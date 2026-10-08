@@ -1,153 +1,171 @@
 # Bien Vendre · Florist & Gifts
 
-Sistem informasi rekomendasi katalog dan manajemen penjualan florist, berdasarkan **PPT PPSI Kelompok 4**. React + Vite untuk antarmuka, Express untuk API, dan PostgreSQL 17 untuk database relasional. Bahasa antarmuka Indonesia, mata uang rupiah, tanggal operasional Asia/Jakarta.
+Website katalog dan manajemen penjualan untuk bisnis florist. Bien Vendre membantu pelanggan menemukan rangkaian bunga untuk momen istimewa, serta membantu tim toko mengelola produk, pesanan, dan laporan penjualan dalam satu tempat.
 
-![Dashboard admin](docs/screenshots/admin-desktop.png)
+Antarmuka tersedia dalam bahasa Indonesia, menggunakan mata uang rupiah dan zona waktu Asia/Jakarta.
 
-## Peran dan alur
+![Dashboard Bien Vendre](docs/screenshots/admin-desktop.png)
 
-| Peran | Fitur |
+## Fitur
+
+- Katalog produk dengan pencarian, foto, harga, jenis bunga, ukuran, dan deskripsi.
+- Rekomendasi produk berdasarkan kategori momen, seperti ulang tahun, wisuda, dan pernikahan.
+- Pengelolaan produk, kategori, dan rekomendasi oleh admin.
+- Pencatatan pesanan dengan beberapa produk dan permintaan khusus pelanggan.
+- Pemantauan status pesanan dan ringkasan pelanggan.
+- Dashboard penjualan, riwayat transaksi, dan laporan PDF berdasarkan periode.
+- Tampilan responsif untuk desktop dan smartphone.
+
+## Akses pengguna
+
+| Pengguna | Akses |
 |---|---|
-| Pelanggan (tanpa login) | Katalog, pencarian produk, detail foto/harga/jenis/ukuran/deskripsi, rekomendasi berdasarkan kategori momen, kanal digital toko |
-| Admin | Login, CRUD produk/kategori/rekomendasi, catat pesanan multi-item, ubah pesanan aktif, proses/selesaikan/batalkan, ringkasan pelanggan |
-| Owner | Login, dashboard, daftar/detail pesanan baca saja, riwayat penjualan per periode, unduh PDF |
+| Pelanggan | Melihat katalog, detail, dan rekomendasi tanpa login; menghubungi toko melalui kanal yang tersedia. |
+| Admin | Mengelola katalog, kategori, rekomendasi, serta mencatat dan memperbarui pesanan. |
+| Owner | Memantau pesanan dan penjualan serta mengunduh laporan PDF. |
 
-**Alur pelanggan sesuai PPT:** lihat katalog → pilih kategori/rekomendasi → lihat detail → konsultasi melalui kanal toko. Admin mencatat pesanan setelah konsultasi. Tidak ada akun pelanggan, checkout mandiri, atau payment gateway dalam PPT.
+Pelanggan memilih produk dan berkonsultasi dengan toko. Admin kemudian mencatat pesanan dan memprosesnya hingga selesai. Pesanan selesai otomatis masuk ke riwayat penjualan. Harga transaksi tetap tersimpan meskipun harga produk di katalog berubah.
 
-**Alur pesanan:** Baru → Diproses → Selesai; Baru/Diproses dapat dibatalkan. Pesanan baru dapat dihapus. Penyelesaian atomik membuat tepat satu baris penjualan. Pesanan selesai dibekukan untuk menjaga histori; tanggal laporan adalah tanggal penyelesaian. Harga dan nama item tersimpan sebagai snapshot, sehingga perubahan katalog tidak mengubah transaksi lampau. Total dihitung di server.
+## Menjalankan website
 
-Diagram dan pemetaan fitur: [REQUIREMENTS.md](docs/REQUIREMENTS.md). Implementasi menambahkan status operasional dan sesi untuk menjalankan kebutuhan PPT.
+**Persiapan:** instal [Docker Desktop](https://www.docker.com/products/docker-desktop/), buka aplikasinya, dan tunggu hingga **Engine running**. Di Windows, gunakan mode Linux containers / WSL 2. Website dan database dijalankan melalui Docker; Node.js dan PostgreSQL tidak perlu diinstal terpisah.
 
-## Menjalankan website + database dengan Docker (direkomendasikan)
+### 1. Unduh proyek
 
-Docker sekarang menjalankan dua layanan: `web` (frontend hasil build dan backend Express) serta `db` (PostgreSQL). **Tidak perlu menginstal Node.js di laptop** untuk mode ini. Dockerfile memakai Node.js 22 dan multi-stage build; proses aplikasi berjalan sebagai user non-root. File `.env` dan data pelanggan tidak dimasukkan ke image. Compose menunggu database sehat sebelum migrasi dan startup web.
+Unduh melalui [GitHub](https://github.com/RamonZalmora/Florist_kel4_ppsi) → **Code → Download ZIP**, lalu ekstrak. Buka folder yang berisi `compose.yaml` dan `Dockerfile`.
 
-### Windows — sampai terbuka di browser
+Jika menggunakan Git:
 
-1. Instal dan buka **Docker Desktop**, gunakan Linux containers/WSL 2. Tunggu sampai Engine running. Periksa di PowerShell: `docker --version` dan `docker compose version`.
-2. Unduh ZIP dari GitHub melalui **Code → Download ZIP**, ekstrak semua file. Bila memakai Git, gunakan `git clone` (checkout lama dapat diperbarui dengan `git pull origin main`). Pertahankan `.env` lama dan database jika sudah pernah menjalankan proyek.
-3. Buka folder yang berisi `compose.yaml` dan `Dockerfile` di File Explorer. Klik address bar, ketik `powershell`, lalu Enter; terminal terbuka dalam folder proyek.
-4. Jalankan:
+```bash
+git clone https://github.com/RamonZalmora/Florist_kel4_ppsi.git
+cd Florist_kel4_ppsi
+```
 
-   ```powershell
-   powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\setup-docker.ps1
-   ```
+### 2. Jalankan setup
 
-   Pengaturan execution policy ini hanya berlaku pada proses PowerShell tersebut. Script membuat `.env` dengan password acak jika belum ada, menggunakan Node dari container sementara, kemudian membangun dan menjalankan aplikasi. Docker Desktop harus aktif. Saat pertama kali, image dan dependensi perlu diunduh; waktu tergantung koneksi.
-5. Periksa:
+**Windows:** di folder proyek, klik kolom alamat File Explorer, ketik `powershell`, lalu tekan Enter. Jalankan:
 
-   ```powershell
-   docker compose ps
-   ```
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\setup-docker.ps1
+```
 
-   Layanan `web` dan `db` harus `healthy`. Buka Chrome/Edge dan ketik **http://localhost:3000/catalog**. Login tim di **http://localhost:3000/login**. Untuk langsung membuka browser dari PowerShell:
+Pengaturan execution policy hanya berlaku pada proses tersebut.
 
-   ```powershell
-   Start-Process "http://localhost:3000/catalog"
-   ```
-
-6. Username **admin** atau **owner**. Buka `.env` lokal dengan editor teks untuk melihat password awal pada `SEED_ADMIN_PASSWORD` dan `SEED_OWNER_PASSWORD`; jangan membagikan file atau password. Untuk username admin gunakan password admin, untuk owner gunakan password owner.
-
-### Linux/macOS
+**Linux/macOS:** buka terminal di folder proyek, lalu jalankan:
 
 ```bash
 bash scripts/setup-docker.sh
 ```
 
-Khusus runner Codex cloud yang memakai proxy dan CA platform, gunakan `bash scripts/setup-cloud-docker.sh`. Helper memakai sertifikat tepercaya melalui secret saat build, tanpa mematikan TLS atau menyimpan kredensial proxy di image. Ini tidak diperlukan pada instalasi Docker Desktop biasa.
+Setup membuat konfigurasi lokal dan akun awal, membangun website, lalu menjalankan aplikasi beserta database. Unduhan pertama dapat membutuhkan beberapa menit. Konfigurasi dan data yang sudah ada dipertahankan.
 
-### Menjalankan lagi, memperbarui kode, dan berhenti
+### 3. Buka browser
 
-Setelah setup pertama, nyalakan Docker Desktop lalu dari folder proyek:
+Setelah setup selesai, buka:
 
-```bash
-docker compose up -d --wait
-# Setelah mengubah/mengunduh kode terbaru, build ulang image web:
-docker compose up -d --build --wait
-# Melihat penyebab startup gagal:
-docker compose logs --tail 80 web db
-# Menghentikan aplikasi dan database, data tetap pada volume:
-docker compose stop
-```
-
-Mode `-d` berjalan di background; terminal boleh ditutup, Docker Desktop tetap aktif. Tidak perlu menjalankan `npm start` bersamaan. Jangan memakai `down -v` jika ingin mempertahankan database. `.env` juga harus dipertahankan agar password cocok dengan volume PostgreSQL yang sudah ada.
-
-Jika port 3000 digunakan aplikasi lain, isi `WEB_PORT=3001` dalam `.env`, jalankan lagi `docker compose up -d --wait`, lalu buka `http://localhost:3001/catalog`. `DATABASE_URL` pada `.env` tetap untuk mode npm di laptop; mode Docker memakai hostname `db` secara otomatis. Jangan menggantinya menjadi localhost di container.
-
-**Jika gagal:** pastikan terminal berada di folder `compose.yaml`; Docker Desktop Engine running dan Linux containers dipilih; lihat log di atas. Error password database setelah mengganti `.env` berarti kredensial volume lama perlu digunakan kembali. Jangan menghapus volume untuk mengatasi error tersebut. Mode demo default `SEED_DEMO=true`; gunakan `SEED_DEMO=false` bila tidak ingin seed otomatis (akun awal harus sudah disiapkan). Port dibatasi ke laptop (`127.0.0.1`); website belum online.
-
-## Menjalankan dengan npm (alternatif pengembangan)
-
-Prasyarat: Node.js **22+**, npm, Docker Engine dengan Compose. Port 5432 dan 3000 tersedia. Setup tidak membuat worktree: gunakan checkout yang ada.
-
-```bash
-git clone https://github.com/RamonZalmora/Florist_kel4_ppsi.git
-cd Florist_kel4_ppsi
-bash scripts/setup.sh
-npm start
-```
-
-Di komputer Anda, buka aplikasi pada port **3000**. `/catalog` untuk pelanggan, `/login` untuk tim. `/api/health` memeriksa koneksi database. Setup membuat `.env` lokal dengan password acak, menjalankan database, migrasi, seed demo dan build; jika `.env` sudah ada, file dipertahankan. Jika memakai database PostgreSQL sendiri, atur `DATABASE_URL` di `.env` dan jalankan `npm ci`, `npm run db:migrate`, `npm run db:seed`, `npm run build` tanpa Compose.
-
-Username awal: **admin** dan **owner**. Password awal terdapat dalam `.env` lokal pada `SEED_ADMIN_PASSWORD` dan `SEED_OWNER_PASSWORD`; tidak ditulis ke Git, chat, atau dokumentasi. Seed meng-hash password dengan bcrypt, tidak menimpa akun yang sudah ada. Mengubah variabel seed tidak mengganti password akun lama. Pengelolaan/reset akun lanjutan belum termasuk lingkup versi ini.
-
-Seed menambahkan **6 produk, 4 kategori, 8 rekomendasi dan 7 pesanan fiktif** saat katalog kosong. Seed ulang tidak menggandakan data. Ilustrasi produk merupakan demo; admin dapat menggantinya melalui URL foto HTTPS. Banner floral dibuat dengan generator gambar. Tidak ada unggah berkas foto dalam versi ini.
-
-Untuk mengaktifkan kanal toko, isi `.env` lalu jalankan `docker compose up -d web` agar konfigurasi diterapkan ulang (atau restart server pada mode npm):
-
-```dotenv
-STORE_WHATSAPP=62xxxxxxxxxxx
-STORE_INSTAGRAM=https://www.instagram.com/akun_toko_asli/
-STORE_ADDRESS=Alamat toko sebenarnya
-```
-
-Nilai di atas adalah placeholder, bukan kontak toko. Tombol WhatsApp/Instagram hanya tampil setelah dikonfigurasi. `COOKIE_SECURE=false` untuk HTTP lokal; gunakan `true` ketika kelak berjalan di HTTPS. Jangan commit `.env`, dump database, atau kredensial.
-
-## Pengembangan dan pengujian
-
-```bash
-# Mode npm: hentikan container web terlebih dahulu agar port 3000 bebas
-docker compose stop web
-# Terminal 1: backend dengan auto-reload
-npm run dev
-# Terminal 2: frontend Vite, proxy /api ke backend
-npm run web:dev
-
-# Integration test, memakai PostgreSQL pada DATABASE_URL
-npm test
-# Browser test, backend dan build harus sudah berjalan
-npm run test:e2e
-```
-
-Tes integrasi membuat akun/data sementara dengan identifier unik lalu membersihkan data miliknya; jalankan hanya pada database pengembangan. Tes browser memakai akun seed dan katalog demo tanpa modifikasi; membuat lalu menghapus pesanan uji. Browser test menjalankan **Chromium yang terpasang di `/usr/bin/chromium`**. Set `CHROMIUM_PATH` untuk lokasi executable lain. Bila belum ada browser, instal Chromium atau browser Playwright dari sumber resminya dan arahkan variabel tersebut. Tes dijalankan pada viewport desktop 1440×1000 dan HP 390×844.
-
-Browser test dapat mengakses web dalam Docker. Jika memakai port alternatif, set `E2E_BASE_URL`, misalnya `E2E_BASE_URL=http://127.0.0.1:3001 npm run test:e2e` pada Bash. Tool pengembangan/test membutuhkan Node.js dan npm di host; pengguna yang hanya menjalankan aplikasi Docker tidak membutuhkannya.
-
-Perintah wajib setelah perubahan: `npm run build`, `npm test`, dan `npm run test:e2e` untuk perubahan UI. [VALIDATION.md](docs/VALIDATION.md) mencatat hasil aktual. Screenshot ada di `docs/screenshots/`.
-
-## Database dan API
-
-Skema SQL berversi: `server/db/001_initial.sql`, runner migrasi memakai advisory lock dan tabel `schema_migrations`. Semua query input menggunakan parameter. Foreign key, constraint, snapshot harga, lock pesanan, dan transaksi PostgreSQL menjaga konsistensi. Diagram [DATABASE.md](docs/DATABASE.md) menjelaskan relasi.
-
-| API | Akses |
+| Halaman | Alamat |
 |---|---|
-| `GET /api/products`, `/products/:id`, `/categories`, `/store` | Publik |
-| `POST /api/auth/login`, `GET /api/auth/me`, `POST /api/auth/logout` | Login/sesi |
-| `/api/manage/products`, `/categories`, `/recommendations` | Admin (POST/PUT/DELETE); daftar internal produk/rekomendasi GET |
-| `GET /api/orders`, `/api/dashboard` | Admin & owner |
-| `POST/PUT/DELETE /api/orders`, `PATCH /api/orders/:id/status` | Admin |
-| `GET /api/reports?from=YYYY-MM-DD&to=YYYY-MM-DD`, `/api/reports/pdf` | Owner |
+| Katalog pelanggan | http://localhost:3000/catalog |
+| Login admin dan owner | http://localhost:3000/login |
 
-Mutasi terautentikasi wajib header `X-CSRF-Token` dari login/me. Sesi acak disimpan sebagai hash di DB, cookie HttpOnly/SameSite Strict, masa berlaku 12 jam. Login dibatasi 20 percobaan/15 menit/IP. Validasi input menggunakan Zod; owner tidak dapat mengubah data walaupun memanggil API langsung. Daftar pesanan dibatasi 500 terbaru; laporan periode mencakup seluruh penjualan dalam periode. Paginasi pesanan dan unggah foto dapat ditambahkan pada iterasi berikutnya.
+Untuk memeriksa apakah layanan siap, jalankan `docker compose ps`. Layanan `web` dan `db` harus berstatus **healthy**.
 
-## Persistensi dan backup
+### 4. Login ke dashboard
 
-Compose menyimpan PostgreSQL dalam named volume `florist_db`. Stop/start database tidak menghapus data. **Jangan menjalankan `docker compose down -v`** pada database yang ingin dipertahankan. Sebelum memindahkan lingkungan, buat backup:
+Password awal dibuat secara acak dan disimpan dalam file `.env` di folder proyek.
+
+| Username | Password yang digunakan |
+|---|---|
+| `admin` | Nilai `SEED_ADMIN_PASSWORD` di `.env` |
+| `owner` | Nilai `SEED_OWNER_PASSWORD` di `.env` |
+
+Di Windows, file tersebut dapat dibuka dengan `notepad .env`. Salin nilai setelah tanda `=` sesuai akun yang digunakan. Simpan file ini secara pribadi; jangan unggah ke GitHub.
+
+Setup tidak mengganti password akun yang sudah ada. Mengubah variabel `SEED_*` tidak mereset password akun lama.
+
+## Penggunaan sehari-hari
+
+Jalankan perintah berikut dari folder proyek. Docker Desktop harus tetap berjalan; terminal boleh ditutup setelah aplikasi aktif.
+
+| Kebutuhan | Perintah |
+|---|---|
+| Menyalakan website | `docker compose up -d --wait` |
+| Menghentikan website dan database | `docker compose stop` |
+| Menerapkan pembaruan kode | `docker compose up -d --build --wait` |
+| Memeriksa status | `docker compose ps` |
+| Melihat pesan error | `docker compose logs --tail 80 web db` |
+
+Jika memakai Git, ambil pembaruan dengan `git pull origin main` sebelum membangun ulang aplikasi.
+
+Jika port 3000 sedang digunakan, tambahkan `WEB_PORT=3001` pada `.env`, jalankan kembali `docker compose up -d --wait`, lalu buka `http://localhost:3001/catalog`.
+
+## Konfigurasi toko
+
+Isi pengaturan berikut pada `.env` menggunakan informasi toko yang sebenarnya:
+
+| Variabel | Isi |
+|---|---|
+| `STORE_WHATSAPP` | Nomor WhatsApp dengan kode negara, hanya angka. |
+| `STORE_INSTAGRAM` | URL lengkap profil Instagram toko. |
+| `STORE_ADDRESS` | Alamat toko. |
+
+Setelah diubah, jalankan `docker compose up -d web`. Kanal WhatsApp dan Instagram ditampilkan setelah dikonfigurasi.
+
+Instalasi awal menyertakan produk, ilustrasi, dan transaksi contoh untuk mencoba fitur. Ganti informasi serta gambar produk melalui dashboard sebelum digunakan untuk operasional toko. Gambar produk saat ini menggunakan URL HTTPS atau aset lokal; unggah berkas foto belum tersedia.
+
+## Data dan keamanan
+
+PostgreSQL menyimpan data pada volume `florist_db`, sehingga data tetap tersedia ketika layanan dihentikan atau dinyalakan kembali. Pertahankan `.env` agar konfigurasi akses sesuai dengan database yang sudah digunakan. **Jangan menjalankan `docker compose down -v` jika data perlu dipertahankan**, karena perintah tersebut menghapus volume database.
+
+Password akun di-hash dengan bcrypt. Server memvalidasi input, memeriksa hak akses, dan melindungi perubahan data dengan token CSRF. Total pesanan dihitung di server; penyelesaian pesanan dan pencatatan penjualan dilakukan dalam satu transaksi database untuk mencegah penjualan ganda. Pesanan selesai tidak dapat diubah atau dihapus.
+
+Backup melalui Bash / Git Bash:
 
 ```bash
 bash scripts/backup-db.sh
-# Restore ke database pengembangan kosong setelah memeriksa file backup:
-docker compose --env-file .env exec -T db psql -U florist -d bien_vendre < .local/backups/NAMA_BACKUP.sql
 ```
 
-Backup berisi data pelanggan dan hash password: simpan aman, jangan unggah ke GitHub. Restore ke cloud task baru belum diverifikasi; jangan mengandalkan proses hidup atau volume Docker ikut dipindahkan tanpa backup. Deploy, domain, TLS, email, pembayaran dan konfigurasi produksi belum dilakukan sesuai permintaan.
+Backup tersimpan di `.local/backups/`. Simpan secara aman karena berisi data pelanggan dan informasi akun.
+
+## Teknologi dan pengembangan
+
+| Komponen | Teknologi |
+|---|---|
+| Frontend | React, Vite, Lucide |
+| Backend | Node.js 22+, Express, Zod |
+| Database | PostgreSQL 17 |
+| Laporan | PDFKit |
+| Infrastruktur lokal | Docker, Docker Compose |
+| Pengujian | Node.js Test Runner, Playwright |
+
+Dockerfile menggunakan multi-stage build dan menjalankan aplikasi sebagai user non-root. Compose menjalankan `web` dan `db`, menunggu database siap, lalu menerapkan migrasi sebelum website aktif.
+
+Untuk pengembangan dengan perubahan kode langsung terbaca, instal Node.js 22+ dan npm di host:
+
+```bash
+docker compose stop web
+bash scripts/setup.sh
+# Terminal pertama
+npm run dev
+# Terminal kedua
+npm run web:dev
+```
+
+Vite menampilkan alamat frontend di terminal dan meneruskan permintaan API ke backend. Mode npm memakai `DATABASE_URL` pada `.env`; container web terhubung ke database melalui hostname `db` secara otomatis.
+
+Pemeriksaan pengembangan:
+
+```bash
+npm run build
+npm test
+npm run test:e2e
+npm run format:check
+```
+
+Gunakan database pengembangan untuk pengujian. Tes browser membutuhkan aplikasi yang aktif, katalog contoh, dan Chromium; atur `CHROMIUM_PATH` jika lokasi browser berbeda dari `/usr/bin/chromium`. `E2E_BASE_URL` dapat diatur untuk port aplikasi yang berbeda.
+
+Dokumentasi teknis: [struktur database](docs/DATABASE.md) dan [hasil validasi](docs/VALIDATION.md). Runner cloud dengan proxy platform menggunakan `scripts/setup-cloud-docker.sh` untuk menyiapkan koneksi build dan sertifikat tepercaya.
+
+## Status pengembangan
+
+Website dapat dijalankan secara lokal dengan Docker. Akses publik melalui domain dan konfigurasi produksi belum disiapkan. Pemesanan dikelola melalui konsultasi dan pencatatan admin; pembayaran online serta pengelolaan akun lanjutan belum tersedia. Daftar pesanan menampilkan maksimal 500 pesanan terbaru, sedangkan laporan mencakup semua penjualan dalam periode yang dipilih.
