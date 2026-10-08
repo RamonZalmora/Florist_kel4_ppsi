@@ -1,5 +1,30 @@
 # Hasil validasi implementasi
 
+## Pembaruan: website dan database dalam Docker
+
+Validasi aktual pada Linux cloud dengan Docker Engine 28.4 dan Compose 2.40.3:
+
+| Pemeriksaan | Hasil |
+|---|---|
+| Build Dockerfile multi-stage | Lulus, Node.js 22 Alpine, frontend dikompilasi Vite di build stage |
+| Startup Compose | `web` dan `db` healthy; web menunggu database lalu migrasi dan seed |
+| HTTP dari container web | `/catalog`, `/login`, `/api/health`, `/api/products` HTTP 200 |
+| `npm test` | 8 lulus, 0 gagal |
+| `E2E_BASE_URL=http://127.0.0.1:3001 npm run test:e2e` | 8 lulus, 0 gagal; browser desktop dan HP mengakses web container |
+| Instalasi kosong | Bootstrap .env dari Node container; PostgreSQL baru; login admin/owner berhasil; 6 produk dan 7 pesanan demo |
+| Restart instalasi kosong | Login owner dan 7 pesanan dipertahankan, seed tidak ganda |
+| Runtime image | UID 1000 (non-root), tidak membawa `.env`, sertifikat build, atau compiler Vite |
+| `scripts/setup-cloud-docker.sh` | Lulus, build ulang memakai cache dan startup pada port default 3000 |
+| Pemeriksaan format dan whitespace | Lulus |
+
+Volume database proyek yang sudah ada dipertahankan. Database/volume percobaan baru dibuat pada project Compose terpisah dan dihapus setelah pengujian; volume proyek utama tidak dihapus.
+
+Build awal terhambat DNS proxy dan trust certificate dalam BuildKit cloud. Koreksi memakai pemetaan DNS proxy yang tersedia, build proxy bawaan Docker, serta bundle CA tepercaya melalui mount build secret opsional. TLS dan integrity package tetap diverifikasi. Helper cloud menulis referensi variabel proxy, bukan nilai kredensial, ke `.local/cloud-compose.json` yang diabaikan Git. Laptop tidak memerlukan helper cloud ini.
+
+Panduan dan script PowerShell disediakan untuk Windows; eksekusi pada Windows/Docker Desktop belum diuji langsung karena runner ini Linux. Alur Docker, bootstrap Node container, startup kosong, restart, dan browser telah diuji sebagaimana di atas. Deploy tetap belum dilakukan. CI ditambah build Dockerfile; hasil eksekusinya di GitHub belum diverifikasi.
+
+## Validasi implementasi awal
+
 Lingkungan yang diuji: Node.js 24.19, PostgreSQL 17 pada Docker Compose, Chromium sistem `/usr/bin/chromium`. Ini adalah validasi pada instance pengembangan saat ini; belum ada deploy, publish environment, atau uji restore pada cloud task baru.
 
 | Pemeriksaan | Hasil akhir |

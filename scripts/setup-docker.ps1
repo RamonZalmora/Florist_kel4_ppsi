@@ -1,0 +1,15 @@
+$ErrorActionPreference = "Stop"
+$projectPath = Split-Path -Parent $PSScriptRoot
+Push-Location $projectPath
+try {
+    if (-not (Test-Path ".env")) {
+        docker run --rm --mount "type=bind,source=$projectPath,target=/app" -w /app node:22-alpine node scripts/init-local.js
+        if ($LASTEXITCODE -ne 0) { throw "Gagal menyiapkan .env. Pastikan Docker Desktop aktif dan folder dapat diakses." }
+    }
+    docker compose --env-file .env up -d --build --wait --wait-timeout 180
+    if ($LASTEXITCODE -ne 0) { throw "Startup gagal. Periksa: docker compose logs --tail 80 web db" }
+    Write-Host "Website dan database siap. Buka http://localhost:3000/catalog (port default)."
+    Write-Host "Login tim: http://localhost:3000/login. Password awal ada di .env lokal."
+} finally {
+    Pop-Location
+}

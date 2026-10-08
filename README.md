@@ -18,7 +18,65 @@ Sistem informasi rekomendasi katalog dan manajemen penjualan florist, berdasarka
 
 Diagram dan pemetaan fitur: [REQUIREMENTS.md](docs/REQUIREMENTS.md). Implementasi menambahkan status operasional dan sesi untuk menjalankan kebutuhan PPT.
 
-## Menjalankan lokal
+## Menjalankan website + database dengan Docker (direkomendasikan)
+
+Docker sekarang menjalankan dua layanan: `web` (frontend hasil build dan backend Express) serta `db` (PostgreSQL). **Tidak perlu menginstal Node.js di laptop** untuk mode ini. Dockerfile memakai Node.js 22 dan multi-stage build; proses aplikasi berjalan sebagai user non-root. File `.env` dan data pelanggan tidak dimasukkan ke image. Compose menunggu database sehat sebelum migrasi dan startup web.
+
+### Windows — sampai terbuka di browser
+
+1. Instal dan buka **Docker Desktop**, gunakan Linux containers/WSL 2. Tunggu sampai Engine running. Periksa di PowerShell: `docker --version` dan `docker compose version`.
+2. Unduh ZIP dari GitHub melalui **Code → Download ZIP**, ekstrak semua file. Bila memakai Git, gunakan `git clone` (checkout lama dapat diperbarui dengan `git pull origin main`). Pertahankan `.env` lama dan database jika sudah pernah menjalankan proyek.
+3. Buka folder yang berisi `compose.yaml` dan `Dockerfile` di File Explorer. Klik address bar, ketik `powershell`, lalu Enter; terminal terbuka dalam folder proyek.
+4. Jalankan:
+
+   ```powershell
+   powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\setup-docker.ps1
+   ```
+
+   Pengaturan execution policy ini hanya berlaku pada proses PowerShell tersebut. Script membuat `.env` dengan password acak jika belum ada, menggunakan Node dari container sementara, kemudian membangun dan menjalankan aplikasi. Docker Desktop harus aktif. Saat pertama kali, image dan dependensi perlu diunduh; waktu tergantung koneksi.
+5. Periksa:
+
+   ```powershell
+   docker compose ps
+   ```
+
+   Layanan `web` dan `db` harus `healthy`. Buka Chrome/Edge dan ketik **http://localhost:3000/catalog**. Login tim di **http://localhost:3000/login**. Untuk langsung membuka browser dari PowerShell:
+
+   ```powershell
+   Start-Process "http://localhost:3000/catalog"
+   ```
+
+6. Username **admin** atau **owner**. Buka `.env` lokal dengan editor teks untuk melihat password awal pada `SEED_ADMIN_PASSWORD` dan `SEED_OWNER_PASSWORD`; jangan membagikan file atau password. Untuk username admin gunakan password admin, untuk owner gunakan password owner.
+
+### Linux/macOS
+
+```bash
+bash scripts/setup-docker.sh
+```
+
+Khusus runner Codex cloud yang memakai proxy dan CA platform, gunakan `bash scripts/setup-cloud-docker.sh`. Helper memakai sertifikat tepercaya melalui secret saat build, tanpa mematikan TLS atau menyimpan kredensial proxy di image. Ini tidak diperlukan pada instalasi Docker Desktop biasa.
+
+### Menjalankan lagi, memperbarui kode, dan berhenti
+
+Setelah setup pertama, nyalakan Docker Desktop lalu dari folder proyek:
+
+```bash
+docker compose up -d --wait
+# Setelah mengubah/mengunduh kode terbaru, build ulang image web:
+docker compose up -d --build --wait
+# Melihat penyebab startup gagal:
+docker compose logs --tail 80 web db
+# Menghentikan aplikasi dan database, data tetap pada volume:
+docker compose stop
+```
+
+Mode `-d` berjalan di background; terminal boleh ditutup, Docker Desktop tetap aktif. Tidak perlu menjalankan `npm start` bersamaan. Jangan memakai `down -v` jika ingin mempertahankan database. `.env` juga harus dipertahankan agar password cocok dengan volume PostgreSQL yang sudah ada.
+
+Jika port 3000 digunakan aplikasi lain, isi `WEB_PORT=3001` dalam `.env`, jalankan lagi `docker compose up -d --wait`, lalu buka `http://localhost:3001/catalog`. `DATABASE_URL` pada `.env` tetap untuk mode npm di laptop; mode Docker memakai hostname `db` secara otomatis. Jangan menggantinya menjadi localhost di container.
+
+**Jika gagal:** pastikan terminal berada di folder `compose.yaml`; Docker Desktop Engine running dan Linux containers dipilih; lihat log di atas. Error password database setelah mengganti `.env` berarti kredensial volume lama perlu digunakan kembali. Jangan menghapus volume untuk mengatasi error tersebut. Mode demo default `SEED_DEMO=true`; gunakan `SEED_DEMO=false` bila tidak ingin seed otomatis (akun awal harus sudah disiapkan). Port dibatasi ke laptop (`127.0.0.1`); website belum online.
+
+## Menjalankan dengan npm (alternatif pengembangan)
 
 Prasyarat: Node.js **22+**, npm, Docker Engine dengan Compose. Port 5432 dan 3000 tersedia. Setup tidak membuat worktree: gunakan checkout yang ada.
 
@@ -35,7 +93,7 @@ Username awal: **admin** dan **owner**. Password awal terdapat dalam `.env` loka
 
 Seed menambahkan **6 produk, 4 kategori, 8 rekomendasi dan 7 pesanan fiktif** saat katalog kosong. Seed ulang tidak menggandakan data. Ilustrasi produk merupakan demo; admin dapat menggantinya melalui URL foto HTTPS. Banner floral dibuat dengan generator gambar. Tidak ada unggah berkas foto dalam versi ini.
 
-Untuk mengaktifkan kanal toko, isi `.env` lalu restart server:
+Untuk mengaktifkan kanal toko, isi `.env` lalu jalankan `docker compose up -d web` agar konfigurasi diterapkan ulang (atau restart server pada mode npm):
 
 ```dotenv
 STORE_WHATSAPP=62xxxxxxxxxxx
@@ -48,6 +106,8 @@ Nilai di atas adalah placeholder, bukan kontak toko. Tombol WhatsApp/Instagram h
 ## Pengembangan dan pengujian
 
 ```bash
+# Mode npm: hentikan container web terlebih dahulu agar port 3000 bebas
+docker compose stop web
 # Terminal 1: backend dengan auto-reload
 npm run dev
 # Terminal 2: frontend Vite, proxy /api ke backend
@@ -60,6 +120,8 @@ npm run test:e2e
 ```
 
 Tes integrasi membuat akun/data sementara dengan identifier unik lalu membersihkan data miliknya; jalankan hanya pada database pengembangan. Tes browser memakai akun seed dan katalog demo tanpa modifikasi; membuat lalu menghapus pesanan uji. Browser test menjalankan **Chromium yang terpasang di `/usr/bin/chromium`**. Set `CHROMIUM_PATH` untuk lokasi executable lain. Bila belum ada browser, instal Chromium atau browser Playwright dari sumber resminya dan arahkan variabel tersebut. Tes dijalankan pada viewport desktop 1440×1000 dan HP 390×844.
+
+Browser test dapat mengakses web dalam Docker. Jika memakai port alternatif, set `E2E_BASE_URL`, misalnya `E2E_BASE_URL=http://127.0.0.1:3001 npm run test:e2e` pada Bash. Tool pengembangan/test membutuhkan Node.js dan npm di host; pengguna yang hanya menjalankan aplikasi Docker tidak membutuhkannya.
 
 Perintah wajib setelah perubahan: `npm run build`, `npm test`, dan `npm run test:e2e` untuk perubahan UI. [VALIDATION.md](docs/VALIDATION.md) mencatat hasil aktual. Screenshot ada di `docs/screenshots/`.
 
