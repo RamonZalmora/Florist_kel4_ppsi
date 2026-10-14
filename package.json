@@ -4,18 +4,23 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node --watch server/index.js",
+    "dev": "node scripts/dev.js",
     "start": "node server/index.js",
     "db:migrate": "node server/db/migrate.js",
     "db:seed": "node server/db/seed.js",
     "build": "vite build --config web/vite.config.js",
-    "web:dev": "vite --config web/vite.config.js --host 0.0.0.0",
     "test": "node --test tests/*.test.js",
     "test:e2e": "playwright test",
     "format": "prettier --write server web/src tests scripts/*.js *.json *.js .github/workflows/ci.yml",
-    "format:check": "prettier --check server web/src tests scripts/*.js *.json *.js .github/workflows/ci.yml"
+    "format:check": "prettier --check server web/src tests scripts/*.js *.json *.js .github/workflows/ci.yml",
+    "setup": "node scripts/setup.js",
+    "db:import": "node scripts/import-postgres.js",
+    "db:backup": "node scripts/backup-db.js",
+    "db:restore": "node scripts/restore-db.js",
+    "db:inspect": "node scripts/inspect-db.js"
   },
   "dependencies": {
+    "@electric-sql/pglite": "^0.5.9",
     "bcryptjs": "^3.0.2",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",

@@ -4,7 +4,7 @@ import helmet from 'helmet';
 import { fileURLToPath } from 'node:url';
 import { ZodError } from 'zod';
 import { auth } from './auth.js';
-import { db } from './db/pool.js';
+import { db, databaseDriver } from './db/pool.js';
 import { catalog, management } from './routes/catalog.js';
 import { orders } from './routes/orders.js';
 import { reports, dashboard } from './routes/reports.js';
@@ -23,7 +23,7 @@ app.use(
 app.use(express.json({ limit: '100kb' }));
 app.get('/api/health', async (req, res) => {
   await db.query('SELECT 1');
-  res.json({ status: 'ok', database: 'PostgreSQL' });
+  res.json({ status: 'ok', database: 'PostgreSQL', driver: databaseDriver });
 });
 app.use('/api/auth', auth);
 app.use('/api', catalog);
@@ -46,7 +46,7 @@ app.use((error, req, res, next) => {
     return res
       .status(409)
       .json({ error: 'Data sudah ada. Gunakan nama atau kombinasi yang berbeda.' });
-  if (error.code === '23503')
+  if (['23503', '23001'].includes(error.code))
     return res
       .status(409)
       .json({ error: 'Data sedang digunakan. Hapus relasi terkait atau nonaktifkan produk.' });

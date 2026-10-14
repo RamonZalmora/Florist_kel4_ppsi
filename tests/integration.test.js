@@ -2,8 +2,14 @@ import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { randomBytes } from 'node:crypto';
 import bcrypt from 'bcryptjs';
-import { db } from '../server/db/pool.js';
-import { migrate } from '../server/db/migrate.js';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+const testDirectory = mkdtempSync(join(tmpdir(), 'bien-vendre-test-'));
+process.env.DB_DRIVER = process.env.TEST_DB_DRIVER || 'pglite';
+process.env.DB_DIRECTORY = join(testDirectory, 'database');
+const { db } = await import('../server/db/pool.js');
+const { migrate } = await import('../server/db/migrate.js');
 process.env.NODE_ENV = 'test';
 const { app } = await import('../server/index.js');
 const suffix = randomBytes(5).toString('hex');
@@ -70,6 +76,7 @@ after(async () => {
   await db.query('DELETE FROM users WHERE id=ANY($1::bigint[])', [[adminId, ownerId]]);
   await new Promise((resolve) => server.close(resolve));
   await db.end();
+  rmSync(testDirectory, { recursive: true, force: true });
 });
 test('database health and public catalog require no login', async () => {
   assert.equal((await request('/health')).data.database, 'PostgreSQL');

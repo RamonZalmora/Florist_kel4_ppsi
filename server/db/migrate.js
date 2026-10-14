@@ -1,8 +1,8 @@
 import { readFile } from 'node:fs/promises';
-import { db, transaction } from './pool.js';
+import { db, transaction, databaseDriver } from './pool.js';
 export async function migrate() {
   await transaction(async (client) => {
-    await client.query('SELECT pg_advisory_xact_lock(493812)');
+    if (databaseDriver === 'postgres') await client.query('SELECT pg_advisory_xact_lock(493812)');
     await client.query(
       'CREATE TABLE IF NOT EXISTS schema_migrations (version text PRIMARY KEY, applied_at timestamptz NOT NULL DEFAULT now())',
     );
