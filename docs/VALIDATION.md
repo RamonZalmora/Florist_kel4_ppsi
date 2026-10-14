@@ -1,59 +1,39 @@
-# Hasil validasi implementasi
+# Validasi mode lokal
 
-## Pembaruan: website dan database dalam Docker
+Mode utama: Node.js langsung, PGlite pada disk, frontend Vite dengan hot reload. Docker tidak diperlukan oleh instalasi, aplikasi, maupun CI.
 
-Validasi aktual pada Linux cloud dengan Docker Engine 28.4 dan Compose 2.40.3:
+## Hasil
 
 | Pemeriksaan | Hasil |
 |---|---|
-| Build Dockerfile multi-stage | Lulus, Node.js 22 Alpine, frontend dikompilasi Vite di build stage |
-| Startup Compose | `web` dan `db` healthy; web menunggu database lalu migrasi dan seed |
-| HTTP dari container web | `/catalog`, `/login`, `/api/health`, `/api/products` HTTP 200 |
-| `npm test` | 8 lulus, 0 gagal |
-| `E2E_BASE_URL=http://127.0.0.1:3001 npm run test:e2e` | 8 lulus, 0 gagal; browser desktop dan HP mengakses web container |
-| Instalasi kosong | Bootstrap .env dari Node container; PostgreSQL baru; login admin/owner berhasil; 6 produk dan 7 pesanan demo |
-| Restart instalasi kosong | Login owner dan 7 pesanan dipertahankan, seed tidak ganda |
-| Runtime image | UID 1000 (non-root), tidak membawa `.env`, sertifikat build, atau compiler Vite |
-| `scripts/setup-cloud-docker.sh` | Lulus, build ulang memakai cache dan startup pada port default 3000 |
+| Setup pertama dan setup ulang | Migrasi, seed, build berhasil; akun/katalog yang sudah ada dipertahankan |
+| `npm test` | 11 lulus, 0 gagal, 0 skipped |
+| `npm run test:e2e` | 8 lulus, desktop dan HP, melalui frontend Vite dan backend lokal |
+| Build frontend | Berhasil |
 | Pemeriksaan format dan whitespace | Lulus |
+| Startup `npm run dev` | Backend siap lebih dahulu, lalu frontend pada port 3000 |
+| Hot reload CSS | Perubahan gaya muncul di browser tanpa build atau reload halaman; file uji dikembalikan |
+| Inspeksi dan backup database | Berhasil; snapshot tersimpan di folder Git-ignored |
+| Persistensi/restart dan restore | Data tetap ada; restore memakai folder baru dan menolak overwrite |
+| Pencegahan dua penulis | Database menolak proses kedua pada folder yang sedang dipakai |
+| Duplikasi server dev | Ditolak pada pemeriksaan port sebelum menyentuh database aktif |
 
-Volume database proyek yang sudah ada dipertahankan. Database/volume percobaan baru dibuat pada project Compose terpisah dan dihapus setelah pengujian; volume proyek utama tidak dihapus.
+Pengujian dilakukan pada Linux cloud, Node.js 24.19, PGlite yang dipin lockfile, dan Chromium sistem. Pengujian langsung pada Windows belum dilakukan; script setup/dev menggunakan Node.js lintas platform dan dokumentasi Windows menggunakan `npm.cmd`.
 
-Build awal terhambat DNS proxy dan trust certificate dalam BuildKit cloud. Koreksi memakai pemetaan DNS proxy yang tersedia, build proxy bawaan Docker, serta bundle CA tepercaya melalui mount build secret opsional. TLS dan integrity package tetap diverifikasi. Helper cloud menulis referensi variabel proxy, bukan nilai kredensial, ke `.local/cloud-compose.json` yang diabaikan Git. Laptop tidak memerlukan helper cloud ini.
+## Perilaku yang diperiksa
 
-Panduan dan script PowerShell disediakan untuk Windows; eksekusi pada Windows/Docker Desktop belum diuji langsung karena runner ini Linux. Alur Docker, bootstrap Node container, startup kosong, restart, dan browser telah diuji sebagaimana di atas. Deploy tetap belum dilakukan. CI ditambah build Dockerfile; hasil eksekusinya di GitHub belum diverifikasi.
+- Katalog publik, pencarian, detail produk, dan filter rekomendasi.
+- Form kategori/produk/rekomendasi mengubah data API/database, termasuk harga.
+- Login, bcrypt, cookie HttpOnly, CSRF, dan pembatasan role pada server.
+- Total pesanan dihitung server, validasi tanggal/item, dan rollback transaksi.
+- Dua permintaan penyelesaian pesanan menghasilkan tepat satu penjualan.
+- Owner hanya membaca pesanan/penjualan; PDF periode dapat diunduh dari browser.
+- Import fixture menjaga ID, relasi, hash akun, harga/subtotal, dan sequence; target berisi data ditolak.
+- Backup lokal dapat direstore ke folder baru; sesi dibersihkan setelah restore.
+- Seluruh data tes backend menggunakan folder sementara terpisah; data browser sementara dibersihkan. Database aplikasi kembali berisi 6 produk, 4 kategori, 8 rekomendasi, 7 pesanan contoh dan 4 penjualan contoh.
 
-## Validasi implementasi awal
+## Batas verifikasi
 
-Lingkungan yang diuji: Node.js 24.19, PostgreSQL 17 pada Docker Compose, Chromium sistem `/usr/bin/chromium`. Ini adalah validasi pada instance pengembangan saat ini; belum ada deploy, publish environment, atau uji restore pada cloud task baru.
+Import dari PostgreSQL nyata pada laptop pengguna belum dapat dijalankan dari runner ini. Script koneksi tersedia; logika transfer diuji memakai fixture PostgreSQL-compatible. Database sumber tidak diubah dan transfer tujuan memakai transaksi.
 
-| Pemeriksaan | Hasil akhir |
-|---|---|
-| `bash scripts/setup.sh` | Lulus: install frozen lockfile (`npm ci`), database healthy, migrasi dan seed ulang tanpa duplikasi, build berhasil |
-| `npm run build` | Lulus: bundle React/Vite produksi |
-| `npm test` | **8 lulus**, 0 gagal, 0 skipped |
-| `npm run test:e2e` | **8 lulus**, 0 gagal, desktop dan mobile; proses keluar 0 |
-| `npm run format:check` | Lulus |
-| `GET /api/health` | HTTP 200, database PostgreSQL terhubung |
-| `bash scripts/backup-db.sh` | Lulus, dump non-kosong tersimpan pada `.local/backups/`, tidak masuk Git |
-| `git diff --check` | Lulus |
-
-## Perilaku yang diverifikasi
-
-- Katalog publik, pencarian, kategori rekomendasi, detail produk termasuk jenis/ukuran/harga.
-- Form admin membuat kategori dan produk, mengubah harga produk, membuat rekomendasi; API publik menampilkan hasil database yang sesuai.
-- Login admin/owner, cookie HttpOnly, hash bcrypt, pembatasan role di backend, validasi CSRF, penolakan kredensial salah.
-- Pencatatan dan perubahan pesanan; total dihitung dari harga database meskipun client mengirim total palsu.
-- Transaksi rollback untuk produk tidak ditemukan; penolakan item berulang dan tanggal tidak valid.
-- Status wajib Baru → Diproses → Selesai. Dua permintaan penyelesaian bersamaan menghasilkan tepat satu Sale.
-- Pesanan selesai tidak bisa diubah/dihapus/dibatalkan, owner tidak memiliki kontrol mutasi.
-- Filter periode laporan, periode kosong, PDF dengan signature `%PDF-` dan unduhan nyata melalui browser.
-- Tidak ada overflow horizontal pada halaman katalog, dashboard dan laporan di viewport 1440×1000 dan 390×844. Tabel panjang memiliki scroll internal.
-- Browser pelanggan tidak mengeluarkan error JavaScript. Screenshot akhir tersedia pada `docs/screenshots/`.
-- Data tes sementara dibersihkan. Kondisi akhir: 6 produk, 4 kategori, 8 rekomendasi, 7 pesanan demo dan 4 penjualan demo.
-
-Tes browser awal gagal karena pencari menu mengabaikan badge jumlah, asumsi urutan produk, cara mencari label select, dan konteks cookie cleanup yang berbeda dari browser. Pencari dan cleanup tes diperbaiki; seluruh rangkaian final selesai dengan hasil di atas. Tidak ada assertion yang dinonaktifkan. Pengunduhan browser Playwright diblokir kebijakan domain; pengujian memakai Chromium sistem yang sudah tersedia.
-
-## Belum dilakukan / batas versi
-
-Deploy, domain, TLS produksi, publish/restore task baru, load testing, integrasi pembayaran, dan audit aksesibilitas lengkap belum dilakukan. Kontak toko nyata belum diberikan; tombol kanal digital menunggu konfigurasi. Foto produk masih ilustrasi demo dengan URL yang dapat diedit; upload berkas foto belum tersedia. Daftar pesanan dibatasi 500 terbaru; laporan memakai semua penjualan dalam periode. CI telah ditulis, tetapi hasil GitHub Actions baru dapat dibuktikan setelah workflow dijalankan di GitHub.
+CI sudah diperbarui agar tanpa layanan Docker; hasil GitHub Actions baru dapat dinyatakan setelah eksekusinya diamati. Deployment, domain/HTTPS produksi, pengujian beban, serta audit keamanan/aksesibilitas lengkap belum dilakukan. Mode PGlite ditujukan untuk satu proses pada satu laptop; PostgreSQL eksternal tetap tersedia untuk lingkungan server.

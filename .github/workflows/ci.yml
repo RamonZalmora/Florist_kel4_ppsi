@@ -6,19 +6,6 @@ on:
 jobs:
   integration:
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:17-alpine
-        env:
-          POSTGRES_USER: florist
-          POSTGRES_PASSWORD: ci-only-disposable
-          POSTGRES_DB: bien_vendre_test
-        ports: ['5432:5432']
-        options: >-
-          --health-cmd "pg_isready -U florist -d bien_vendre_test"
-          --health-interval 5s --health-timeout 5s --health-retries 10
-    env:
-      DATABASE_URL: postgresql://florist:ci-only-disposable@localhost:5432/bien_vendre_test
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -29,4 +16,3 @@ jobs:
       - run: npm run build
       - run: npm test
       - run: npm run format:check
-      - run: docker build -t bien-vendre:ci .
