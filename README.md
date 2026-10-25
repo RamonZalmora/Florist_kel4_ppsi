@@ -19,7 +19,29 @@ Website katalog dan manajemen penjualan florist dengan tampilan pelanggan, dashb
 | Admin | Mengelola katalog dan mencatat/memproses pesanan. |
 | Owner | Melihat pesanan dan penjualan serta mengunduh laporan. |
 
-## Menjalankan di laptop
+## Menjalankan dengan Docker
+
+Sesuai rancangan arsitektur pada presentasi kelompok, aplikasi ini dapat dijalankan menggunakan **Docker Compose** dalam 2 container:
+- **`web`**: Menjalankan frontend React dan backend Node.js / Express.
+- **`db`**: Menjalankan PostgreSQL 17 dengan data persisten pada volume `florist_db`.
+
+### Langkah menjalankan:
+1. Pastikan **Docker Desktop** sudah aktif di laptop Anda.
+2. Jalankan perintah berikut di PowerShell atau terminal:
+   ```powershell
+   docker compose up -d --build
+   ```
+   *(Atau jalankan script otomatis: `.\scripts\setup-docker.ps1`)*
+3. Setelah container siap, buka di browser:
+   - **Katalog Publik:** http://localhost:3000/catalog
+   - **Login Admin/Owner:** http://localhost:3000/login
+4. Perintah pembantu:
+   - Melihat log: `docker compose logs -f`
+   - Menghentikan container: `docker compose down`
+
+---
+
+## Menjalankan di laptop (Tanpa Docker)
 
 **Cukup instal [Node.js LTS](https://nodejs.org/) versi 22 atau lebih baru.** Database lokal berjalan bersama aplikasi; tidak perlu Docker Desktop, WSL, atau instalasi server PostgreSQL.
 
