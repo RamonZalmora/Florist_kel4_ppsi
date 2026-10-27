@@ -144,7 +144,7 @@ dashboard.use(authenticate);
 dashboard.get('/', async (req, res) => {
   const [summary, trend, popular] = await Promise.all([
     db.query(
-      `SELECT (SELECT COALESCE(sum(total_sale),0) FROM sales WHERE date_trunc('month',sale_date)=date_trunc('month',(now() AT TIME ZONE 'Asia/Jakarta')::date)) AS revenue,(SELECT count(*)::int FROM orders WHERE status IN ('pending','processing')) AS pending_orders,(SELECT count(DISTINCT phone_number)::int FROM orders) AS customers,(SELECT count(*)::int FROM products WHERE active=true) AS products,(SELECT count(*)::int FROM orders WHERE status='completed') AS completed_orders`,
+      `SELECT (SELECT COALESCE(sum(total_sale),0) FROM sales WHERE date_trunc('month',sale_date)=date_trunc('month',(now() AT TIME ZONE 'Asia/Jakarta')::date)) AS revenue,(SELECT count(*)::int FROM orders) AS total_orders,(SELECT count(*)::int FROM orders WHERE status IN ('pending','processing')) AS pending_orders,(SELECT count(DISTINCT phone_number)::int FROM orders) AS customers,(SELECT count(*)::int FROM products WHERE active=true) AS products,(SELECT count(*)::int FROM orders WHERE status='completed') AS completed_orders`,
     ),
     db.query(
       `SELECT to_char(d.day,'YYYY-MM-DD') AS day,COALESCE(sum(s.total_sale),0) AS total FROM generate_series((now() AT TIME ZONE 'Asia/Jakarta')::date-6,(now() AT TIME ZONE 'Asia/Jakarta')::date,'1 day'::interval) d(day) LEFT JOIN sales s ON s.sale_date=d.day::date GROUP BY d.day ORDER BY d.day`,

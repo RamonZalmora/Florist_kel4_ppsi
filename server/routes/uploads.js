@@ -16,7 +16,7 @@ const upload = multer({
 uploads.post(
   '/',
   authenticate,
-  authorize('admin'),
+  authorize('admin', 'owner'),
   (req, res, next) =>
     upload(req, res, (error) => {
       if (error)

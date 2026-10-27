@@ -34,13 +34,14 @@ catalog.get('/products', async (req, res) => {
   if (minPrice !== null && maxPrice !== null && minPrice > maxPrice)
     fail(422, 'Harga minimum tidak boleh melebihi harga maksimum.');
   const sort = z
-    .enum(['recommended', 'price_asc', 'price_desc', 'popular'])
+    .enum(['recommended', 'price_asc', 'price_desc', 'popular', 'newest'])
     .parse(req.query.sort || 'recommended');
   const order = {
     recommended: 'p.id',
     price_asc: 'p.price ASC,p.id',
     price_desc: 'p.price DESC,p.id',
-    popular: 'favorite_count DESC,p.id',
+    popular: 'favorite_count DESC,p.updated_at DESC,p.id DESC',
+    newest: 'p.updated_at DESC,p.id DESC',
   }[sort];
   res.json(
     (
@@ -136,7 +137,7 @@ for (const [path, table, schema, columns] of [
     const body = schema.parse(req.body),
       id = idSchema.parse(req.params.id);
     const { rows } = await db.query(
-      `UPDATE ${table} SET ${columns.map((k, i) => k + '=$' + (i + 1)).join(',')} WHERE id=$${columns.length + 1} RETURNING *`,
+      `UPDATE ${table} SET ${columns.map((k, i) => k + '=$' + (i + 1)).join(',')}${table === 'products' ? ',updated_at=now()' : ''} WHERE id=$${columns.length + 1} RETURNING *`,
       [...columns.map((k) => body[k]), id],
     );
     if (!rows.length) fail(404, 'Data tidak ditemukan.');

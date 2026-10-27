@@ -508,24 +508,28 @@ test('store settings persist publicly, customer metrics are readable by owner, a
         whatsapp: '6281234567890',
         instagram: 'https://www.instagram.com/bienvendre/',
         tiktok: 'https://www.tiktok.com/@bienvendre',
+        about_story: 'Cerita florist',
+        about_service: 'Konsultasi personal',
+        care_tips: 'Ganti air bunga',
         description: 'Test description',
         logo: '/assets/logo.svg',
       };
-    assert.equal((await request('/store', { method: 'PUT', session, body: settings })).status, 403);
+    assert.equal(
+      (await request('/store', { method: 'PUT', session: admin, body: settings })).status,
+      403,
+    );
+    assert.equal((await request('/store', { method: 'PUT', body: settings })).status, 401);
     assert.equal(
       (
         await request('/store', {
           method: 'PUT',
-          session: admin,
+          session,
           body: { ...settings, instagram: 'https://evil.example/' },
         })
       ).status,
       422,
     );
-    assert.equal(
-      (await request('/store', { method: 'PUT', session: admin, body: settings })).status,
-      200,
-    );
+    assert.equal((await request('/store', { method: 'PUT', session, body: settings })).status, 200);
     assert.deepEqual((await request('/store')).data, settings);
     const customer = await request('/customers', { session });
     assert.equal(customer.status, 200);
@@ -554,7 +558,10 @@ test('store settings persist publicly, customer metrics are readable by owner, a
         body: form,
       });
     }
-    assert.equal((await upload(image, 'image/png', session)).status, 403);
+    const ownerPhoto = await upload(image, 'image/png', session);
+    assert.equal(ownerPhoto.status, 201);
+    const ownerUrl = (await ownerPhoto.json()).url;
+    await unlink(join(uploadsDirectory, basename(ownerUrl)));
     assert.equal(
       (await upload(Buffer.from('<svg><script>alert(1)</script></svg>'), 'image/png')).status,
       422,
@@ -626,4 +633,25 @@ test('favorites are idempotent, persisted per visitor, and visible in catalog an
       .count,
     0,
   );
+});
+
+test('newest order reflects product edits', async () => {
+  const id = created.products[0];
+  const existing = (await request('/manage/products', { session: admin })).data.find(
+    (p) => p.id === id,
+  );
+  const body = {
+    name: existing.name,
+    price: Number(existing.price),
+    flower_type: existing.flower_type,
+    size: existing.size,
+    description: existing.description,
+    photo: existing.photo,
+    active: existing.active,
+  };
+  assert.equal(
+    (await request('/manage/products/' + id, { method: 'PUT', session: admin, body })).status,
+    200,
+  );
+  assert.equal((await request('/products?sort=newest')).data[0].id, id);
 });
