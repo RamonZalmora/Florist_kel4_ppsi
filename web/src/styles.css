@@ -3037,3 +3037,13 @@ tr:hover td {
     display: none;
   }
 }
+.local-mail-note {
+  margin: 20px;
+  font-size: 12px;
+  line-height: 1.8;
+  display: block;
+  overflow-wrap: anywhere;
+}
+.recovery-card .local-mail-note {
+  margin: 0 0 22px;
+}

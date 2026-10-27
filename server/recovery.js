@@ -1,6 +1,9 @@
 import { Router } from 'express';
 import { rateLimit } from 'express-rate-limit';
 import { randomBytes } from 'node:crypto';
+import { mkdir, writeFile } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
+import { join } from 'node:path';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { db, transaction } from './db/pool.js';
@@ -27,13 +30,28 @@ const password = z
   .max(128)
   .refine((v) => Buffer.byteLength(v, 'utf8') <= 72, 'Password maksimal 72 byte.');
 const tokenSchema = z.string().regex(/^[a-f0-9]{64}$/, 'Tautan tidak valid.');
+function localMode(req) {
+  const mode =
+    process.env.MAIL_MODE || (process.env.NODE_ENV === 'production' ? 'resend' : 'local');
+  return (
+    mode === 'local' &&
+    process.env.NODE_ENV !== 'production' &&
+    ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(req.socket.remoteAddress)
+  );
+}
 function ready(req) {
   return Boolean(
     req.app.locals.sendAccountMail ||
-    (process.env.RESEND_API_KEY && process.env.MAIL_FROM && process.env.PUBLIC_URL),
+    localMode(req) ||
+    ((process.env.MAIL_MODE || 'resend') === 'resend' &&
+      process.env.RESEND_API_KEY &&
+      process.env.MAIL_FROM &&
+      process.env.PUBLIC_URL),
   );
 }
-function baseURL() {
+function baseURL(req) {
+  if (localMode(req))
+    return new URL('http://localhost:' + Number(process.env.WEB_PORT || 3000)).origin;
   const url = new URL(process.env.PUBLIC_URL || 'http://localhost:3000');
   if (process.env.NODE_ENV === 'production' && url.protocol !== 'https:')
     fail(503, 'PUBLIC_URL harus menggunakan HTTPS.');
@@ -41,11 +59,21 @@ function baseURL() {
 }
 async function send(req, to, purpose, token) {
   const link =
-    baseURL() + (purpose === 'reset' ? '/reset-password' : '/verify-email') + '#token=' + token;
+    baseURL(req) + (purpose === 'reset' ? '/reset-password' : '/verify-email') + '#token=' + token;
   const subject =
     purpose === 'reset' ? 'Atur ulang password Bien Vendre' : 'Verifikasi email Bien Vendre';
   const text = `${subject}\n\nBuka tautan ini dalam 15 menit:\n${link}\n\nJika Anda tidak meminta perubahan ini, abaikan email ini. Jangan bagikan tautan tersebut.`;
   if (req.app.locals.sendAccountMail) return req.app.locals.sendAccountMail({ to, subject, text });
+  if (localMode(req)) {
+    const directory = fileURLToPath(new URL('../.local/mail/', import.meta.url));
+    await mkdir(directory, { recursive: true, mode: 0o700 });
+    await writeFile(
+      join(directory, Date.now() + '-' + randomBytes(8).toString('hex') + '.txt'),
+      `To: ${to}\nSubject: ${subject}\n\n${text}`,
+      { mode: 0o600, flag: 'wx' },
+    );
+    return;
+  }
   const response = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
@@ -78,7 +106,12 @@ async function issue(req, userId, address, purpose) {
     throw new Error('MAIL_DELIVERY_FAILED');
   }
 }
-recovery.get('/recovery-status', (req, res) => res.json({ available: ready(req) }));
+recovery.get('/recovery-status', (req, res) =>
+  res.json({
+    available: ready(req),
+    mode: localMode(req) ? 'local' : ready(req) ? 'email' : 'disabled',
+  }),
+);
 recovery.get('/profile', authenticate, async (req, res) =>
   res.json(
     (

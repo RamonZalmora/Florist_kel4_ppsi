@@ -38,15 +38,13 @@ test('owner can inspect data, export JSON and open a delivery agenda', async ({ 
   await go(page, 'Pengaturan');
   await expect(page.getByRole('heading', { name: 'Keamanan & pemulihan akun' })).toBeVisible();
 });
-test('forgot-password screen explains unavailable email and invalid reset links fail safely', async ({
+test('forgot-password screen explains local mail and invalid reset links fail safely', async ({
   page,
 }) => {
   await page.goto('/login');
   await page.getByRole('button', { name: 'Lupa password?' }).click();
   await expect(page.getByRole('heading', { name: 'Kembali ke ruang Anda.' })).toBeVisible();
-  await expect(
-    page.getByText('Pemulihan email belum diaktifkan. Hubungi owner toko untuk bantuan.'),
-  ).toBeVisible();
+  await expect(page.getByText(/Mode lokal: instruksi disimpan/)).toBeVisible();
   await page.goto('/reset-password#token=' + 'a'.repeat(64));
   await expect(page.getByRole('heading', { name: 'Mulai dengan password baru.' })).toBeVisible();
   expect(new URL(page.url()).hash).toBe('');

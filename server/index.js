@@ -60,8 +60,10 @@ app.use((error, req, res, next) => {
   res.status(500).json({ error: 'Terjadi kesalahan pada server.' });
 });
 if (process.env.NODE_ENV !== 'test') {
-  const server = app.listen(Number(process.env.PORT || 3000), '0.0.0.0', () =>
-    console.log('Bien Vendre listening on port', process.env.PORT || 3000),
+  const server = app.listen(
+    Number(process.env.PORT || 3000),
+    process.env.HOST || (process.env.NODE_ENV === 'production' ? '0.0.0.0' : '127.0.0.1'),
+    () => console.log('Bien Vendre listening on port', process.env.PORT || 3000),
   );
   const shutdown = () =>
     server.close(async () => {

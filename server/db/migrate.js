@@ -1,4 +1,5 @@
 import { readFile } from 'node:fs/promises';
+import { basename } from 'node:path';
 import { db, transaction, databaseDriver } from './pool.js';
 export async function migrate() {
   await transaction(async (client) => {
@@ -22,7 +23,7 @@ export async function migrate() {
     }
   });
 }
-if (process.argv[1]?.endsWith('/migrate.js')) {
+if (basename(process.argv[1] || '') === 'migrate.js') {
   try {
     await migrate();
     console.log('Database migration complete.');

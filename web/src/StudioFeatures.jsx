@@ -20,11 +20,15 @@ export function RecoveryScreen({
   const [busy, setBusy] = useState(false),
     [error, setError] = useState(''),
     [message, setMessage] = useState(''),
-    [available, setAvailable] = useState(null);
+    [available, setAvailable] = useState(null),
+    [deliveryMode, setDeliveryMode] = useState('');
   useEffect(() => {
     if (mode === 'forgot')
       api('/auth/recovery-status')
-        .then((r) => setAvailable(r.available))
+        .then((r) => {
+          setAvailable(r.available);
+          setDeliveryMode(r.mode);
+        })
         .catch((e) => setError(e.message));
   }, [mode]);
   async function submit(e) {
@@ -78,6 +82,13 @@ export function RecoveryScreen({
               ? 'Konfirmasikan alamat email agar akun Anda dapat dipulihkan dengan aman.'
               : 'Gunakan minimal 12 karakter. Tautan hanya berlaku satu kali selama 15 menit.'}
         </p>
+        {deliveryMode === 'local' && (
+          <p className="soft-note local-mail-note">
+            Mode lokal: instruksi disimpan di folder .local/mail pada laptop, bukan dikirim ke
+            email. Buka file terbaru dengan Notepad. Email pemulihan harus diverifikasi terlebih
+            dahulu lewat Pengaturan.
+          </p>
+        )}
         {message ? (
           <div className="success-message" role="status">
             <ShieldCheck size={24} />
@@ -155,6 +166,12 @@ export function AccountSecurity({ notify }) {
   const [profile, setProfile] = useState(null),
     [busy, setBusy] = useState(false),
     [changed, setChanged] = useState(false);
+  const [mailMode, setMailMode] = useState('');
+  useEffect(() => {
+    api('/auth/recovery-status')
+      .then((r) => setMailMode(r.mode))
+      .catch((e) => notify(e.message, true));
+  }, [notify]);
   useEffect(() => {
     api('/auth/profile')
       .then(setProfile)
@@ -188,6 +205,12 @@ export function AccountSecurity({ notify }) {
         </div>
         <ShieldCheck size={24} />
       </div>
+      {mailMode === 'local' && (
+        <p className="soft-note local-mail-note">
+          Pengujian lokal: tautan verifikasi disimpan sebagai file pribadi di .local/mail. Tidak ada
+          email yang dikirim ke internet.
+        </p>
+      )}
       {changed ? (
         <div className="success-message">
           <p>Password diperbarui dan seluruh sesi telah berakhir.</p>
