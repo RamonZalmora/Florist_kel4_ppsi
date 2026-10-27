@@ -2361,3 +2361,679 @@ tr:hover td {
     transition: none !important;
   }
 }
+
+/* Bien Vendre — Atelier collection */
+:root {
+  --green: #254d3c;
+  --dark: #17372b;
+  --cream: #faf7f1;
+  --line: #e7e6dc;
+  color: #263e33;
+}
+.catalog-page {
+  background: #faf7f1;
+}
+.public-nav {
+  padding-top: 27px;
+  padding-bottom: 27px;
+}
+.public-nav .brand {
+  font-size: 25px;
+  letter-spacing: -1px;
+}
+.public-nav .brand small {
+  font-size: 8px;
+  letter-spacing: 2.5px;
+}
+.nav-links {
+  font-size: 13px;
+  gap: 36px;
+}
+.catalog-hero {
+  min-height: 580px;
+  padding: 65px 55px;
+  border-radius: 24px;
+  background:
+    linear-gradient(90deg, #132f25e6 0%, #132f2580 45%, #132f2500 72%),
+    url('/assets/atelier-hero.png') center/cover;
+  box-shadow: 0 22px 55px #17372b16;
+}
+.hero-copy {
+  max-width: 620px;
+}
+.catalog-hero .hero-copy h1 {
+  font-size: 64px;
+  line-height: 1.1;
+  color: #fff9e9;
+  letter-spacing: -2.8px;
+  margin-top: 28px;
+}
+.catalog-hero .hero-copy h1 em {
+  color: #e2b8a0;
+}
+.catalog-hero .hero-copy p {
+  font-size: 14px;
+  color: #e1e8d9;
+  max-width: 370px;
+  line-height: 1.9;
+}
+.catalog-hero .pill {
+  background: #ffffff0d;
+  border-color: #e6eee239;
+  color: #e5edda;
+  padding: 10px 15px;
+  letter-spacing: 0.2px;
+}
+.catalog-hero .hero-copy .btn {
+  background: #f1dfc2;
+  color: #284636;
+  padding: 15px 24px;
+  border-radius: 8px;
+}
+.catalog-hero .hero-copy .btn:hover {
+  background: #fff3dd;
+}
+.catalog-hero .hero-foot {
+  color: #d1dccb;
+  font-size: 11px;
+  margin-top: 29px;
+}
+.hero-stamp {
+  background: #f4ecdce6;
+  border-color: #e3dac1;
+  width: 112px;
+  height: 112px;
+  right: 30px;
+  bottom: 30px;
+  color: #405e43;
+}
+.moments {
+  padding-top: 65px;
+}
+.moments h2,
+.section-heading h2 {
+  font-size: 35px;
+  letter-spacing: -1px;
+}
+.eyebrow {
+  color: #747f5e;
+}
+.moment {
+  padding: 26px 22px;
+  border-radius: 15px;
+  background: #fffdfa;
+  box-shadow: 0 4px 16px #263e3304;
+}
+.moment strong {
+  font-size: 16px;
+}
+.moment small {
+  font-size: 11px;
+  color: #6e7968;
+}
+.moment > span {
+  width: 46px;
+  height: 46px;
+}
+.collection {
+  padding-top: 30px;
+}
+.section-heading p {
+  font-size: 13px;
+  color: #74806d;
+}
+.product-grid {
+  gap: 34px 26px;
+}
+.product-picture {
+  height: 340px;
+  border-radius: 16px;
+}
+.product-card h3 {
+  font-family: Georgia, serif;
+  font-size: 22px;
+  letter-spacing: -0.4px;
+}
+.product-card p {
+  font-size: 12px;
+  color: #73816b;
+}
+.product-price {
+  font-size: 15px;
+  margin-top: 12px;
+}
+.product-tag {
+  font-size: 10px;
+  padding: 8px 11px;
+  background: #fffdf2e8;
+}
+.about-banner {
+  padding: 40px 30px;
+  background: #eaf0e4;
+  border-color: #d9e3cf;
+  border-radius: 18px;
+}
+.about-banner p {
+  font-size: 13px;
+  color: #64785c;
+}
+.catalog-page footer {
+  font-size: 11px;
+}
+.product-detail h2 {
+  font-size: 34px;
+}
+.product-detail p {
+  font-size: 13px;
+  color: #66775d;
+}
+.sidebar {
+  background: #1c3d2f;
+}
+.sidebar .brand {
+  font-family: Georgia, serif;
+  font-size: 23px;
+}
+.sidebar nav button {
+  font-size: 13px;
+  min-height: 45px;
+}
+.sidebar-label {
+  font-size: 9px;
+}
+.topbar {
+  background: #fffdf7;
+}
+.workspace {
+  background: #f5f5ed;
+}
+.page-heading h1 {
+  font-family: Georgia, serif;
+  font-size: 33px;
+  font-weight: 400;
+}
+.page-heading p {
+  font-size: 12px;
+  color: #6e7d67;
+}
+.dashboard-banner {
+  height: 215px;
+  border: none;
+  background:
+    linear-gradient(90deg, #173b2ff2, #173b2f80 45%, transparent 75%),
+    url('/assets/atelier-hero.png') 50% 50% / cover;
+  border-radius: 16px;
+}
+.dashboard-banner h2 {
+  font-size: 32px;
+  color: #fff8e6;
+}
+.dashboard-banner h2 em {
+  color: #dfb99e;
+}
+.dashboard-banner .eyebrow,
+.dashboard-banner p {
+  color: #d1dfc8;
+}
+.dashboard-banner p {
+  font-size: 11px;
+}
+.stat-card {
+  padding: 23px 17px;
+  border-radius: 13px;
+  box-shadow: none;
+}
+.stat-card span {
+  font-size: 11px;
+  color: #6e7e63;
+}
+.stat-card strong {
+  font-size: 25px;
+}
+.stat-card small {
+  font-size: 10px;
+  color: #7d8873;
+}
+.panel {
+  border-radius: 13px;
+  box-shadow: none;
+}
+.panel-heading h2 {
+  font-size: 15px;
+}
+.panel-heading p {
+  font-size: 11px;
+  color: #7a8770;
+}
+.recent-orders td {
+  font-size: 11px;
+}
+.recent-orders th {
+  font-size: 10px;
+}
+.popular-row strong {
+  font-size: 12px;
+}
+.popular-row small {
+  font-size: 10px;
+}
+.popular-row img {
+  width: 48px;
+  height: 51px;
+}
+.login-art {
+  background:
+    linear-gradient(0deg, #153427f0, transparent 80%),
+    url('/assets/atelier-hero.png') 64% center/cover;
+}
+.login-art::after {
+  display: none;
+}
+.login-art h1,
+.login-art .brand {
+  color: #fff5df;
+}
+.login-art p,
+.login-art .eyebrow {
+  color: #e1e9d6;
+}
+.login-form h2 {
+  font-size: 34px;
+}
+.recovery-link {
+  margin-top: 18px;
+}
+.recovery-page {
+  min-height: 100dvh;
+  padding: 35px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    linear-gradient(90deg, #14382ae6, #14382a7a),
+    url('/assets/atelier-hero.png') center/cover;
+}
+.recovery-card {
+  max-width: 500px;
+  width: 100%;
+  padding: 36px;
+  background: #fffdf6;
+  border: 1px solid #e4ddce;
+  border-radius: 23px;
+  box-shadow: 0 25px 80px #0003;
+}
+.recovery-card .flower-mark {
+  margin-top: 30px;
+}
+.recovery-card h1 {
+  font-family: Georgia, serif;
+  font-weight: 400;
+  font-size: 35px;
+  margin: 14px 0;
+}
+.recovery-card > p {
+  color: #6e7b65;
+  font-size: 13px;
+  margin-bottom: 25px;
+}
+.recovery-card > .hint {
+  display: block;
+  margin-top: 25px;
+}
+.success-message {
+  padding: 24px;
+  background: #edf3e7;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 18px;
+}
+.success-message p {
+  font-size: 13px;
+}
+.security-panel {
+  margin-bottom: 24px;
+}
+.security-forms {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 35px;
+  padding: 28px;
+}
+.security-forms h3 {
+  font-size: 18px;
+}
+.security-forms .hint {
+  min-height: 38px;
+  margin: 0;
+}
+.agenda-banner {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  background: #e6eddf;
+  border: 1px solid #dce5d3;
+  border-radius: 14px;
+  padding: 28px;
+  margin-bottom: 23px;
+}
+.agenda-banner > svg {
+  color: #779363;
+  flex-shrink: 0;
+}
+.agenda-banner h2 {
+  font-family: Georgia, serif;
+  font-weight: 400;
+  font-size: 29px;
+  margin: 8px 0;
+}
+.agenda-banner p {
+  color: #728164;
+  font-size: 12px;
+}
+.agenda-controls {
+  display: flex;
+  align-items: center;
+  gap: 25px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+.agenda-controls span {
+  font-size: 11px;
+  color: #7e8b72;
+}
+.agenda-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+.agenda-card {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 23px;
+}
+.agenda-card h3 {
+  font-size: 20px;
+  margin: 8px 0;
+}
+.agenda-card p {
+  font-size: 12px;
+}
+.agenda-card > strong {
+  margin-left: auto;
+  white-space: nowrap;
+}
+.agenda-day {
+  background: #e8eedf;
+  border-radius: 12px;
+  min-width: 64px;
+  text-align: center;
+  padding: 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.agenda-day strong {
+  font-size: 27px;
+  font-weight: 500;
+}
+.agenda-day span {
+  font-size: 11px;
+}
+.data-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+.data-tabs button {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  border: 1px solid #dce4d4;
+  padding: 10px 14px;
+  border-radius: 9px;
+  background: #fffdf9;
+  font-size: 12px;
+}
+.data-tabs button.active {
+  background: #254d3c;
+  color: #fffdf1;
+}
+.data-tabs strong {
+  font-size: 10px;
+  padding: 4px 6px;
+  background: #90a38325;
+  border-radius: 5px;
+}
+.data-value {
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.data-pagination {
+  margin-top: 20px;
+}
+.export-panel {
+  padding: 25px;
+  margin-top: 25px;
+  display: grid;
+  grid-template-columns: 1fr 220px auto;
+  gap: 20px;
+  align-items: end;
+}
+.export-panel h2 {
+  font-family: Georgia, serif;
+  font-size: 25px;
+  font-weight: 400;
+  margin-bottom: 10px;
+}
+.export-panel p {
+  font-size: 12px;
+  color: #758269;
+}
+@media (max-width: 1100px) {
+  .catalog-hero .hero-copy h1 {
+    font-size: 54px;
+  }
+  .product-picture {
+    height: 285px;
+  }
+  .stat-card strong {
+    font-size: 20px;
+  }
+  .stat-card small {
+    font-size: 9px;
+  }
+  .export-panel {
+    grid-template-columns: 1fr 1fr;
+  }
+  .export-panel > div {
+    grid-column: 1/-1;
+  }
+}
+@media (max-width: 760px) {
+  .catalog-hero {
+    min-height: 560px;
+    padding: 35px 26px;
+    background:
+      linear-gradient(90deg, #102e25f0, #16382e90),
+      url('/assets/atelier-hero.png') 70% center/cover;
+  }
+  .catalog-hero .hero-copy h1 {
+    font-size: 44px;
+    letter-spacing: -1.7px;
+  }
+  .catalog-hero .hero-copy p {
+    max-width: 285px;
+    font-size: 13px;
+  }
+  .hero-stamp {
+    height: 82px;
+    width: 82px;
+    right: 19px;
+    bottom: 20px;
+  }
+  .catalog-hero .hero-foot {
+    max-width: 260px;
+    font-size: 10px;
+  }
+  .moments h2,
+  .section-heading h2 {
+    font-size: 29px;
+  }
+  .moment {
+    padding: 20px 15px;
+  }
+  .moment strong {
+    font-size: 14px;
+  }
+  .moment small {
+    font-size: 10px;
+  }
+  .product-picture {
+    height: 240px;
+  }
+  .product-card h3 {
+    font-size: 19px;
+  }
+  .product-card p {
+    font-size: 10px;
+  }
+  .stat-card strong {
+    font-size: 20px;
+  }
+  .stat-card span {
+    font-size: 10px;
+  }
+  .stat-card small {
+    font-size: 8px;
+  }
+  .dashboard-banner {
+    height: 205px;
+  }
+  .dashboard-banner h2 {
+    font-size: 28px;
+  }
+  .security-forms {
+    grid-template-columns: 1fr;
+    padding: 20px;
+    gap: 30px;
+  }
+  .agenda-banner {
+    padding: 22px;
+    gap: 15px;
+  }
+  .agenda-banner h2 {
+    font-size: 25px;
+  }
+  .agenda-controls {
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+  .agenda-card {
+    gap: 12px;
+    padding: 18px;
+    flex-wrap: wrap;
+  }
+  .agenda-card > strong {
+    margin-left: 76px;
+  }
+  .agenda-card > div:nth-child(2) {
+    flex: 1;
+    min-width: 160px;
+  }
+  .export-panel {
+    grid-template-columns: 1fr;
+  }
+  .export-panel > div {
+    grid-column: auto;
+  }
+  .recovery-card {
+    padding: 28px 22px;
+  }
+  .recovery-card h1 {
+    font-size: 30px;
+  }
+}
+@media (max-width: 480px) {
+  .catalog-hero::before,
+  .dashboard-banner::before {
+    display: none;
+  }
+  .catalog-hero .hero-copy h1 {
+    font-size: 40px;
+  }
+  .product-picture {
+    height: 205px;
+  }
+  .product-grid {
+    gap: 28px 13px;
+  }
+  .product-card h3 {
+    font-size: 18px;
+  }
+  .product-price {
+    font-size: 13px;
+  }
+  .stat-card {
+    padding: 18px 11px;
+  }
+  .stat-card strong {
+    font-size: 18px;
+  }
+  .dashboard-banner p {
+    max-width: 210px;
+  }
+  .dashboard-banner h2 {
+    font-size: 25px;
+  }
+  .hero-copy .pill {
+    font-size: 9px;
+  }
+  .hero-stamp {
+    bottom: 18px;
+  }
+  .agenda-banner > svg {
+    display: none;
+  }
+}
+.catalog-tools {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  margin: 0 0 27px;
+}
+.catalog-tools label {
+  min-width: 175px;
+  color: #6a7b60;
+  font-size: 11px;
+}
+.catalog-tools select {
+  font-size: 12px;
+  background: #fffdf8;
+}
+.catalog-tools > span {
+  font-size: 11px;
+  color: #7c886e;
+  margin-left: auto;
+  padding-bottom: 12px;
+  max-width: 230px;
+  line-height: 1.6;
+}
+@media (max-width: 760px) {
+  .catalog-tools {
+    gap: 10px;
+  }
+  .catalog-tools label {
+    min-width: 0;
+    flex: 1;
+  }
+  .catalog-tools > span {
+    display: none;
+  }
+}

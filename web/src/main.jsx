@@ -1,3 +1,4 @@
+import { RecoveryScreen, AccountSecurity, DeliveryAgenda, DataStudio } from './StudioFeatures';
 import React, { useState, useEffect, useCallback } from 'react';
 import { createRoot } from 'react-dom/client';
 import {
@@ -48,7 +49,15 @@ const asset = '/assets/bouquet-rose.svg';
 function Photo({ src, alt, ...props }) {
   return (
     <img
-      src={src || asset}
+      src={
+        {
+          '/assets/bouquet-rose.svg': '/assets/product-rose.png',
+          '/assets/bouquet-sun.svg': '/assets/product-sun.png',
+          '/assets/bouquet-ivory.svg': '/assets/product-ivory.png',
+        }[src] ||
+        src ||
+        asset
+      }
       alt={alt}
       loading="lazy"
       onError={(e) => {
@@ -128,6 +137,17 @@ function Badge({ status }) {
   );
 }
 function App() {
+  const [recovery] = useState(() => {
+    const mode =
+      location.pathname === '/reset-password'
+        ? 'reset'
+        : location.pathname === '/verify-email'
+          ? 'verify'
+          : null;
+    const token = new URLSearchParams(location.hash.slice(1)).get('token') || '';
+    if (mode) history.replaceState(null, '', location.pathname);
+    return { mode, token };
+  });
   const [user, setUser] = useState(null),
     [checking, setChecking] = useState(true),
     [view, setView] = useState(location.pathname === '/login' ? 'login' : 'catalog'),
@@ -160,6 +180,7 @@ function App() {
       notify(e.message, true);
     }
   }
+  if (recovery.mode) return <RecoveryScreen mode={recovery.mode} token={recovery.token} />;
   if (checking)
     return (
       <div className="boot">
@@ -210,6 +231,7 @@ function App() {
   );
 }
 function Login({ onBack, onLogin }) {
+  const [forgot, setForgot] = useState(false);
   const [busy, setBusy] = useState(false),
     [error, setError] = useState('');
   async function submit(e) {
@@ -227,6 +249,7 @@ function Login({ onBack, onLogin }) {
       setBusy(false);
     }
   }
+  if (forgot) return <RecoveryScreen onBack={() => setForgot(false)} />;
   return (
     <div className="login-page">
       <div className="login-art">
@@ -291,6 +314,9 @@ function Login({ onBack, onLogin }) {
               <ArrowRight size={18} />
             </button>
           </form>
+          <button className="text-btn recovery-link" onClick={() => setForgot(true)}>
+            Lupa password?
+          </button>
           <div className="security-note">
             <ShieldCheck size={16} /> Akses aman, sesuai peran Anda.
           </div>
@@ -301,6 +327,8 @@ function Login({ onBack, onLogin }) {
   );
 }
 function Catalog({ user, onLogin, onDashboard, notify }) {
+  const [budget, setBudget] = useState(''),
+    [sort, setSort] = useState('recommended');
   const [products, setProducts] = useState([]),
     [categories, setCategories] = useState([]),
     [store, setStore] = useState({}),
@@ -321,7 +349,15 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
     let active = true;
     setLoading(true);
     const timer = setTimeout(() => {
-      api('/products?' + new URLSearchParams({ search, ...(category ? { category } : {}) }))
+      api(
+        '/products?' +
+          new URLSearchParams({
+            search,
+            sort,
+            ...(budget ? { max_price: budget } : {}),
+            ...(category ? { category } : {}),
+          }),
+      )
         .then((p) => {
           if (active) {
             setProducts(p);
@@ -339,7 +375,7 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
       active = false;
       clearTimeout(timer);
     };
-  }, [category, search]);
+  }, [category, search, budget, sort]);
   async function showProduct(id) {
     try {
       setDetail(await api('/products/' + id));
@@ -463,6 +499,26 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
               </button>
             ))}
           </div>
+          <div className="catalog-tools">
+            <label>
+              Anggaran
+              <select value={budget} onChange={(e) => setBudget(e.target.value)}>
+                <option value="">Semua harga</option>
+                <option value="200000">Hingga Rp200.000</option>
+                <option value="350000">Hingga Rp350.000</option>
+                <option value="500000">Hingga Rp500.000</option>
+              </select>
+            </label>
+            <label>
+              Urutkan
+              <select value={sort} onChange={(e) => setSort(e.target.value)}>
+                <option value="recommended">Pilihan koleksi</option>
+                <option value="price_asc">Harga terendah</option>
+                <option value="price_desc">Harga tertinggi</option>
+              </select>
+            </label>
+            <span>Temukan rangkaian yang sesuai momen dan anggaran Anda.</span>
+          </div>
           {loading ? (
             <div className="empty">
               <LoaderCircle className="spin" /> Memuat koleksi…
@@ -582,11 +638,14 @@ const navAdmin = [
   ['recommendations', 'Rekomendasi', Sparkles],
   ['orders', 'Pesanan', ShoppingBag],
   ['customers', 'Pelanggan', Users],
+  ['agenda', 'Agenda pengiriman', CalendarDays],
 ];
 const navOwner = [
   ['dashboard', 'Dashboard', LayoutDashboard],
   ['orders', 'Daftar pesanan', ShoppingBag],
   ['reports', 'Riwayat & laporan', ChartNoAxesCombined],
+  ['agenda', 'Agenda pengiriman', CalendarDays],
+  ['data', 'Data bisnis', Package],
 ];
 function Workspace({ user, view, setView, logout, notify }) {
   const [mobile, setMobile] = useState(false),
@@ -725,6 +784,8 @@ function Workspace({ user, view, setView, logout, notify }) {
                       customers: 'Kenali pelanggan dari pesanan yang telah dicatat.',
                       reports: 'Pantau penjualan dan unduh laporan berdasarkan periode.',
                       settings: 'Informasi toko dan akses akun Anda.',
+                      agenda: 'Jadwal rangkaian dan pengiriman, dalam satu pandangan.',
+                      data: 'Jelajahi dan unduh data bisnis Anda secara aman.',
                     }[view]}
               </p>
             </div>
@@ -760,6 +821,8 @@ function Workspace({ user, view, setView, logout, notify }) {
                 {view === 'orders' && <Orders {...shared} />}{' '}
                 {view === 'customers' && <Customers {...shared} />}{' '}
                 {view === 'reports' && <Reports notify={notify} />}{' '}
+                {view === 'agenda' && <DeliveryAgenda data={data} go={go} />}
+                {view === 'data' && <DataStudio notify={notify} />}
                 {view === 'settings' && <StoreSettings user={user} notify={notify} />}
               </>
             )
@@ -767,7 +830,7 @@ function Workspace({ user, view, setView, logout, notify }) {
           <div className="workspace-footer">
             <span>Bien Vendre · Dirangkai dengan hati</span>
             <span>
-              <span className="online-dot" /> Terhubung ke PostgreSQL
+              <span className="online-dot" /> Data toko tersimpan
             </span>
           </div>
         </main>
@@ -2056,50 +2119,53 @@ function StoreSettings({ user, notify }) {
       .catch((e) => notify(e.message, true));
   }, [notify]);
   return (
-    <div className="settings-grid">
-      <section className="panel settings-card">
-        <div className="flower-mark">
-          <Flower2 size={26} />
-        </div>
-        <h2>Bien Vendre</h2>
-        <p>Florist & Gifts</p>
-        {store && (
+    <>
+      <AccountSecurity notify={notify} />
+      <div className="settings-grid">
+        <section className="panel settings-card">
+          <div className="flower-mark">
+            <Flower2 size={26} />
+          </div>
+          <h2>Bien Vendre</h2>
+          <p>Florist & Gifts</p>
+          {store && (
+            <dl>
+              <dt>Lokasi</dt>
+              <dd>{store.address}</dd>
+              <dt>WhatsApp</dt>
+              <dd>{store.whatsapp || 'Belum dikonfigurasi'}</dd>
+              <dt>Instagram</dt>
+              <dd>{store.instagram || 'Belum dikonfigurasi'}</dd>
+            </dl>
+          )}
+          <p className="hint">
+            Kanal digital diatur melalui variabel STORE_WHATSAPP dan STORE_INSTAGRAM pada
+            konfigurasi server. Jangan gunakan nomor contoh sebagai kontak toko.
+          </p>
+        </section>
+        <section className="panel settings-card">
+          <ShieldCheck size={30} />
+          <h2>Akses akun</h2>
           <dl>
-            <dt>Lokasi</dt>
-            <dd>{store.address}</dd>
-            <dt>WhatsApp</dt>
-            <dd>{store.whatsapp || 'Belum dikonfigurasi'}</dd>
-            <dt>Instagram</dt>
-            <dd>{store.instagram || 'Belum dikonfigurasi'}</dd>
+            <dt>Nama</dt>
+            <dd>{user.name}</dd>
+            <dt>Username</dt>
+            <dd>{user.username}</dd>
+            <dt>Peran</dt>
+            <dd>{user.role === 'admin' ? 'Admin' : 'Owner'}</dd>
           </dl>
-        )}
-        <p className="hint">
-          Kanal digital diatur melalui variabel STORE_WHATSAPP dan STORE_INSTAGRAM pada konfigurasi
-          server. Jangan gunakan nomor contoh sebagai kontak toko.
-        </p>
-      </section>
-      <section className="panel settings-card">
-        <ShieldCheck size={30} />
-        <h2>Akses akun</h2>
-        <dl>
-          <dt>Nama</dt>
-          <dd>{user.name}</dd>
-          <dt>Username</dt>
-          <dd>{user.username}</dd>
-          <dt>Peran</dt>
-          <dd>{user.role === 'admin' ? 'Admin' : 'Owner'}</dd>
-        </dl>
-        <p className="soft-note">
-          {user.role === 'admin'
-            ? 'Anda dapat mengelola produk, kategori, rekomendasi, dan pesanan.'
-            : 'Anda dapat melihat pesanan, riwayat penjualan, dan mengunduh laporan PDF.'}
-        </p>
-        <p className="hint">
-          Katalog pelanggan dapat diakses tanpa login. Pengelolaan akun tambahan berada di luar
-          lingkup PPT.
-        </p>
-      </section>
-    </div>
+          <p className="soft-note">
+            {user.role === 'admin'
+              ? 'Anda dapat mengelola produk, kategori, rekomendasi, dan pesanan.'
+              : 'Anda dapat melihat pesanan, riwayat penjualan, dan mengunduh laporan PDF.'}
+          </p>
+          <p className="hint">
+            Katalog pelanggan dapat diakses tanpa login. Atur email pemulihan dan password melalui
+            panel keamanan di atas.
+          </p>
+        </section>
+      </div>
+    </>
   );
 }
 createRoot(document.getElementById('root')).render(<App />);
