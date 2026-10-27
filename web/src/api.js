@@ -7,7 +7,7 @@ export async function api(path, options = {}) {
     credentials: 'same-origin',
     ...options,
     headers: {
-      'Content-Type': 'application/json',
+      ...(options.body instanceof FormData ? {} : { 'Content-Type': 'application/json' }),
       ...(options.method && options.method !== 'GET' ? { 'X-CSRF-Token': csrf } : {}),
       ...options.headers,
     },

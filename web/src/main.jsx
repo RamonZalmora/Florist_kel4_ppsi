@@ -1,3 +1,4 @@
+import { PhotoField, StoreEditor, OrderTracker, SalesTrend } from './RetailFeatures';
 import { RecoveryScreen, AccountSecurity, DeliveryAgenda, DataStudio } from './StudioFeatures';
 import React, { useState, useEffect, useCallback } from 'react';
 import { createRoot } from 'react-dom/client';
@@ -328,6 +329,7 @@ function Login({ onBack, onLogin }) {
 }
 function Catalog({ user, onLogin, onDashboard, notify }) {
   const [budget, setBudget] = useState(''),
+    [minPrice, setMinPrice] = useState(''),
     [sort, setSort] = useState('recommended');
   const [products, setProducts] = useState([]),
     [categories, setCategories] = useState([]),
@@ -355,6 +357,7 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
             search,
             sort,
             ...(budget ? { max_price: budget } : {}),
+            ...(minPrice ? { min_price: minPrice } : {}),
             ...(category ? { category } : {}),
           }),
       )
@@ -375,7 +378,7 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
       active = false;
       clearTimeout(timer);
     };
-  }, [category, search, budget, sort]);
+  }, [category, search, budget, sort, minPrice]);
   async function showProduct(id) {
     try {
       setDetail(await api('/products/' + id));
@@ -395,15 +398,21 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
     <div className="catalog-page">
       <nav className="public-nav">
         <a className="brand" href="/catalog">
-          <Flower2 size={30} />
+          {store.logo ? (
+            <img className="store-logo" src={store.logo} alt="Logo toko" />
+          ) : (
+            <Flower2 size={30} />
+          )}
           <div>
-            Bien Vendre<small>FLORIST & GIFTS</small>
+            {store.name || 'Bien Vendre'}
+            <small>FLORIST & GIFTS</small>
           </div>
         </a>
         <div className="nav-links">
           <a href="#collection">Koleksi bunga</a>
           <a href="#moments">Momen spesial</a>
           <a href="#about">Tentang kami</a>
+          <a href="#tracking">Lacak pesanan</a>
         </div>
         <button className="btn outline" onClick={user ? onDashboard : onLogin}>
           {user ? <LayoutDashboard size={16} /> : <LockKeyhole size={16} />}{' '}
@@ -501,6 +510,17 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
           </div>
           <div className="catalog-tools">
             <label>
+              Harga minimum
+              <input
+                type="number"
+                min="0"
+                max="1000000000"
+                value={minPrice}
+                onChange={(e) => setMinPrice(e.target.value)}
+                placeholder="Rp 0"
+              />
+            </label>
+            <label>
               Anggaran
               <select value={budget} onChange={(e) => setBudget(e.target.value)}>
                 <option value="">Semua harga</option>
@@ -553,14 +573,15 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
             </div>
           )}
         </section>
+        <OrderTracker />
         <section className="about-banner" id="about">
           <Flower2 size={50} />
           <div>
             <span className="eyebrow">DARI HATI, UNTUK HATI</span>
             <h2>Hadiah yang terasa personal.</h2>
             <p>
-              Dari bouquet hingga frame mahar, Bien Vendre membantu Anda merayakan momen dengan
-              sentuhan floral yang istimewa.
+              {store.description ||
+                'Dari bouquet hingga frame mahar, Bien Vendre membantu Anda merayakan momen dengan sentuhan floral yang istimewa.'}
             </p>
           </div>
           <span className="about-location">
@@ -646,6 +667,7 @@ const navOwner = [
   ['reports', 'Riwayat & laporan', ChartNoAxesCombined],
   ['agenda', 'Agenda pengiriman', CalendarDays],
   ['data', 'Data bisnis', Package],
+  ['customers', 'Pelanggan', Users],
 ];
 function Workspace({ user, view, setView, logout, notify }) {
   const [mobile, setMobile] = useState(false),
@@ -1030,6 +1052,7 @@ function useMutation(notify, refresh) {
   return { busy, error, mutate, setError };
 }
 function Products({ data, query, notify, refresh }) {
+  const [uploading, setUploading] = useState(false);
   const [edit, setEdit] = useState(null),
     [remove, setRemove] = useState(null),
     { busy, error, mutate, setError } = useMutation(notify, refresh);
@@ -1164,24 +1187,12 @@ function Products({ data, query, notify, refresh }) {
                 rows={4}
               />
             </label>
-            <label>
-              URL foto
-              <input
-                name="photo"
-                defaultValue={edit.photo}
-                required
-                placeholder="https://… atau /assets/…"
-              />
-            </label>
-            <p className="hint">
-              Gunakan URL foto HTTPS milik toko atau ilustrasi lokal. Upload foto belum termasuk
-              pada versi ini.
-            </p>
+            <PhotoField initialValue={edit.photo} onBusyChange={setUploading} />
             <label className="checkbox">
               <input type="checkbox" name="active" defaultChecked={edit.active} /> Aktif di katalog
             </label>
             {error && <p className="form-error">{error}</p>}
-            <FormActions busy={busy} onClose={() => setEdit(null)} />
+            <FormActions busy={busy || uploading} onClose={() => setEdit(null)} />
           </form>
         </Modal>
       )}
@@ -1681,6 +1692,11 @@ function Orders({ data, user, query, notify, refresh }) {
               </tbody>
             </table>
           </div>
+          <label className="tracking-code-label">
+            Kode pelacakan pribadi
+            <input readOnly value={detail.tracking_code || ''} onFocus={(e) => e.target.select()} />
+            <small className="hint">Bagikan hanya kepada pelanggan pemilik pesanan.</small>
+          </label>
           <div className="order-total">
             <span>Total pesanan</span>
             <strong>{money(detail.total)}</strong>
@@ -1920,25 +1936,35 @@ function OrderEditor({ order, products, onClose, notify, refresh }) {
     </Modal>
   );
 }
-function Customers({ data, query }) {
-  const map = new Map();
-  for (const o of data.orders) {
-    const c = map.get(o.phone_number) || {
-      name: o.customer_name,
-      phone: o.phone_number,
-      orders: 0,
-      total: 0,
-      last: o.order_date,
-    };
-    c.orders++;
-    if (o.status === 'completed') c.total += Number(o.total);
-    map.set(o.phone_number, c);
-  }
-  const customers = [...map.values()].filter((c) =>
+function Customers({ query, notify }) {
+  const [payload, setPayload] = useState(null);
+  useEffect(() => {
+    api('/customers')
+      .then(setPayload)
+      .catch((e) => notify(e.message, true));
+  }, [notify]);
+  if (!payload) return <Empty text="Memuat pelanggan…" />;
+  const customers = payload.rows.filter((c) =>
     (c.name + ' ' + c.phone).toLowerCase().includes(query.toLowerCase()),
   );
+  const cards = [
+    ['Total pelanggan', payload.summary.customers],
+    ['Pelanggan berulang', payload.summary.repeat_customers],
+    ['Pembelian selesai', money(payload.summary.revenue)],
+    ['Pesanan aktif', payload.summary.active_orders],
+  ];
   return (
     <>
+      <div className="stat-grid">
+        {cards.map(([label, value]) => (
+          <article className="stat-card" key={label}>
+            <div>
+              <span>{label}</span>
+              <strong>{value}</strong>
+            </div>
+          </article>
+        ))}
+      </div>
       <div className="toolbar">
         <span>{customers.length} pelanggan · dirangkum dari pesanan</span>
       </div>
@@ -1951,6 +1977,7 @@ function Customers({ data, query }) {
               <th>Pesanan</th>
               <th>Total pembelian selesai</th>
               <th>Pesanan terakhir</th>
+              <th>Aksi</th>
             </tr>
           </thead>
           <tbody>
@@ -1966,6 +1993,16 @@ function Customers({ data, query }) {
                 <td>{c.orders}</td>
                 <td>{money(c.total)}</td>
                 <td>{date(c.last)}</td>
+                <td>
+                  <a
+                    className="btn outline"
+                    href={'https://wa.me/' + c.phone.replace(/\D/g, '').replace(/^0/, '62')}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Chat
+                  </a>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -1973,8 +2010,8 @@ function Customers({ data, query }) {
         {!customers.length && <Empty text="Pelanggan akan tampil setelah pesanan dicatat." />}
       </section>
       <p className="hint">
-        Ringkasan berasal dari maksimal 500 pesanan terbaru; identitas dikelompokkan menurut nomor
-        telepon.
+        Tabel menampilkan maksimal 500 pelanggan terbaru; kartu metrik mencakup seluruh pesanan.
+        Identitas dikelompokkan menurut nomor telepon.
       </p>
     </>
   );
@@ -2067,6 +2104,7 @@ function Reports({ notify }) {
               <small>Pesanan yang tercatat sebagai penjualan</small>
             </div>
           </div>
+          <SalesTrend trend={result.trend} />
           <section className="panel">
             <div className="panel-heading">
               <div>
@@ -2121,12 +2159,15 @@ function StoreSettings({ user, notify }) {
   return (
     <>
       <AccountSecurity notify={notify} />
+      {store && user.role === 'admin' && (
+        <StoreEditor key={JSON.stringify(store)} store={store} onSaved={setStore} notify={notify} />
+      )}
       <div className="settings-grid">
         <section className="panel settings-card">
           <div className="flower-mark">
             <Flower2 size={26} />
           </div>
-          <h2>Bien Vendre</h2>
+          <h2>{store?.name || 'Bien Vendre'}</h2>
           <p>Florist & Gifts</p>
           {store && (
             <dl>
