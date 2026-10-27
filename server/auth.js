@@ -8,7 +8,7 @@ export const hashToken = (token) => createHash('sha256').update(token).digest('h
 const cookieOptions = {
   httpOnly: true,
   sameSite: 'strict',
-  secure: process.env.COOKIE_SECURE === 'true',
+  secure: process.env.COOKIE_SECURE === 'true' || process.env.NODE_ENV === 'production',
   path: '/',
 };
 export async function authenticate(req, res, next) {

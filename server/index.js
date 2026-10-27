@@ -4,12 +4,15 @@ import helmet from 'helmet';
 import { fileURLToPath } from 'node:url';
 import { ZodError } from 'zod';
 import { auth } from './auth.js';
+import { recovery } from './recovery.js';
+import { dataStudio } from './routes/data.js';
 import { db, databaseDriver } from './db/pool.js';
 import { catalog, management } from './routes/catalog.js';
 import { orders } from './routes/orders.js';
 import { reports, dashboard } from './routes/reports.js';
 export const app = express();
 app.disable('x-powered-by');
+if (process.env.TRUST_PROXY === '1') app.set('trust proxy', 1);
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -26,11 +29,13 @@ app.get('/api/health', async (req, res) => {
   res.json({ status: 'ok', database: 'PostgreSQL', driver: databaseDriver });
 });
 app.use('/api/auth', auth);
+app.use('/api/auth', recovery);
 app.use('/api', catalog);
 app.use('/api/manage', management);
 app.use('/api/orders', orders);
 app.use('/api/reports', reports);
 app.use('/api/dashboard', dashboard);
+app.use('/api/data', dataStudio);
 app.use('/api', (req, res) => res.status(404).json({ error: 'Endpoint tidak ditemukan.' }));
 app.use(express.static(fileURLToPath(new URL('../dist/', import.meta.url))));
 app.get('/{*path}', (req, res) =>

@@ -69,6 +69,7 @@ try {
         );
       }
     }
+    if (process.env.SEED_DEMO === 'false') return;
     if ((await client.query('SELECT id FROM products LIMIT 1')).rowCount) return;
     const cats = [];
     for (const [name, description] of [

@@ -337,3 +337,130 @@ test('dashboard reflects relational data and logout invalidates session', async 
   assert.equal((await request('/auth/logout', { method: 'POST', session: owner })).status, 200);
   assert.equal((await request('/auth/me', { session: owner })).status, 401);
 });
+
+test('email verification and password recovery are single-use, expiring and revoke sessions', async () => {
+  const username = 'recovery_' + suffix,
+    oldPassword = randomBytes(18).toString('hex'),
+    newPassword = randomBytes(18).toString('hex'),
+    address = 'recovery-' + suffix + '@example.com';
+  const user = (
+    await db.query(
+      'INSERT INTO users(username,password_hash,name,role) VALUES($1,$2,$3,$4) RETURNING id',
+      [username, await bcrypt.hash(oldPassword, 12), 'Recovery Test', 'admin'],
+    )
+  ).rows[0];
+  const deliveries = [];
+  app.locals.sendAccountMail = async (value) => deliveries.push(value);
+  try {
+    const session = await login(username, oldPassword);
+    let r = await request('/auth/email/request', {
+      method: 'POST',
+      session,
+      body: { email: address, password: oldPassword },
+    });
+    assert.equal(r.status, 200);
+    const verify = deliveries.at(-1).text.match(/#token=([a-f0-9]{64})/)[1];
+    assert.equal(
+      (await request('/auth/email/verify', { method: 'POST', body: { token: verify } })).status,
+      200,
+    );
+    assert.equal(
+      (await request('/auth/email/verify', { method: 'POST', body: { token: verify } })).status,
+      422,
+    );
+    const known = await request('/auth/forgot-password', {
+        method: 'POST',
+        body: { email: address },
+      }),
+      unknown = await request('/auth/forgot-password', {
+        method: 'POST',
+        body: { email: 'unknown-' + suffix + '@example.com' },
+      });
+    assert.deepEqual(known.data, unknown.data);
+    const expired = deliveries.at(-1).text.match(/#token=([a-f0-9]{64})/)[1];
+    const tokens = await db.query('SELECT token_hash FROM account_tokens WHERE user_id=$1', [
+      user.id,
+    ]);
+    assert.notEqual(tokens.rows[0].token_hash, expired);
+    await db.query(
+      "UPDATE account_tokens SET expires_at=now()-interval '1 minute' WHERE user_id=$1",
+      [user.id],
+    );
+    assert.equal(
+      (
+        await request('/auth/reset-password', {
+          method: 'POST',
+          body: { token: expired, password: newPassword },
+        })
+      ).status,
+      422,
+    );
+    await request('/auth/forgot-password', { method: 'POST', body: { email: address } });
+    const token = deliveries.at(-1).text.match(/#token=([a-f0-9]{64})/)[1];
+    const results = await Promise.all([
+      request('/auth/reset-password', { method: 'POST', body: { token, password: newPassword } }),
+      request('/auth/reset-password', { method: 'POST', body: { token, password: newPassword } }),
+    ]);
+    assert.deepEqual(results.map((r) => r.status).sort(), [200, 422]);
+    assert.equal((await request('/auth/me', { session })).status, 401);
+    const newSession = await login(username, newPassword);
+    assert.equal(newSession.role, 'admin');
+    assert.equal(
+      (await request('/auth/login', { method: 'POST', body: { username, password: oldPassword } }))
+        .status,
+      401,
+    );
+  } finally {
+    delete app.locals.sendAccountMail;
+    await db.query('DELETE FROM users WHERE id=$1', [user.id]);
+  }
+});
+
+test('owner data explorer is read-only, paginated and exports no credentials', async () => {
+  const password = randomBytes(18).toString('hex'),
+    username = 'data_' + suffix;
+  const user = (
+    await db.query(
+      'INSERT INTO users(username,password_hash,name,role) VALUES($1,$2,$3,$4) RETURNING id',
+      [username, await bcrypt.hash(password, 12), 'Data Test', 'owner'],
+    )
+  ).rows[0];
+  try {
+    const session = await login(username, password);
+    assert.equal((await request('/data', { session: admin })).status, 403);
+    assert.equal((await request('/data/users', { session })).status, 422);
+    assert.equal((await request('/data/products?offset=-1', { session })).status, 422);
+    const meta = await request('/data', { session });
+    assert.equal(meta.status, 200);
+    assert.ok('products' in meta.data.tables);
+    const rows = await request('/data/products', { session });
+    assert.equal(rows.status, 200);
+    assert.ok(rows.data.rows.length <= 50);
+    assert.equal(
+      (await request('/data/export', { method: 'POST', session, body: { password: 'wrong' } }))
+        .status,
+      403,
+    );
+    const exported = await request('/data/export', { method: 'POST', session, body: { password } });
+    assert.equal(exported.status, 200);
+    assert.equal(exported.data.format, 'bien-vendre-business-data-v1');
+    for (const forbidden of ['users', 'sessions', 'account_tokens'])
+      assert.ok(!(forbidden in exported.data.data));
+    assert.ok(!JSON.stringify(exported.data).includes('password_hash'));
+  } finally {
+    await db.query('DELETE FROM users WHERE id=$1', [user.id]);
+  }
+});
+
+test('catalog budget and ordering are validated and applied in the database', async () => {
+  const result = await request('/products?max_price=200000&sort=price_asc');
+  assert.equal(result.status, 200);
+  assert.ok(result.data.every((p) => Number(p.price) <= 200000));
+  const prices = result.data.map((p) => Number(p.price));
+  assert.deepEqual(
+    prices,
+    [...prices].sort((a, b) => a - b),
+  );
+  assert.equal((await request('/products?sort=unsafe')).status, 422);
+  assert.equal((await request('/products?max_price=-1')).status, 422);
+});

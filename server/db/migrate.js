@@ -13,6 +13,13 @@ export async function migrate() {
       await client.query(await readFile(new URL('./001_initial.sql', import.meta.url), 'utf8'));
       await client.query('INSERT INTO schema_migrations(version) VALUES($1)', ['001']);
     }
+    if (
+      !(await client.query('SELECT version FROM schema_migrations WHERE version=$1', ['002']))
+        .rowCount
+    ) {
+      await client.query(await readFile(new URL('./002_accounts.sql', import.meta.url), 'utf8'));
+      await client.query('INSERT INTO schema_migrations(version) VALUES($1)', ['002']);
+    }
   });
 }
 if (process.argv[1]?.endsWith('/migrate.js')) {

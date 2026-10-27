@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import { Router } from 'express';
 import { db } from '../db/pool.js';
 import { authenticate, authorize } from '../auth.js';
@@ -29,11 +30,22 @@ catalog.get('/categories', async (req, res) =>
 catalog.get('/products', async (req, res) => {
   const search = String(req.query.search || '').slice(0, 120),
     category = req.query.category ? idSchema.parse(req.query.category) : null;
+  const maxPrice = req.query.max_price
+    ? z.coerce.number().positive().max(1000000000).parse(req.query.max_price)
+    : null;
+  const sort = z
+    .enum(['recommended', 'price_asc', 'price_desc'])
+    .parse(req.query.sort || 'recommended');
+  const order = {
+    recommended: 'p.id',
+    price_asc: 'p.price ASC,p.id',
+    price_desc: 'p.price DESC,p.id',
+  }[sort];
   res.json(
     (
       await db.query(
-        `SELECT p.*,COALESCE((SELECT json_agg(json_build_object('id',c.id,'name',c.name)) FROM recommendations r JOIN categories c ON c.id=r.category_id WHERE r.product_id=p.id),'[]') AS categories FROM products p WHERE p.active=true AND (p.name ILIKE $1 OR p.description ILIKE $1) AND ($2::bigint IS NULL OR EXISTS(SELECT 1 FROM recommendations r WHERE r.product_id=p.id AND r.category_id=$2)) ORDER BY p.id`,
-        ['%' + search + '%', category],
+        `SELECT p.*,COALESCE((SELECT json_agg(json_build_object('id',c.id,'name',c.name)) FROM recommendations r JOIN categories c ON c.id=r.category_id WHERE r.product_id=p.id),'[]') AS categories FROM products p WHERE p.active=true AND (p.name ILIKE $1 OR p.description ILIKE $1) AND ($2::bigint IS NULL OR EXISTS(SELECT 1 FROM recommendations r WHERE r.product_id=p.id AND r.category_id=$2)) AND ($3::numeric IS NULL OR p.price<=$3) ORDER BY ${order}`,
+        ['%' + search + '%', category, maxPrice],
       )
     ).rows,
   );
