@@ -1,5 +1,9 @@
 # Bien Vendre — arah produk Atelier
 
+## Status penggunaan
+
+Saat ini fokus localhost; deployment ditunda. Pemulihan akun lokal menggunakan file pesan pribadi, tanpa akun layanan email.
+
 ## Tujuan
 
 Membuat katalog florist yang meyakinkan dan ruang kerja toko yang dapat dipakai sehari-hari. Fondasi tetap: katalog/detail, rekomendasi kategori, pengelolaan produk/kategori/pesanan, riwayat serta laporan penjualan. Pelanggan tidak dipaksa membuat akun; konsultasi dan pencatatan admin tetap menjadi alur pemesanan.

@@ -19,27 +19,21 @@ Website katalog dan manajemen penjualan florist dengan tampilan pelanggan, dashb
 | Admin | Mengelola katalog dan mencatat/memproses pesanan. |
 | Owner | Melihat pesanan dan penjualan serta mengunduh laporan. |
 
-## Menjalankan dengan Docker
+## Mulai cepat di Windows
 
-Sesuai rancangan arsitektur pada presentasi kelompok, aplikasi ini dapat dijalankan menggunakan **Docker Compose** dalam 2 container:
-- **`web`**: Menjalankan frontend React dan backend Node.js / Express.
-- **`db`**: Menjalankan PostgreSQL 17 dengan data persisten pada volume `florist_db`.
+**Fokus saat ini adalah penggunaan lokal. Tidak perlu Render, Neon, Resend, Docker, atau akun layanan tambahan.**
 
-### Langkah menjalankan:
-1. Pastikan **Docker Desktop** sudah aktif di laptop Anda.
-2. Jalankan perintah berikut di PowerShell atau terminal:
-   ```powershell
-   docker compose up -d --build
-   ```
-   *(Atau jalankan script otomatis: `.\scripts\setup-docker.ps1`)*
-3. Setelah container siap, buka di browser:
-   - **Katalog Publik:** http://localhost:3000/catalog
-   - **Login Admin/Owner:** http://localhost:3000/login
-4. Perintah pembantu:
-   - Melihat log: `docker compose logs -f`
-   - Menghentikan container: `docker compose down`
+1. Instal [Node.js LTS](https://nodejs.org/) versi 22 atau lebih baru.
+2. Unduh/ekstrak kode terbaru ke folder lokal.
+3. Klik dua kali **`Mulai-BienVendre.cmd`** pada folder proyek.
+4. Tunggu setup selesai. Browser akan diminta membuka katalog secara otomatis. Jika tidak terbuka, ketik `http://localhost:3000/catalog` di browser.
+5. Biarkan jendela launcher tetap berjalan. Untuk berhenti tekan Ctrl+C.
 
----
+Kebutuhan aplikasi diunduh saat pertama kali jika belum terpasang; setelah itu gunakan launcher yang sama. Launcher menjalankan setup idempotent agar migrasi terbaru diterapkan tanpa menimpa data yang sudah ada. Kalau server sedang berjalan, hentikan dahulu sebelum membuka launcher lagi. Setelah perubahan dependency, jalankan `npm.cmd ci` sekali sebelum startup.
+
+Login tim di `http://localhost:3000/login`; password awal admin/owner ada di `.env`. Data disimpan dalam `.local/database`. Memperbarui produk melalui dashboard tidak membutuhkan rebuild; perubahan kode tampilan langsung terbaca dalam mode dev.
+
+Launcher khusus Windows disediakan; pengujian otomatis di runner ini dilakukan pada Linux. Langkah terminal berikut merupakan alternatif.
 
 ## Menjalankan di laptop (Tanpa Docker)
 
@@ -199,6 +193,32 @@ Identitas visual baru memakai hijau hutan, ivory, dan aset floral editorial. Vis
 - **Pengaturan keamanan:** ganti password dan verifikasi email pemulihan. Lupa password memakai tautan sekali pakai yang berlaku 15 menit; semua sesi berakhir setelah reset.
 - **Data bisnis owner:** lihat tabel tanpa aplikasi database tambahan dan unduh JSON setelah konfirmasi password. Ekspor tidak menyertakan akun, password/hash, sesi, atau token; ini bukan backup lengkap.
 
-Pemulihan email memerlukan `PUBLIC_URL`, `RESEND_API_KEY`, dan `MAIL_FROM` yang terverifikasi. Tanpa konfigurasi tersebut, UI menjelaskan bahwa layanan belum aktif. Untuk publikasi permanen, ikuti [panduan Render + Neon + Resend](docs/DEPLOYMENT.md). Aplikasi belum dinyatakan online sebelum URL publik dan email nyata diverifikasi.
+### Lupa password untuk pengujian lokal
+
+Mode non-production default memakai `MAIL_MODE=local`. Tidak diperlukan API key atau pengirim email.
+
+1. Login, buka **Pengaturan → Email pemulihan**, masukkan alamat email dan password saat ini.
+2. Buka folder `.local/mail` dari File Explorer. Buka file `.txt` terbaru dengan Notepad, lalu salin tautan verifikasinya ke browser dan konfirmasikan.
+3. Pada halaman login, pilih **Lupa password** dan masukkan alamat yang sudah diverifikasi.
+4. Buka file reset terbaru di `.local/mail`, salin tautannya ke browser, lalu buat password baru.
+
+File hanya disimpan pada laptop; tidak dikirim ke inbox email dan tidak disediakan melalui endpoint web. Tautan berlaku 15 menit, sekali pakai. Jaga folder tersebut secara pribadi dan hapus pesan yang tidak diperlukan. Jangan kirim screenshot tautan/token. Mode ini tidak membuktikan kepemilikan email nyata dan hanya untuk pengujian lokal; mode production menolaknya.
+
+**Deployment ditunda sesuai instruksi.** Konfigurasi hosting sebelumnya disimpan sebagai referensi masa depan di [catatan hosting](docs/DEPLOYMENT.md), tetapi tidak diperlukan dan tidak dijalankan untuk penggunaan lokal.
 
 [Arah produk dan batas fitur](docs/PRODUCT-DIRECTION.md).
+
+<details>
+<summary>Opsi lanjutan: Docker dan PostgreSQL server</summary>
+
+Konfigurasi Docker Compose tetap tersedia sebagai alternatif untuk pengembang yang membutuhkannya. Mode lokal di atas tidak memerlukannya. Compose menjalankan layanan `web` dan `db`; jangan menjalankannya bersamaan pada port yang sama dengan `npm run dev`.
+
+```bash
+docker compose up -d --build
+docker compose logs -f
+docker compose stop
+```
+
+Data PostgreSQL mode ini terpisah dari folder PGlite. Pertahankan data lama sebelum berpindah mode.
+
+</details>

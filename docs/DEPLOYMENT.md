@@ -1,4 +1,8 @@
-# Publikasi Bien Vendre: Render + Neon + Resend
+# Catatan hosting — ditunda
+
+**Status: tidak ada deployment yang dilakukan. Fokus proyek saat ini hanya localhost. Tidak perlu membuat akun layanan di bawah untuk menjalankan aplikasi.**
+
+## Opsi masa depan: Render + Neon + Resend
 
 Aplikasi lokal dan konfigurasi deployment sudah disiapkan. Publikasi memerlukan akun layanan yang dimiliki pengguna. Tidak ada URL online yang dianggap berhasil sebelum pemeriksaan pada URL publik selesai. Ketersediaan paket gratis, kuota, sleep, region, dan biaya mengikuti ketentuan terbaru masing-masing penyedia; periksa sebelum membuat layanan.
 

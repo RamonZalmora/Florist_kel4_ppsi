@@ -1,15 +1,21 @@
-# Atelier release validation
+# Validasi penggunaan lokal
 
-Current environment: Linux cloud, Node.js 24.19, persisted PGlite, Chromium desktop/mobile. Public hosting and live email are not yet configured.
+Deployment ditunda. Tidak ada layanan hosting dibuat atau situs internet diterbitkan.
 
-- Backend/storage: 14 tests passed, covering existing order/catalog/report flows plus verified email, expired/one-use reset links, concurrent reset requests, session revocation, password change, role-limited table access, credential-free JSON export and budget sorting.
-- Browser: 14 tests passed, 0 failed/skipped. Desktop/mobile cover catalog, budget/order filters, role workflows, PDF downloads, agenda, data explorer/export, unavailable email explanation and invalid reset links.
-- Frontend production build and formatting checks passed.
-- Generated floral hero and three product assets integrated. Screenshot previews are in docs/screenshots. Product visuals remain examples and must be replaced/approved against actual merchandise.
-- Existing migrations are preserved; 002 adds verified recovery emails and hashed, expiring account tokens.
-- Recovery delivery uses a test mail transport for automated tests. Real Resend delivery, Neon connectivity, and Render deployment remain unverified until user-owned accounts and secure configuration are available.
-- Render blueprint and native startup are supplied; startup enforces external PostgreSQL and an HTTPS canonical URL and runs migrations. Live provider build/start/health checks are still required.
+- Backend/penyimpanan: 15 tes lulus, 0 gagal/skipped. Termasuk alur verifikasi/reset melalui file lokal tanpa layanan email, penolakan mode surat lokal pada production, token sekali pakai/kedaluwarsa, pencabutan sesi, pesanan/penjualan, dan ekspor owner.
+- Browser: 14 tes desktop/HP lulus. Meliputi katalog/anggaran, dashboard dan hak akses, agenda, data/JSON, PDF, penjelasan surat lokal, dan tautan reset tidak valid.
+- Build dan pemeriksaan format/whitespace lulus.
+- Mode dev berjalan pada localhost; frontend Vite memakai hot reload dan backend Node watch. Server non-production secara default hanya bind loopback.
+- Pengunci database satu proses, backup/restore folder baru, dan perlindungan data lama tetap dipertahankan.
 
-Initial browser runs exposed a select-locator assumption and one HMR interruption while assets were being updated. Test locators were corrected, files frozen, and the owned dev service restarted before final verification. No assertions or security controls were disabled.
+## Launcher Windows
 
-See DEPLOYMENT.md for the exact public validation checklist and PRODUCT-DIRECTION.md for scope.
+`Mulai-BienVendre.cmd` memeriksa Node.js 22+, memasang dependency jika belum tersedia, menjalankan setup idempotent, lalu mode dev dengan pembukaan katalog otomatis melalui Vite. Mode development, host loopback, dan surat lokal ditetapkan pada proses launcher. Entry point migrasi memakai path.basename agar sesuai dengan path Windows.
+
+Runner pengujian adalah Linux, Node.js 24.19, PGlite dan Chromium. Eksekusi klik launcher/browser pada Windows belum diuji langsung; perintah setup, server, fitur surat lokal dan tampilan diuji pada runner tersebut.
+
+## Surat lokal
+
+Pesan disimpan di `.local/mail` di luar direktori public/dist dan diabaikan Git. File dibuat dengan permission privat pada sistem yang mendukungnya; tidak ada endpoint untuk membaca kotak surat tersebut. Pesan berisi tautan pribadi dan hanya untuk pengujian di laptop, bukan bukti akses inbox email nyata. Pengguna menghapus pesan yang tidak diperlukan dan tidak membagikan folder/token. Mode ini tidak dipakai untuk production.
+
+Konfigurasi Render/Neon/Resend yang sebelumnya disiapkan hanya referensi masa depan. Tidak ada pengiriman email nyata atau verifikasi provider online dalam release lokal ini.
