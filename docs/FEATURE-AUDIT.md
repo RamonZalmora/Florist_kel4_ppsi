@@ -2,7 +2,7 @@
 
 ## P1 — Pengaturan toko
 
-Sebelumnya profil/kontak dibaca dari environment. Sekarang admin dapat mengubah nama, alamat, deskripsi, WhatsApp, Instagram, dan logo pada Pengaturan. Nilai disimpan di tabel singleton `store_settings` melalui `PUT /api/store`; katalog dan PDF membaca pengaturan tersebut. Konfigurasi lama tetap menjadi fallback sampai admin menyimpan pengaturan. Owner hanya membaca profil toko.
+Sebelumnya profil/kontak dibaca dari environment. Owner dapat mengubah nama, alamat, deskripsi, cerita toko, layanan, tips perawatan, WhatsApp, Instagram, TikTok, dan logo pada Pengaturan. Nilai disimpan di tabel singleton `store_settings` melalui `PUT /api/store`; katalog dan PDF membaca pengaturan tersebut. Konfigurasi lama tetap menjadi fallback sampai owner menyimpan pengaturan. Admin hanya membaca profil toko.
 
 Nomor WhatsApp berupa angka dengan kode negara dan URL Instagram dibatasi ke profil instagram.com. Tidak perlu restart untuk perubahan data; refresh katalog yang sudah terbuka untuk mengambil nilai terbaru.
 
@@ -16,17 +16,13 @@ PDF memakai nama toko, periode, waktu cetak WIB, tabel kolom tetap, baris bersel
 
 Admin dan owner dapat membuka halaman Pelanggan; endpoint hanya GET. Empat kartu mencakup total pelanggan, pelanggan dengan lebih dari satu pesanan tercatat, total nilai pesanan selesai, dan pesanan aktif. Metrik dihitung dari seluruh database. Tabel menampilkan maksimal 500 pelanggan terbaru, dikelompokkan berdasarkan nomor telepon. Tombol Chat membuka kanal WhatsApp, tidak mengirim pesan otomatis.
 
-## P2 — Rentang harga dan tracking
+## P2 — Katalog
 
-Katalog dapat menggabungkan harga minimum dengan batas maksimum serta urutan harga. Server menolak rentang terbalik dan nilai tidak valid.
-
-Setiap pesanan mempunyai kode acak pribadi 32 karakter yang terpisah dari nomor berurutan BV-xxxx. Admin/owner dapat menyalinnya dari detail pesanan dan membagikannya hanya kepada pelanggan terkait. Widget katalog menerima kode tersebut melalui POST; pencarian dibatasi frekuensinya dan respons tidak dicache. Hasil hanya berisi nomor referensi, status, tanggal pesanan dan jadwal. Nama, nomor telepon, nilai pembayaran, serta catatan pribadi tidak diungkapkan.
-
-Kode adalah akses baca pribadi: jangan dibagikan di tempat publik. Ini merupakan status proses pesanan toko, bukan integrasi pelacakan kurir/GPS.
+Halaman utama menampilkan hingga sembilan produk berdasarkan jumlah favorit. Occasion menampilkan sembilan produk per halaman dan dapat diurutkan berdasarkan pembaruan terbaru atau jumlah favorit. Fitur pelacakan pelanggan tidak aktif.
 
 ## P3 — Upload foto dan password
 
-Upload multipart tersedia melalui `POST /api/uploads`, khusus admin dan dilindungi sesi/CSRF. Input JPEG/PNG/WebP maksimal 5 MB dan 25 megapiksel. Isi berkas benar-benar didecode, bukan dipercaya dari ekstensi/MIME. SVG/HTML dan input rusak ditolak. Foto dirotasi sesuai orientasi, diperkecil hingga 1600×1600 tanpa memperbesar, dikonversi WebP, dan metadata asli tidak dipertahankan. Nama file acak; nama asli tidak dipakai sebagai path.
+Upload multipart tersedia melalui `POST /api/uploads`, untuk admin dan owner dan dilindungi sesi/CSRF. Input JPEG/PNG/WebP maksimal 5 MB dan 25 megapiksel. Isi berkas benar-benar didecode, bukan dipercaya dari ekstensi/MIME. SVG/HTML dan input rusak ditolak. Foto dirotasi sesuai orientasi, diperkecil hingga 1600×1600 tanpa memperbesar, dikonversi WebP, dan metadata asli tidak dipertahankan. Nama file acak; nama asli tidak dipakai sebagai path.
 
 Foto tersimpan di `.local/uploads` dan disajikan melalui `/uploads/`. Form produk dan logo toko dapat mengunggah dari perangkat atau memakai URL. Foto yang diunggah bersifat publik seperti foto katalog; jangan mengunggah dokumen pribadi. Upload yang dibatalkan atau foto lama belum dihapus otomatis agar tidak menghapus berkas yang masih dipakai.
 

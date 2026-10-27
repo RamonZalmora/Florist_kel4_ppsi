@@ -100,10 +100,15 @@ test('customer can browse, search, filter and read complete product details', as
   await expect(
     page.getByRole('heading', { name: 'Bunga yang indah. Cerita yang bermakna.' }),
   ).toBeVisible();
-  await expect(page.locator('.product-card')).toHaveCount(6);
+  await expect(page.locator('.product-card')).toHaveCount(9);
+  await page.getByRole('link', { name: 'Occasion', exact: true }).click();
   await page.locator('.filter-tabs').getByRole('button', { name: 'Pernikahan' }).click();
-  await expect(page.locator('.product-card')).toHaveCount(2);
-  await page.getByRole('button', { name: /Ivory Wedding/ }).click();
+  await expect(page.locator('.product-card')).toHaveCount(7);
+  await page
+    .locator('.product-card')
+    .filter({ hasText: 'Ivory Wedding' })
+    .locator('.product-picture')
+    .click();
   await expect(page.getByRole('dialog')).toBeVisible();
   await expect(page.getByText('Large · 24 tangkai')).toBeVisible();
   await page.getByRole('button', { name: 'Tutup', exact: true }).click();
@@ -113,7 +118,7 @@ test('customer can browse, search, filter and read complete product details', as
   await page.getByRole('textbox', { name: 'Cari produk' }).fill('produk tidak ada');
   await expect(page.getByText('Belum ada produk yang sesuai.')).toBeVisible();
   await page.getByRole('textbox', { name: 'Cari produk' }).fill('');
-  await expect(page.locator('.product-card')).toHaveCount(6);
+  await expect(page.locator('.product-card')).toHaveCount(9);
   await page.evaluate(() => scrollTo(0, 0));
   await mkdir('docs/screenshots', { recursive: true });
   await page.screenshot({

@@ -28,10 +28,16 @@ test('about page links to the channels configured by the store', async ({ page }
         whatsapp: '6281234567890',
         instagram: 'https://www.instagram.com/florist/',
         tiktok: 'https://www.tiktok.com/@florist',
+        about_story: 'Cerita khusus dari owner',
+        about_service: 'Konsultasi khusus dari owner',
+        care_tips: 'Tips khusus dari owner',
       },
     }),
   );
   await page.goto('/about');
+  await expect(page.getByText('Cerita khusus dari owner')).toBeVisible();
+  await expect(page.getByText('Konsultasi khusus dari owner')).toBeVisible();
+  await expect(page.getByText('Tips khusus dari owner')).toBeVisible();
   await expect(
     page.locator('.social-links').getByRole('link', { name: 'WhatsApp' }),
   ).toHaveAttribute('href', 'https://wa.me/6281234567890');

@@ -17,16 +17,13 @@ async function go(page, label) {
   if (await menu.isVisible()) await menu.click();
   await page.locator('.sidebar nav').getByRole('button', { name: label, exact: true }).click();
 }
-test('admin can upload a real photo into the product form; store settings form is available', async ({
-  page,
-}) => {
+test('admin can upload a real product photo without store edit access', async ({ page }) => {
   let photo, id;
   const name = 'Upload ' + randomBytes(5).toString('hex');
   await login(page, 'admin');
   try {
     await go(page, 'Pengaturan');
-    await expect(page.getByRole('button', { name: 'Simpan pengaturan toko' })).toBeVisible();
-    await expect(page.getByLabel('WhatsApp konsultasi')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Simpan pengaturan toko' })).toHaveCount(0);
     await go(page, 'Produk');
     await page.getByRole('button', { name: 'Tambah produk' }).click();
     await page.getByLabel('Nama produk').fill(name);
@@ -79,9 +76,7 @@ test('admin can upload a real photo into the product form; store settings form i
     }
   }
 });
-test('owner has four customer cards, a report chart, and no store edit permission', async ({
-  page,
-}) => {
+test('owner has customer metrics, report chart and store edit access', async ({ page }) => {
   await login(page, 'owner');
   await go(page, 'Pelanggan');
   await expect(page.locator('.stat-card')).toHaveCount(4);
@@ -89,30 +84,16 @@ test('owner has four customer cards, a report chart, and no store edit permissio
   await go(page, 'Riwayat & laporan');
   await expect(page.getByRole('heading', { name: 'Tren penjualan periode' })).toBeVisible();
   await go(page, 'Pengaturan');
-  await expect(page.getByRole('button', { name: 'Simpan pengaturan toko' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Simpan pengaturan toko' })).toBeVisible();
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
   ).toBeTruthy();
 });
-test('public order tracking requires an unguessable code and reveals only status and dates', async ({
-  page,
-}) => {
-  await login(page, 'admin');
-  const orders = await (await page.context().request.get('/api/orders')).json();
-  const code = orders[0].tracking_code;
-  await page.context().clearCookies();
+test('catalog no longer exposes order tracking or price filters', async ({ page }) => {
   await page.goto('/catalog');
-  await page.getByLabel('Kode pelacakan', { exact: true }).fill(code);
-  await page.getByRole('button', { name: 'Lacak pesanan', exact: true }).click();
-  await expect(page.locator('.tracking-result')).toContainText('BV-');
-  await expect(page.locator('.tracking-result')).not.toContainText(orders[0].phone_number);
-  await page.getByLabel('Kode pelacakan', { exact: true }).fill('0'.repeat(32));
-  await page.getByRole('button', { name: 'Lacak pesanan', exact: true }).click();
-  await expect(page.getByRole('alert')).toContainText('tidak ditemukan');
-  await page.getByLabel('Harga minimum', { exact: true }).fill('200000');
-  await page.getByRole('combobox', { name: 'Anggaran', exact: true }).selectOption('350000');
-  await expect(page.locator('.product-card')).toHaveCount(2);
-  expect(
-    await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
-  ).toBeTruthy();
+  await expect(page.getByRole('button', { name: 'Lacak pesanan' })).toHaveCount(0);
+  await page.getByRole('link', { name: 'Occasion', exact: true }).click();
+  await expect(page.getByLabel('Harga minimum')).toHaveCount(0);
+  await expect(page.getByLabel('Anggaran')).toHaveCount(0);
+  await expect(page.getByLabel('Urutkan')).toHaveValue('newest');
 });

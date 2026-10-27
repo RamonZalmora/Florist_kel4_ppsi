@@ -1,5 +1,5 @@
 import { PhotoField, StoreEditor, SalesTrend } from './RetailFeatures';
-import { RecoveryScreen, AccountSecurity, DeliveryAgenda, DataStudio } from './StudioFeatures';
+import { RecoveryScreen, AccountSecurity, DataStudio } from './StudioFeatures';
 import React, { useState, useEffect, useCallback } from 'react';
 import { createRoot } from 'react-dom/client';
 import {
@@ -421,13 +421,12 @@ function AboutPage({ store, whatsapp, onExplore }) {
         </div>
         <div>
           <p>
-            Kami membantu Anda menemukan rangkaian yang sesuai untuk pernikahan, wisuda, ulang
-            tahun, dan hadiah spesial. Jelajahi koleksi dan rekomendasi berdasarkan momen yang ingin
-            dirayakan.
+            {store.about_story ||
+              'Kami membantu Anda menemukan rangkaian yang sesuai untuk pernikahan, wisuda, ulang tahun, dan hadiah spesial. Jelajahi koleksi dan rekomendasi berdasarkan momen yang ingin dirayakan.'}
           </p>
           <p>
-            Setiap produk dilengkapi informasi jenis bunga, ukuran, dan harga. Untuk mendiskusikan
-            pilihan atau permintaan khusus, hubungi toko melalui kanal yang tersedia.
+            {store.about_service ||
+              'Setiap produk dilengkapi informasi jenis bunga, ukuran, dan harga. Untuk mendiskusikan pilihan atau permintaan khusus, hubungi toko melalui kanal yang tersedia.'}
           </p>
         </div>
       </section>
@@ -468,8 +467,8 @@ function AboutPage({ store, whatsapp, onExplore }) {
         <div className="about-care">
           <h3>Merawat bunga potong</h3>
           <p>
-            Potong ujung batang secara miring, gunakan air bersih, dan ganti air secara berkala.
-            Simpan rangkaian jauh dari panas dan sinar matahari langsung.
+            {store.care_tips ||
+              'Potong ujung batang secara miring, gunakan air bersih, dan ganti air secara berkala. Simpan rangkaian jauh dari panas dan sinar matahari langsung.'}
           </p>
           <small>Ketersediaan bunga dan detail rangkaian dapat dikonfirmasi kepada toko.</small>
         </div>
@@ -478,9 +477,10 @@ function AboutPage({ store, whatsapp, onExplore }) {
   );
 }
 function Catalog({ user, onLogin, onDashboard, notify }) {
-  const [sort, setSort] = useState('recommended'),
+  const [sort, setSort] = useState('newest'),
     [page, setPage] = useState(location.pathname === '/about' ? 'about' : 'catalog'),
     [occasion, setOccasion] = useState(false),
+    [catalogPage, setCatalogPage] = useState(1),
     [favorites, setFavorites] = useState([]);
   const [visitor] = useState(() => {
     let id = localStorage.getItem('bv_visitor');
@@ -538,7 +538,7 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
         '/products?' +
           new URLSearchParams({
             search,
-            sort,
+            sort: occasion ? sort : 'popular',
             ...(category ? { category } : {}),
           }),
       )
@@ -559,7 +559,8 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
       active = false;
       clearTimeout(timer);
     };
-  }, [category, search, sort]);
+  }, [category, search, sort, occasion]);
+  useEffect(() => setCatalogPage(1), [category, search, sort, occasion]);
   useEffect(() => {
     const syncPage = () => setPage(location.pathname === '/about' ? 'about' : 'catalog');
     window.addEventListener('popstate', syncPage);
@@ -583,6 +584,11 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
       notify(e.message, true);
     }
   }
+  const pageCount = Math.max(1, Math.ceil(products.length / 9));
+  const currentPage = Math.min(catalogPage, pageCount);
+  const visibleProducts = occasion
+    ? products.slice((currentPage - 1) * 9, currentPage * 9)
+    : products.slice(0, 9);
   const whatsapp = store.whatsapp?.replace(/\D/g, '');
   const consult = (p) =>
     whatsapp
@@ -731,42 +737,44 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
                   />
                 </label>
               </div>
-              <div className="catalog-layout">
-                <aside className="catalog-sidebar">
-                  <h3>Temukan bunga</h3>
-                  <div className="filter-tabs">
-                    <button className={!category ? 'active' : ''} onClick={() => setCategory('')}>
-                      Semua koleksi
-                    </button>
-                    {categories.map((c) => (
-                      <button
-                        key={c.id}
-                        className={category === String(c.id) ? 'active' : ''}
-                        onClick={() => setCategory(String(c.id))}
-                      >
-                        {c.name}
+              <div className={occasion ? 'catalog-layout' : 'catalog-home-layout'}>
+                {occasion && (
+                  <aside className="catalog-sidebar">
+                    <h3>Temukan bunga</h3>
+                    <div className="filter-tabs">
+                      <button className={!category ? 'active' : ''} onClick={() => setCategory('')}>
+                        Semua koleksi
                       </button>
-                    ))}
-                  </div>
-                  <div className="catalog-tools">
-                    <label>
-                      Urutkan
-                      <select value={sort} onChange={(e) => setSort(e.target.value)}>
-                        <option value="recommended">Pilihan koleksi</option>
-                        <option value="popular">Paling banyak favorit</option>
-                      </select>
-                    </label>
-                    <button
-                      className="text-btn"
-                      onClick={() => {
-                        setCategory('');
-                        setSort('recommended');
-                      }}
-                    >
-                      Reset filter
-                    </button>
-                  </div>
-                </aside>
+                      {categories.map((c) => (
+                        <button
+                          key={c.id}
+                          className={category === String(c.id) ? 'active' : ''}
+                          onClick={() => setCategory(String(c.id))}
+                        >
+                          {c.name}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="catalog-tools">
+                      <label>
+                        Urutkan
+                        <select value={sort} onChange={(e) => setSort(e.target.value)}>
+                          <option value="newest">Terbaru diperbarui</option>
+                          <option value="popular">Paling banyak favorit</option>
+                        </select>
+                      </label>
+                      <button
+                        className="text-btn"
+                        onClick={() => {
+                          setCategory('');
+                          setSort('newest');
+                        }}
+                      >
+                        Reset filter
+                      </button>
+                    </div>
+                  </aside>
+                )}
                 <div className="catalog-results">
                   {loading ? (
                     <div className="empty">
@@ -778,7 +786,7 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
                     <Empty text="Belum ada produk yang sesuai. Coba kategori atau pencarian lain." />
                   ) : (
                     <div className="product-grid">
-                      {products.map((p, i) => (
+                      {visibleProducts.map((p, i) => (
                         <article className="product-card" key={p.id}>
                           <div
                             className={'product-picture tone-' + (i % 3)}
@@ -827,6 +835,44 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
                       ))}
                     </div>
                   )}
+                  {!loading &&
+                    !error &&
+                    products.length > 0 &&
+                    (occasion ? (
+                      <nav className="pagination" aria-label="Halaman produk">
+                        <button
+                          disabled={currentPage === 1}
+                          onClick={() => setCatalogPage(currentPage - 1)}
+                        >
+                          Sebelumnya
+                        </button>
+                        {Array.from({ length: pageCount }, (_, i) => (
+                          <button
+                            key={i}
+                            aria-current={currentPage === i + 1 ? 'page' : undefined}
+                            onClick={() => setCatalogPage(i + 1)}
+                          >
+                            {i + 1}
+                          </button>
+                        ))}
+                        <button
+                          disabled={currentPage === pageCount}
+                          onClick={() => setCatalogPage(currentPage + 1)}
+                        >
+                          Selanjutnya
+                        </button>
+                      </nav>
+                    ) : (
+                      <button
+                        className="btn outline browse-all"
+                        onClick={() => {
+                          setOccasion(true);
+                          setCategory('');
+                        }}
+                      >
+                        Lihat semua koleksi <ArrowRight size={17} />
+                      </button>
+                    ))}
                 </div>
               </div>
             </section>
@@ -936,13 +982,11 @@ const navAdmin = [
   ['recommendations', 'Rekomendasi', Sparkles],
   ['orders', 'Pesanan', ShoppingBag],
   ['customers', 'Pelanggan', Users],
-  ['agenda', 'Agenda pengiriman', CalendarDays],
 ];
 const navOwner = [
   ['dashboard', 'Dashboard', LayoutDashboard],
   ['orders', 'Daftar pesanan', ShoppingBag],
   ['reports', 'Riwayat & laporan', ChartNoAxesCombined],
-  ['agenda', 'Agenda pengiriman', CalendarDays],
   ['data', 'Data bisnis', Package],
   ['customers', 'Pelanggan', Users],
 ];
@@ -1080,7 +1124,6 @@ function Workspace({ user, view, setView, logout, notify }) {
                       customers: 'Kenali pelanggan dari pesanan yang telah dicatat.',
                       reports: 'Pantau penjualan dan unduh laporan berdasarkan periode.',
                       settings: 'Informasi toko dan akses akun Anda.',
-                      agenda: 'Jadwal rangkaian dan pengiriman, dalam satu pandangan.',
                       data: 'Jelajahi dan unduh data bisnis Anda secara aman.',
                     }[view]}
               </p>
@@ -1117,7 +1160,6 @@ function Workspace({ user, view, setView, logout, notify }) {
                 {view === 'orders' && <Orders {...shared} />}{' '}
                 {view === 'customers' && <Customers {...shared} />}{' '}
                 {view === 'reports' && <Reports notify={notify} />}{' '}
-                {view === 'agenda' && <DeliveryAgenda data={data} go={go} />}
                 {view === 'data' && <DataStudio notify={notify} />}
                 {view === 'settings' && <StoreSettings user={user} notify={notify} />}
               </>
@@ -1146,7 +1188,7 @@ function Dashboard({ data, user, go }) {
       'Transaksi pesanan selesai',
       'sage',
     ],
-    ['Total pesanan', data.orders.length, ShoppingBag, 'Pesanan tercatat', 'peach'],
+    ['Total pesanan', summary.total_orders, ShoppingBag, 'Pesanan tercatat', 'peach'],
     ['Pelanggan', summary.customers, Users, 'Berdasarkan nomor telepon', 'lavender'],
     ['Produk aktif', summary.products, Package, 'Tersedia di katalog', 'gold'],
   ];
@@ -2413,7 +2455,7 @@ function StoreSettings({ user, notify }) {
   return (
     <>
       <AccountSecurity notify={notify} />
-      {store && user.role === 'admin' && (
+      {store && user.role === 'owner' && (
         <StoreEditor key={JSON.stringify(store)} store={store} onSaved={setStore} notify={notify} />
       )}
       <div className="settings-grid">
@@ -2434,8 +2476,9 @@ function StoreSettings({ user, notify }) {
             </dl>
           )}
           <p className="hint">
-            Kanal digital diatur melalui variabel STORE_WHATSAPP dan STORE_INSTAGRAM pada
-            konfigurasi server. Jangan gunakan nomor contoh sebagai kontak toko.
+            {user.role === 'owner'
+              ? 'Ubah profil dan kanal digital melalui formulir pengaturan toko.'
+              : 'Profil toko dikelola oleh owner.'}
           </p>
         </section>
         <section className="panel settings-card">

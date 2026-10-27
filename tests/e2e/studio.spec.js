@@ -12,7 +12,7 @@ async function go(page, label) {
   if (await menu.isVisible()) await menu.click();
   await page.locator('.sidebar nav').getByRole('button', { name: label, exact: true }).click();
 }
-test('owner can inspect data, export JSON and open a delivery agenda', async ({ page }, info) => {
+test('owner can inspect data and export JSON', async ({ page }, info) => {
   await login(page);
   await go(page, 'Data bisnis');
   await expect(page.getByRole('heading', { name: 'Data bisnis', exact: true })).toBeVisible();
@@ -27,14 +27,6 @@ test('owner can inspect data, export JSON and open a delivery agenda', async ({ 
     await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
   ).toBeTruthy();
   await page.screenshot({ path: `docs/screenshots/data-${info.project.name}.png`, fullPage: true });
-  const orders = await (await page.context().request.get('/api/orders')).json();
-  const order = orders.find((o) => ['pending', 'processing'].includes(o.status));
-  await go(page, 'Agenda pengiriman');
-  await page.getByLabel('Tanggal pengiriman').fill(order.delivery_date.slice(0, 10));
-  await expect(page.locator('.agenda-card').first()).toBeVisible();
-  expect(
-    await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
-  ).toBeTruthy();
   await go(page, 'Pengaturan');
   await expect(page.getByRole('heading', { name: 'Keamanan & pemulihan akun' })).toBeVisible();
 });
@@ -54,13 +46,11 @@ test('forgot-password screen explains local mail and invalid reset links fail sa
   await expect(page.getByRole('alert')).toContainText('Tautan sudah digunakan atau kedaluwarsa.');
 });
 
-test('customer can combine a budget and price order', async ({ page }) => {
+test('customer can sort the occasion catalog', async ({ page }) => {
   await page.goto('/catalog');
-  await expect(page.locator('.product-card')).toHaveCount(6);
-  await page.getByRole('combobox', { name: 'Anggaran', exact: true }).selectOption('200000');
-  await expect(page.locator('.product-card')).toHaveCount(2);
-  await page.getByRole('combobox', { name: 'Urutkan', exact: true }).selectOption('price_asc');
-  await expect(page.locator('.product-card').first()).toContainText('Memories Frame');
-  await page.getByRole('combobox', { name: 'Anggaran', exact: true }).selectOption('');
-  await expect(page.locator('.product-card')).toHaveCount(6);
+  await expect(page.locator('.product-card')).toHaveCount(9);
+  await page.getByRole('link', { name: 'Occasion', exact: true }).click();
+  await expect(page.getByLabel('Urutkan')).toHaveValue('newest');
+  await page.getByLabel('Urutkan').selectOption('popular');
+  await expect(page.locator('.product-card')).toHaveCount(9);
 });

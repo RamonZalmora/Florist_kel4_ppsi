@@ -100,6 +100,39 @@ export function StoreEditor({ store, onSaved, notify }) {
         Deskripsi toko
         <textarea name="description" defaultValue={store.description} maxLength={1500} />
       </label>
+      <label>
+        {' '}
+        Cerita toko di Tentang Kami
+        <textarea
+          name="about_story"
+          defaultValue={store.about_story || ''}
+          maxLength={2000}
+          rows={4}
+          placeholder="Cerita dan karakter toko"
+        />
+      </label>
+      <label>
+        {' '}
+        Layanan di Tentang Kami
+        <textarea
+          name="about_service"
+          defaultValue={store.about_service || ''}
+          maxLength={2000}
+          rows={4}
+          placeholder="Layanan dan cara konsultasi"
+        />
+      </label>
+      <label>
+        {' '}
+        Tips perawatan bunga
+        <textarea
+          name="care_tips"
+          defaultValue={store.care_tips || ''}
+          maxLength={2000}
+          rows={4}
+          placeholder="Panduan perawatan bunga"
+        />
+      </label>
       <div className="form-grid">
         <label>
           WhatsApp konsultasi
