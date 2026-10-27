@@ -2,7 +2,7 @@ import { db } from './db/pool.js';
 export async function storeInfo() {
   const row = (
     await db.query(
-      'SELECT name,address,whatsapp,instagram,description,logo FROM store_settings WHERE id=1',
+      'SELECT name,address,whatsapp,instagram,tiktok,description,logo FROM store_settings WHERE id=1',
     )
   ).rows[0];
   return (
@@ -11,6 +11,7 @@ export async function storeInfo() {
       address: process.env.STORE_ADDRESS || 'Pekanbaru, Riau',
       whatsapp: process.env.STORE_WHATSAPP || '',
       instagram: process.env.STORE_INSTAGRAM || '',
+      tiktok: '',
       description: 'Florist & Gifts',
       logo: '/assets/logo.svg',
     }

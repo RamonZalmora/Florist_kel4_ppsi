@@ -30,6 +30,13 @@ export async function migrate() {
       );
       await client.query('INSERT INTO schema_migrations(version) VALUES($1)', ['003']);
     }
+    if (
+      !(await client.query('SELECT version FROM schema_migrations WHERE version=$1', ['004']))
+        .rowCount
+    ) {
+      await client.query(await readFile(new URL('./004_favorites.sql', import.meta.url), 'utf8'));
+      await client.query('INSERT INTO schema_migrations(version) VALUES($1)', ['004']);
+    }
   });
 }
 if (basename(process.argv[1] || '') === 'migrate.js') {

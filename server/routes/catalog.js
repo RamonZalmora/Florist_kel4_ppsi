@@ -1,6 +1,7 @@
 import { storeInfo } from '../store.js';
 import { z } from 'zod';
 import { Router } from 'express';
+import rateLimit from 'express-rate-limit';
 import { db } from '../db/pool.js';
 import { authenticate, authorize } from '../auth.js';
 import {
@@ -33,17 +34,18 @@ catalog.get('/products', async (req, res) => {
   if (minPrice !== null && maxPrice !== null && minPrice > maxPrice)
     fail(422, 'Harga minimum tidak boleh melebihi harga maksimum.');
   const sort = z
-    .enum(['recommended', 'price_asc', 'price_desc'])
+    .enum(['recommended', 'price_asc', 'price_desc', 'popular'])
     .parse(req.query.sort || 'recommended');
   const order = {
     recommended: 'p.id',
     price_asc: 'p.price ASC,p.id',
     price_desc: 'p.price DESC,p.id',
+    popular: 'favorite_count DESC,p.id',
   }[sort];
   res.json(
     (
       await db.query(
-        `SELECT p.*,COALESCE((SELECT json_agg(json_build_object('id',c.id,'name',c.name)) FROM recommendations r JOIN categories c ON c.id=r.category_id WHERE r.product_id=p.id),'[]') AS categories FROM products p WHERE p.active=true AND (p.name ILIKE $1 OR p.description ILIKE $1) AND ($2::bigint IS NULL OR EXISTS(SELECT 1 FROM recommendations r WHERE r.product_id=p.id AND r.category_id=$2)) AND ($3::numeric IS NULL OR p.price<=$3) AND ($4::numeric IS NULL OR p.price>=$4) ORDER BY ${order}`,
+        `SELECT p.*,(SELECT count(*)::int FROM product_favorites f WHERE f.product_id=p.id) AS favorite_count,COALESCE((SELECT json_agg(json_build_object('id',c.id,'name',c.name)) FROM recommendations r JOIN categories c ON c.id=r.category_id WHERE r.product_id=p.id),'[]') AS categories FROM products p WHERE p.active=true AND (p.name ILIKE $1 OR p.description ILIKE $1) AND ($2::bigint IS NULL OR EXISTS(SELECT 1 FROM recommendations r WHERE r.product_id=p.id AND r.category_id=$2)) AND ($3::numeric IS NULL OR p.price<=$3) AND ($4::numeric IS NULL OR p.price>=$4) ORDER BY ${order}`,
         ['%' + search + '%', category, maxPrice, minPrice],
       )
     ).rows,
@@ -51,16 +53,61 @@ catalog.get('/products', async (req, res) => {
 });
 catalog.get('/products/:id', async (req, res) => {
   const { rows } = await db.query(
-    "SELECT p.*,COALESCE((SELECT json_agg(json_build_object('id',c.id,'name',c.name,'note',r.note)) FROM recommendations r JOIN categories c ON c.id=r.category_id WHERE r.product_id=p.id),'[]') AS categories FROM products p WHERE p.id=$1 AND p.active=true",
+    "SELECT p.*,(SELECT count(*)::int FROM product_favorites f WHERE f.product_id=p.id) AS favorite_count,COALESCE((SELECT json_agg(json_build_object('id',c.id,'name',c.name,'note',r.note)) FROM recommendations r JOIN categories c ON c.id=r.category_id WHERE r.product_id=p.id),'[]') AS categories FROM products p WHERE p.id=$1 AND p.active=true",
     [idSchema.parse(req.params.id)],
   );
   if (!rows.length) fail(404, 'Produk tidak ditemukan.');
   res.json(rows[0]);
 });
+const favoriteLimiter = rateLimit({
+  windowMs: 60_000,
+  limit: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+catalog.get('/favorites/:visitor', async (req, res) => {
+  const visitor = z.string().uuid().parse(req.params.visitor);
+  res.json(
+    (
+      await db.query('SELECT product_id FROM product_favorites WHERE visitor_id=$1', [visitor])
+    ).rows.map((r) => String(r.product_id)),
+  );
+});
+catalog.put('/favorites/:id', favoriteLimiter, async (req, res) => {
+  const id = idSchema.parse(req.params.id);
+  const { visitor, favorite } = z
+    .object({ visitor: z.string().uuid(), favorite: z.boolean() })
+    .parse(req.body);
+  if (favorite) {
+    const result = await db.query(
+      'INSERT INTO product_favorites(product_id,visitor_id) SELECT id,$2 FROM products WHERE id=$1 AND active=true ON CONFLICT DO NOTHING RETURNING product_id',
+      [id, visitor],
+    );
+    if (
+      !result.rowCount &&
+      !(await db.query('SELECT id FROM products WHERE id=$1 AND active=true', [id])).rowCount
+    )
+      fail(404, 'Produk tidak ditemukan.');
+  } else
+    await db.query('DELETE FROM product_favorites WHERE product_id=$1 AND visitor_id=$2', [
+      id,
+      visitor,
+    ]);
+  const count = (
+    await db.query('SELECT count(*)::int AS count FROM product_favorites WHERE product_id=$1', [id])
+  ).rows[0].count;
+  res.json({ favorite, count });
+});
 export const management = Router();
 management.use(authenticate, authorize('admin'));
 management.get('/products', async (req, res) =>
-  res.json((await db.query('SELECT * FROM products ORDER BY id DESC')).rows),
+  res.json(
+    (
+      await db.query(
+        'SELECT p.*,(SELECT count(*)::int FROM product_favorites f WHERE f.product_id=p.id) AS favorite_count FROM products p ORDER BY p.id DESC',
+      )
+    ).rows,
+  ),
 );
 for (const [path, table, schema, columns] of [
   [

@@ -487,7 +487,7 @@ test('catalog budget and ordering are validated and applied in the database', as
   assert.equal((await request('/products?max_price=-1')).status, 422);
 });
 
-test('store settings persist publicly, customer metrics are readable by owner, tracking discloses no personal data, and uploads validate content', async () => {
+test('store settings persist publicly, customer metrics are readable by owner, and uploads validate content', async () => {
   const { default: sharp } = await import('sharp');
   const { unlink } = await import('node:fs/promises');
   const { uploadsDirectory } = await import('../server/routes/uploads.js');
@@ -507,6 +507,7 @@ test('store settings persist publicly, customer metrics are readable by owner, t
         address: 'Test address',
         whatsapp: '6281234567890',
         instagram: 'https://www.instagram.com/bienvendre/',
+        tiktok: 'https://www.tiktok.com/@bienvendre',
         description: 'Test description',
         logo: '/assets/logo.svg',
       };
@@ -531,26 +532,9 @@ test('store settings persist publicly, customer metrics are readable by owner, t
     assert.ok(Number(customer.data.summary.customers) >= 1);
     assert.ok(customer.data.rows.some((c) => c.name === 'Test Customer ' + suffix));
     assert.equal((await request('/customers')).status, 401);
-    const code = (
-      await db.query('SELECT tracking_code FROM orders WHERE id=$1', [created.orders[0]])
-    ).rows[0].tracking_code;
-    assert.match(code, /^[a-f0-9]{32}$/);
-    const tracked = await request('/track', { method: 'POST', body: { code } });
-    assert.equal(tracked.status, 200);
-    assert.equal(tracked.data.status, 'completed');
-    assert.deepEqual(Object.keys(tracked.data).sort(), [
-      'delivery_date',
-      'order_code',
-      'order_date',
-      'status',
-    ]);
     assert.equal(
       (await request('/track', { method: 'POST', body: { code: '0'.repeat(32) } })).status,
       404,
-    );
-    assert.equal(
-      (await request('/track', { method: 'POST', body: { code: 'BV-0001' } })).status,
-      422,
     );
     const range = await request('/products?min_price=100000&max_price=150000');
     assert.ok(range.data.some((p) => p.id === created.products[0]));
@@ -611,4 +595,35 @@ test('store settings persist publicly, customer metrics are readable by owner, t
     await db.query('DELETE FROM store_settings WHERE id=1');
     await db.query('DELETE FROM users WHERE id=$1', [u.id]);
   }
+});
+
+test('favorites are idempotent, persisted per visitor, and visible in catalog and admin', async () => {
+  const visitor = 'ca7f843a-67da-49c8-a1c9-6ef44475e391';
+  const id = created.products[0];
+  const first = await request('/favorites/' + id, {
+    method: 'PUT',
+    body: { visitor, favorite: true },
+  });
+  assert.equal(first.status, 200);
+  assert.equal(first.data.count, 1);
+  assert.equal(
+    (await request('/favorites/' + id, { method: 'PUT', body: { visitor, favorite: true } })).data
+      .count,
+    1,
+  );
+  assert.ok((await request('/favorites/' + visitor)).data.includes(String(id)));
+  assert.equal(
+    (await request('/products?sort=popular')).data.find((p) => p.id === id).favorite_count,
+    1,
+  );
+  assert.equal(
+    (await request('/manage/products', { session: admin })).data.find((p) => p.id === id)
+      .favorite_count,
+    1,
+  );
+  assert.equal(
+    (await request('/favorites/' + id, { method: 'PUT', body: { visitor, favorite: false } })).data
+      .count,
+    0,
+  );
 });

@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import { db, transaction } from './pool.js';
 import { migrate } from './migrate.js';
+import { addDemoBouquets } from './demo-bouquets.js';
 const products = [
   [
     'Rosy Reverie',
@@ -70,7 +71,10 @@ try {
       }
     }
     if (process.env.SEED_DEMO === 'false') return;
-    if ((await client.query('SELECT id FROM products LIMIT 1')).rowCount) return;
+    if ((await client.query('SELECT id FROM products LIMIT 1')).rowCount) {
+      await addDemoBouquets(client);
+      return;
+    }
     const cats = [];
     for (const [name, description] of [
       ['Ulang Tahun', 'Rayakan hari yang penuh kebahagiaan'],
@@ -147,6 +151,7 @@ try {
           [o.id, 6 - i, p[1]],
         );
     }
+    await addDemoBouquets(client);
   });
   console.log('Seed complete. Existing accounts and catalog preserved. Demo data is fictional.');
 } finally {
