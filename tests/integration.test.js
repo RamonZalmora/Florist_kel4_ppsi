@@ -486,3 +486,129 @@ test('catalog budget and ordering are validated and applied in the database', as
   assert.equal((await request('/products?sort=unsafe')).status, 422);
   assert.equal((await request('/products?max_price=-1')).status, 422);
 });
+
+test('store settings persist publicly, customer metrics are readable by owner, tracking discloses no personal data, and uploads validate content', async () => {
+  const { default: sharp } = await import('sharp');
+  const { unlink } = await import('node:fs/promises');
+  const { uploadsDirectory } = await import('../server/routes/uploads.js');
+  const { join, basename } = await import('node:path');
+  const secret = randomBytes(18).toString('hex');
+  const u = (
+    await db.query(
+      'INSERT INTO users(username,password_hash,name,role) VALUES($1,$2,$3,$4) RETURNING id',
+      ['retail_' + suffix, await bcrypt.hash(secret, 12), 'Retail Owner', 'owner'],
+    )
+  ).rows[0];
+  let uploaded;
+  try {
+    const session = await login('retail_' + suffix, secret),
+      settings = {
+        name: 'Retail Test Store',
+        address: 'Test address',
+        whatsapp: '6281234567890',
+        instagram: 'https://www.instagram.com/bienvendre/',
+        description: 'Test description',
+        logo: '/assets/logo.svg',
+      };
+    assert.equal((await request('/store', { method: 'PUT', session, body: settings })).status, 403);
+    assert.equal(
+      (
+        await request('/store', {
+          method: 'PUT',
+          session: admin,
+          body: { ...settings, instagram: 'https://evil.example/' },
+        })
+      ).status,
+      422,
+    );
+    assert.equal(
+      (await request('/store', { method: 'PUT', session: admin, body: settings })).status,
+      200,
+    );
+    assert.deepEqual((await request('/store')).data, settings);
+    const customer = await request('/customers', { session });
+    assert.equal(customer.status, 200);
+    assert.ok(Number(customer.data.summary.customers) >= 1);
+    assert.ok(customer.data.rows.some((c) => c.name === 'Test Customer ' + suffix));
+    assert.equal((await request('/customers')).status, 401);
+    const code = (
+      await db.query('SELECT tracking_code FROM orders WHERE id=$1', [created.orders[0]])
+    ).rows[0].tracking_code;
+    assert.match(code, /^[a-f0-9]{32}$/);
+    const tracked = await request('/track', { method: 'POST', body: { code } });
+    assert.equal(tracked.status, 200);
+    assert.equal(tracked.data.status, 'completed');
+    assert.deepEqual(Object.keys(tracked.data).sort(), [
+      'delivery_date',
+      'order_code',
+      'order_date',
+      'status',
+    ]);
+    assert.equal(
+      (await request('/track', { method: 'POST', body: { code: '0'.repeat(32) } })).status,
+      404,
+    );
+    assert.equal(
+      (await request('/track', { method: 'POST', body: { code: 'BV-0001' } })).status,
+      422,
+    );
+    const range = await request('/products?min_price=100000&max_price=150000');
+    assert.ok(range.data.some((p) => p.id === created.products[0]));
+    assert.ok(range.data.every((p) => Number(p.price) >= 100000 && Number(p.price) <= 150000));
+    assert.equal((await request('/products?min_price=200000&max_price=100000')).status, 422);
+    const image = await sharp({
+      create: { width: 4, height: 4, channels: 3, background: '#abcabc' },
+    })
+      .png()
+      .toBuffer();
+    async function upload(bytes, mime, s = admin) {
+      const form = new FormData();
+      form.append('photo', new Blob([bytes], { type: mime }), '../../photo.png');
+      return fetch(base + '/api/uploads', {
+        method: 'POST',
+        headers: { Cookie: s.cookie, 'X-CSRF-Token': s.csrf_token },
+        body: form,
+      });
+    }
+    assert.equal((await upload(image, 'image/png', session)).status, 403);
+    assert.equal(
+      (await upload(Buffer.from('<svg><script>alert(1)</script></svg>'), 'image/png')).status,
+      422,
+    );
+    assert.equal((await upload(Buffer.alloc(5 * 1024 * 1024 + 1), 'image/png')).status, 413);
+    const photo = await upload(image, 'image/png');
+    assert.equal(photo.status, 201);
+    uploaded = (await photo.json()).url;
+    assert.match(uploaded, /^\/uploads\/[a-f0-9-]{36}\.webp$/);
+    const download = await fetch(base + uploaded);
+    assert.equal(download.status, 200);
+    assert.match(download.headers.get('content-type'), /image\/webp/);
+    assert.ok((await download.arrayBuffer()).byteLength > 0);
+    const report = await request('/reports?from=2026-01-01&to=2030-01-01', { session });
+    assert.ok(report.data.trend.length > 0);
+    assert.equal(
+      report.data.trend.reduce((n, x) => n + Number(x.total), 0),
+      report.data.total,
+    );
+    for (let i = 0; i < 45; i++) {
+      const o = (
+        await db.query(
+          "INSERT INTO orders(customer_name,phone_number,order_date,delivery_date,total,created_by,status) VALUES($1,'08111111111','2020-01-01','2020-01-02',1000,$2,'completed') RETURNING id",
+          ['PDF Customer ' + suffix + ' ' + 'Long customer name '.repeat(3), adminId],
+        )
+      ).rows[0];
+      created.orders.push(o.id);
+      await db.query(
+        "INSERT INTO sales(order_id,sale_date,total_sale) VALUES($1,'2020-01-02',1000)",
+        [o.id],
+      );
+    }
+    const multipage = await request('/reports/pdf?from=2020-01-01&to=2020-01-03', { session });
+    assert.equal(multipage.status, 200);
+    assert.ok((multipage.data.toString('latin1').match(/\/Type \/Page\b/g) || []).length >= 2);
+  } finally {
+    if (uploaded) await unlink(join(uploadsDirectory, basename(uploaded)));
+    await db.query('DELETE FROM store_settings WHERE id=1');
+    await db.query('DELETE FROM users WHERE id=$1', [u.id]);
+  }
+});

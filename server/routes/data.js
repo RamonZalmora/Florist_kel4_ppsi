@@ -5,6 +5,7 @@ import { authenticate, authorize } from '../auth.js';
 import { db, transaction } from '../db/pool.js';
 import { fail } from '../validation.js';
 const tables = {
+  store_settings: 'id,name,address,whatsapp,instagram,description,logo,updated_at',
   products: 'id,name,price,flower_type,size,description,photo,active',
   categories: 'id,name,description,photo',
   recommendations: 'id,category_id,product_id,note',

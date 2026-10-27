@@ -1,3 +1,4 @@
+import { storeInfo } from '../store.js';
 import { Router } from 'express';
 import PDFDocument from 'pdfkit';
 import { db } from '../db/pool.js';
@@ -20,6 +21,15 @@ reports.get('/', async (req, res) => {
     from,
     to,
     rows,
+    trend: Object.values(
+      rows.reduce((out, r) => {
+        const day = new Date(r.sale_date).toISOString().slice(0, 10),
+          key = (new Date(to) - new Date(from)) / 86400000 > 62 ? day.slice(0, 7) : day;
+        out[key] ||= { day: key, total: 0 };
+        out[key].total += Number(r.total_sale);
+        return out;
+      }, {}),
+    ).sort((a, b) => a.day.localeCompare(b.day)),
     count: rows.length,
     total: rows.reduce((sum, r) => sum + Number(r.total_sale), 0),
   });
@@ -32,40 +42,101 @@ reports.get('/pdf', async (req, res) => {
     'Content-Type': 'application/pdf',
     'Content-Disposition': `attachment; filename="bien-vendre-${from}-${to}.pdf"`,
   });
-  const doc = new PDFDocument({ size: 'A4', margin: 44 });
+  const store = await storeInfo();
+  const doc = new PDFDocument({ size: 'A4', margin: 44, bufferPages: true });
   doc.pipe(res);
-  doc.fillColor('#345747').fontSize(26).text('BIEN VENDRE');
-  doc.fillColor('#333333').fontSize(15).text('Laporan Penjualan');
-  doc
-    .fontSize(10)
-    .text(`Periode: ${from} sampai ${to}`)
-    .text(`Dicetak: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })} WIB`)
-    .moveDown();
-  const header = () => {
+  const left = 44,
+    width = 507;
+  function title() {
     doc
+      .fillColor('#254d3c')
       .font('Helvetica-Bold')
-      .text('Pesanan / Tanggal / Pelanggan / Total')
-      .font('Helvetica')
-      .moveDown(0.5);
-  };
-  header();
-  if (!rows.length) doc.text('Tidak ada penjualan pada periode ini.');
+      .fontSize(24)
+      .text(store.name, left, 42, { width });
+    doc.font('Helvetica').fontSize(10).fillColor('#6b7e6a').text('LAPORAN PENJUALAN', left, 75);
+    doc.text(`Periode ${from} - ${to}`, left, 93);
+    doc.text(
+      `Dicetak ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })} WIB`,
+      left,
+      109,
+    );
+  }
+  function header(y) {
+    doc.rect(left, y, width, 28).fill('#254d3c');
+    doc.fillColor('white').font('Helvetica-Bold').fontSize(9);
+    for (const [label, x, w] of [
+      ['Pesanan', 50, 72],
+      ['Tanggal', 125, 80],
+      ['Pelanggan', 208, 185],
+      ['Total (Rp)', 397, 147],
+    ])
+      doc.text(label, x, y + 9, { width: w, align: x === 397 ? 'right' : 'left' });
+    return y + 28;
+  }
+  title();
+  let y = header(141),
+    index = 0;
   for (const row of rows) {
-    if (doc.y > 735) {
+    doc.font('Helvetica').fontSize(9);
+    const nameHeight = doc.heightOfString(row.customer_name, { width: 181 });
+    const height = Math.max(34, nameHeight + 18);
+    if (y + height > 735) {
       doc.addPage();
-      header();
+      doc
+        .fillColor('#254d3c')
+        .font('Helvetica-Bold')
+        .fontSize(13)
+        .text(store.name + ' - Lanjutan', left, 40);
+      y = header(70);
     }
+    if (index++ % 2 === 0) doc.rect(left, y, width, height).fill('#f1f4ed');
     doc
-      .text(
-        `#BV-${String(row.order_id).padStart(4, '0')} | ${new Date(row.sale_date).toISOString().slice(0, 10)} | ${row.customer_name} | ${money(row.total_sale)}`,
-      )
-      .moveDown(0.5);
+      .fillColor('#263e33')
+      .font('Helvetica')
+      .fontSize(9)
+      .text('BV-' + String(row.order_id).padStart(4, '0'), 50, y + 9, { width: 72 })
+      .text(new Date(row.sale_date).toISOString().slice(0, 10), 125, y + 9, { width: 80 })
+      .text(row.customer_name, 208, y + 9, { width: 181 })
+      .text(money(row.total_sale), 397, y + 9, { width: 147, align: 'right' });
+    y += height;
+  }
+  if (!rows.length) {
+    doc
+      .fillColor('#63705e')
+      .fontSize(11)
+      .text('Tidak ada penjualan pada periode ini.', left, y + 18);
+    y += 55;
+  }
+  if (y + 85 > 735) {
+    doc.addPage();
+    y = 55;
   }
   doc
-    .moveDown()
+    .moveTo(left, y + 12)
+    .lineTo(left + width, y + 12)
+    .strokeColor('#cbd7c1')
+    .stroke();
+  doc
+    .fillColor('#254d3c')
     .font('Helvetica-Bold')
-    .text(`Jumlah transaksi: ${rows.length}`)
-    .text(`Total penjualan: ${money(rows.reduce((n, r) => n + Number(r.total_sale), 0))}`);
+    .fontSize(11)
+    .text(`Jumlah transaksi: ${rows.length}`, left, y + 28)
+    .text(
+      'Total penjualan: ' + money(rows.reduce((n, r) => n + Number(r.total_sale), 0)),
+      left,
+      y + 48,
+      { width, align: 'right' },
+    );
+  const range = doc.bufferedPageRange();
+  for (let i = range.start; i < range.start + range.count; i++) {
+    doc.switchToPage(i);
+    doc
+      .font('Helvetica')
+      .fontSize(8)
+      .fillColor('#7d8877')
+      .text('Bien Vendre - Dokumen internal', 44, 770, { lineBreak: false })
+      .text(`${i + 1} / ${range.count}`, 480, 770, { width: 71, align: 'right', lineBreak: false });
+  }
   doc.end();
 });
 export const dashboard = Router();

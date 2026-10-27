@@ -1,3 +1,4 @@
+import { storeInfo } from '../store.js';
 import { z } from 'zod';
 import { Router } from 'express';
 import { db } from '../db/pool.js';
@@ -10,14 +11,7 @@ import {
   fail,
 } from '../validation.js';
 export const catalog = Router();
-catalog.get('/store', (req, res) =>
-  res.json({
-    name: 'Bien Vendre',
-    address: process.env.STORE_ADDRESS || 'Pekanbaru, Riau',
-    whatsapp: process.env.STORE_WHATSAPP || '',
-    instagram: process.env.STORE_INSTAGRAM || '',
-  }),
-);
+catalog.get('/store', async (req, res) => res.json(await storeInfo()));
 catalog.get('/categories', async (req, res) =>
   res.json(
     (
@@ -33,6 +27,11 @@ catalog.get('/products', async (req, res) => {
   const maxPrice = req.query.max_price
     ? z.coerce.number().positive().max(1000000000).parse(req.query.max_price)
     : null;
+  const minPrice = req.query.min_price
+    ? z.coerce.number().min(0).max(1000000000).parse(req.query.min_price)
+    : null;
+  if (minPrice !== null && maxPrice !== null && minPrice > maxPrice)
+    fail(422, 'Harga minimum tidak boleh melebihi harga maksimum.');
   const sort = z
     .enum(['recommended', 'price_asc', 'price_desc'])
     .parse(req.query.sort || 'recommended');
@@ -44,8 +43,8 @@ catalog.get('/products', async (req, res) => {
   res.json(
     (
       await db.query(
-        `SELECT p.*,COALESCE((SELECT json_agg(json_build_object('id',c.id,'name',c.name)) FROM recommendations r JOIN categories c ON c.id=r.category_id WHERE r.product_id=p.id),'[]') AS categories FROM products p WHERE p.active=true AND (p.name ILIKE $1 OR p.description ILIKE $1) AND ($2::bigint IS NULL OR EXISTS(SELECT 1 FROM recommendations r WHERE r.product_id=p.id AND r.category_id=$2)) AND ($3::numeric IS NULL OR p.price<=$3) ORDER BY ${order}`,
-        ['%' + search + '%', category, maxPrice],
+        `SELECT p.*,COALESCE((SELECT json_agg(json_build_object('id',c.id,'name',c.name)) FROM recommendations r JOIN categories c ON c.id=r.category_id WHERE r.product_id=p.id),'[]') AS categories FROM products p WHERE p.active=true AND (p.name ILIKE $1 OR p.description ILIKE $1) AND ($2::bigint IS NULL OR EXISTS(SELECT 1 FROM recommendations r WHERE r.product_id=p.id AND r.category_id=$2)) AND ($3::numeric IS NULL OR p.price<=$3) AND ($4::numeric IS NULL OR p.price>=$4) ORDER BY ${order}`,
+        ['%' + search + '%', category, maxPrice, minPrice],
       )
     ).rows,
   );

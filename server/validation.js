@@ -5,7 +5,10 @@ export const photo = z
   .string()
   .max(1500)
   .refine(
-    (v) => /^\/assets\/[a-zA-Z0-9_.\/-]+$/.test(v) || /^https:\/\//.test(v),
+    (v) =>
+      /^\/assets\/[a-zA-Z0-9_.\/-]+$/.test(v) ||
+      /^\/uploads\/[a-f0-9-]{36}\.webp$/.test(v) ||
+      /^https:\/\//.test(v),
     'Gunakan URL HTTPS atau aset lokal /assets/',
   );
 export const productSchema = z.object({
