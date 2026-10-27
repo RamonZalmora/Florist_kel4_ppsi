@@ -86,7 +86,8 @@ test('database health and public catalog require no login', async () => {
 test('role boundaries and CSRF are enforced in backend', async () => {
   assert.equal((await request('/orders')).status, 401);
   assert.equal((await request('/manage/products', { session: owner })).status, 403);
-  assert.equal((await request('/reports', { session: admin })).status, 403);
+  assert.equal((await request('/reports')).status, 401);
+  assert.equal((await request('/reports/pdf')).status, 401);
   assert.equal(
     (await request('/manage/products', { method: 'POST', body: product, session: owner })).status,
     403,
@@ -298,10 +299,16 @@ test('transaction rollback rejects nonexistent, duplicated and inactive product 
   );
   assert.equal((await db.query('SELECT count(*) FROM orders')).rows[0].count, before);
 });
-test('owner report uses sale dates and generates a real PDF, including empty periods', async () => {
+test('admin and owner reports use sale dates and generate PDFs, including empty periods', async () => {
   const report = await request('/reports?from=2026-01-01&to=2030-01-01', { session: owner });
   assert.equal(report.status, 200);
   assert.ok(report.data.rows.some((r) => r.order_id === created.orders[0]));
+  const adminReport = await request('/reports?from=2026-01-01&to=2030-01-01', { session: admin });
+  assert.equal(adminReport.status, 200);
+  assert.deepEqual(adminReport.data, report.data);
+  const adminPdf = await request('/reports/pdf?from=2026-01-01&to=2030-01-01', { session: admin });
+  assert.equal(adminPdf.status, 200);
+  assert.equal(adminPdf.data.subarray(0, 5).toString(), '%PDF-');
   const pdf = await request('/reports/pdf?from=2026-01-01&to=2030-01-01', { session: owner });
   assert.equal(pdf.status, 200);
   assert.equal(pdf.data.subarray(0, 5).toString(), '%PDF-');

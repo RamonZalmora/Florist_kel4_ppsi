@@ -5,7 +5,7 @@ import { db } from '../db/pool.js';
 import { authenticate, authorize } from '../auth.js';
 import { period } from '../validation.js';
 export const reports = Router();
-reports.use(authenticate, authorize('owner'));
+reports.use(authenticate, authorize('admin', 'owner'));
 async function sales(from, to) {
   return (
     await db.query(
