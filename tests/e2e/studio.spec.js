@@ -59,10 +59,10 @@ test('forgot-password screen explains unavailable email and invalid reset links 
 test('customer can combine a budget and price order', async ({ page }) => {
   await page.goto('/catalog');
   await expect(page.locator('.product-card')).toHaveCount(6);
-  await page.getByLabel('Anggaran', { exact: true }).selectOption('200000');
+  await page.getByRole('combobox', { name: 'Anggaran', exact: true }).selectOption('200000');
   await expect(page.locator('.product-card')).toHaveCount(2);
-  await page.getByLabel('Urutkan', { exact: true }).selectOption('price_asc');
+  await page.getByRole('combobox', { name: 'Urutkan', exact: true }).selectOption('price_asc');
   await expect(page.locator('.product-card').first()).toContainText('Memories Frame');
-  await page.getByLabel('Anggaran', { exact: true }).selectOption('');
+  await page.getByRole('combobox', { name: 'Anggaran', exact: true }).selectOption('');
   await expect(page.locator('.product-card')).toHaveCount(6);
 });

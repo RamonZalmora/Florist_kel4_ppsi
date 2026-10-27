@@ -406,6 +406,28 @@ test('email verification and password recovery are single-use, expiring and revo
     const newSession = await login(username, newPassword);
     assert.equal(newSession.role, 'admin');
     assert.equal(
+      (
+        await request('/auth/change-password', {
+          method: 'POST',
+          session: newSession,
+          body: { current_password: 'wrong', password: newPassword + 'x' },
+        })
+      ).status,
+      403,
+    );
+    assert.equal(
+      (
+        await request('/auth/change-password', {
+          method: 'POST',
+          session: newSession,
+          body: { current_password: newPassword, password: newPassword + 'x' },
+        })
+      ).status,
+      200,
+    );
+    assert.equal((await request('/auth/me', { session: newSession })).status, 401);
+
+    assert.equal(
       (await request('/auth/login', { method: 'POST', body: { username, password: oldPassword } }))
         .status,
       401,

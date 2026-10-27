@@ -190,3 +190,15 @@ React, Vite, Lucide, Node.js/Express, PGlite/PostgreSQL, Zod, bcrypt, dan PDFKit
 Pesanan selesai menghasilkan satu penjualan dalam transaksi database. Harga item disimpan sebagai snapshot; perubahan katalog tidak mengubah transaksi selesai. Daftar pesanan dibatasi 500 terbaru, sementara laporan mencakup semua penjualan dalam periode.
 
 Pengelolaan akun lanjutan, upload foto, dan konfigurasi domain/HTTPS produksi belum tersedia. Website belum dideploy.
+
+## Atelier: fitur terbaru
+
+Identitas visual baru memakai hijau hutan, ivory, dan aset floral editorial. Visual produk awal merupakan gambar contoh hasil generasi; ganti dengan foto produk toko sebelum digunakan untuk penawaran nyata.
+
+- **Agenda pengiriman:** jadwal pesanan aktif, catatan rangkaian, dan penanda pesanan melewati tanggal pengiriman.
+- **Pengaturan keamanan:** ganti password dan verifikasi email pemulihan. Lupa password memakai tautan sekali pakai yang berlaku 15 menit; semua sesi berakhir setelah reset.
+- **Data bisnis owner:** lihat tabel tanpa aplikasi database tambahan dan unduh JSON setelah konfirmasi password. Ekspor tidak menyertakan akun, password/hash, sesi, atau token; ini bukan backup lengkap.
+
+Pemulihan email memerlukan `PUBLIC_URL`, `RESEND_API_KEY`, dan `MAIL_FROM` yang terverifikasi. Tanpa konfigurasi tersebut, UI menjelaskan bahwa layanan belum aktif. Untuk publikasi permanen, ikuti [panduan Render + Neon + Resend](docs/DEPLOYMENT.md). Aplikasi belum dinyatakan online sebelum URL publik dan email nyata diverifikasi.
+
+[Arah produk dan batas fitur](docs/PRODUCT-DIRECTION.md).
