@@ -118,7 +118,7 @@ try {
       .id;
     for (let i = 0; i < 7; i++) {
       const p = products[i % 6],
-        status = i < 4 ? 'completed' : i === 4 ? 'processing' : 'pending';
+        status = i < 4 ? 'completed' : 'pending';
       const o = (
         await client.query(
           "INSERT INTO orders(customer_name,phone_number,order_date,delivery_date,request,status,total,created_by) VALUES($1,$2,(now() AT TIME ZONE 'Asia/Jakarta')::date-$3::int,(now() AT TIME ZONE 'Asia/Jakarta')::date+2,$4,$5,$6,$7) RETURNING id",

@@ -224,21 +224,6 @@ test('order totals are server-derived and completion records one immutable sale'
   });
   assert.equal(r.status, 200);
   assert.equal(Number(r.data.total), 370370.34);
-  assert.equal(
-    (
-      await request('/orders/' + id + '/status', {
-        method: 'PATCH',
-        session: admin,
-        body: { status: 'completed' },
-      })
-    ).status,
-    409,
-  );
-  await request('/orders/' + id + '/status', {
-    method: 'PATCH',
-    session: admin,
-    body: { status: 'processing' },
-  });
   const results = await Promise.all([
     request('/orders/' + id + '/status', {
       method: 'PATCH',
@@ -268,7 +253,7 @@ test('order totals are server-derived and completion records one immutable sale'
         body: { status: 'cancelled' },
       })
     ).status,
-    409,
+    422,
   );
   assert.equal((await request('/orders', { session: owner })).status, 200);
 });
@@ -619,6 +604,9 @@ test('favorites are idempotent, persisted per visitor, and visible in catalog an
     1,
   );
   assert.ok((await request('/favorites/' + visitor)).data.includes(String(id)));
+  const dashboard = (await request('/dashboard', { session: admin })).data;
+  assert.equal(dashboard.popular[0].id, id);
+  assert.equal(dashboard.popular[0].favorite_count, 1);
   assert.equal(
     (await request('/products?sort=popular')).data.find((p) => p.id === id).favorite_count,
     1,
@@ -654,4 +642,30 @@ test('newest order reflects product edits', async () => {
     200,
   );
   assert.equal((await request('/products?sort=newest')).data[0].id, id);
+});
+
+test('legacy processing becomes unfinished while cancelled and completed history stays unchanged', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const legacy = [];
+  try {
+    for (const status of ['processing', 'cancelled', 'completed']) {
+      const result = await db.query(
+        "INSERT INTO orders(customer_name,phone_number,order_date,delivery_date,total,created_by,status) VALUES('Legacy','08123456789','2026-01-01','2026-01-02',1000,$1,$2) RETURNING id",
+        [adminId, status],
+      );
+      legacy.push(result.rows[0].id);
+    }
+    await db.query(
+      await readFile(new URL('../server/db/006_order_status.sql', import.meta.url), 'utf8'),
+    );
+    const rows = (
+      await db.query('SELECT status FROM orders WHERE id=ANY($1::bigint[]) ORDER BY id', [legacy])
+    ).rows;
+    assert.deepEqual(
+      rows.map((r) => r.status),
+      ['pending', 'cancelled', 'completed'],
+    );
+  } finally {
+    for (const id of legacy) await db.query('DELETE FROM orders WHERE id=$1', [id]);
+  }
 });

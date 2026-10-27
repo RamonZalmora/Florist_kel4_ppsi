@@ -85,13 +85,13 @@ orders.patch('/:id/status', authorize('admin'), async (req, res) => {
       if (!row) fail(404, 'Pesanan tidak ditemukan.');
       if (row.status === status) return row;
       const transitions = {
-        pending: ['processing', 'cancelled'],
-        processing: ['completed', 'cancelled'],
+        pending: ['completed'],
+        processing: ['completed'],
         completed: [],
         cancelled: [],
       };
       if (!transitions[row.status].includes(status))
-        fail(409, 'Perubahan status tidak diizinkan. Pesanan harus diproses sebelum diselesaikan.');
+        fail(409, 'Pesanan selesai atau arsip tidak dapat diubah.');
       if (status === 'completed')
         await client.query(
           "INSERT INTO sales(order_id,sale_date,total_sale) VALUES($1,(now() AT TIME ZONE 'Asia/Jakarta')::date,$2)",
@@ -111,8 +111,7 @@ orders.delete('/:id', authorize('admin'), async (req, res) => {
       ])
     ).rows[0];
     if (!row) fail(404, 'Pesanan tidak ditemukan.');
-    if (row.status !== 'pending')
-      fail(409, 'Hanya pesanan baru yang dapat dihapus. Batalkan pesanan yang sedang diproses.');
+    if (row.status !== 'pending') fail(409, 'Hanya pesanan belum selesai yang dapat dihapus.');
     await client.query('DELETE FROM orders WHERE id=$1', [idSchema.parse(req.params.id)]);
   });
   res.json({ ok: true });

@@ -150,7 +150,7 @@ dashboard.get('/', async (req, res) => {
       `SELECT to_char(d.day,'YYYY-MM-DD') AS day,COALESCE(sum(s.total_sale),0) AS total FROM generate_series((now() AT TIME ZONE 'Asia/Jakarta')::date-6,(now() AT TIME ZONE 'Asia/Jakarta')::date,'1 day'::interval) d(day) LEFT JOIN sales s ON s.sale_date=d.day::date GROUP BY d.day ORDER BY d.day`,
     ),
     db.query(
-      `SELECT p.id,p.name,p.photo,COALESCE(sum(i.quantity) FILTER(WHERE o.status='completed'),0)::int AS sold FROM products p LEFT JOIN order_items i ON i.product_id=p.id LEFT JOIN orders o ON o.id=i.order_id WHERE p.active=true GROUP BY p.id ORDER BY sold DESC,p.id LIMIT 4`,
+      `SELECT p.id,p.name,p.photo,count(f.visitor_id)::int AS favorite_count FROM products p LEFT JOIN product_favorites f ON f.product_id=p.id WHERE p.active=true GROUP BY p.id ORDER BY favorite_count DESC,p.id DESC LIMIT 4`,
     ),
   ]);
   res.json({ summary: summary.rows[0], trend: trend.rows, popular: popular.rows });

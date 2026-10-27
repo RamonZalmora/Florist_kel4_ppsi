@@ -61,7 +61,7 @@ export const orderSchema = z
     path: ['items'],
   });
 export const statusSchema = z.object({
-  status: z.enum(['pending', 'processing', 'completed', 'cancelled']),
+  status: z.enum(['pending', 'completed']),
 });
 export function period(query) {
   const end = new Date().toISOString().slice(0, 10),

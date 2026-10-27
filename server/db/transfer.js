@@ -44,7 +44,11 @@ export async function transfer(source, destination) {
     for (const row of rows) {
       await destination.query(
         `INSERT INTO ${table}(${columns.join(',')}) OVERRIDING SYSTEM VALUE VALUES(${columns.map((_, i) => '$' + (i + 1)).join(',')})`,
-        columns.map((column) => row[column]),
+        columns.map((column) =>
+          table === 'orders' && column === 'status' && row[column] === 'processing'
+            ? 'pending'
+            : row[column],
+        ),
       );
     }
     await destination.query(
