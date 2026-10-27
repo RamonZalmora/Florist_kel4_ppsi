@@ -120,6 +120,15 @@ export function StoreEditor({ store, onSaved, notify }) {
           />
         </label>
       </div>
+      <label>
+        TikTok toko
+        <input
+          name="tiktok"
+          defaultValue={store.tiktok || ''}
+          placeholder="https://www.tiktok.com/@akun_toko"
+          maxLength={300}
+        />
+      </label>
       <PhotoField name="logo" initialValue={store.logo} onBusyChange={setUploading} />
       <button className="btn primary" disabled={busy || uploading}>
         <ShieldCheck size={17} />

@@ -1,4 +1,4 @@
-import { PhotoField, StoreEditor, OrderTracker, SalesTrend } from './RetailFeatures';
+import { PhotoField, StoreEditor, SalesTrend } from './RetailFeatures';
 import { RecoveryScreen, AccountSecurity, DeliveryAgenda, DataStudio } from './StudioFeatures';
 import React, { useState, useEffect, useCallback } from 'react';
 import { createRoot } from 'react-dom/client';
@@ -37,6 +37,8 @@ import {
   Image,
   ShoppingBasket,
   LockKeyhole,
+  Instagram,
+  MessageCircle,
 } from 'lucide-react';
 import { api, setCsrf, money, date, today, orderCode } from './api';
 import './styles.css';
@@ -330,7 +332,41 @@ function Login({ onBack, onLogin }) {
 function Catalog({ user, onLogin, onDashboard, notify }) {
   const [budget, setBudget] = useState(''),
     [minPrice, setMinPrice] = useState(''),
-    [sort, setSort] = useState('recommended');
+    [sort, setSort] = useState('recommended'),
+    [occasion, setOccasion] = useState(false),
+    [favorites, setFavorites] = useState([]);
+  const [visitor] = useState(() => {
+    let id = localStorage.getItem('bv_visitor');
+    if (!id) {
+      id = crypto.randomUUID();
+      localStorage.setItem('bv_visitor', id);
+    }
+    return id;
+  });
+  useEffect(() => {
+    api('/favorites/' + visitor)
+      .then(setFavorites)
+      .catch(() => {});
+  }, [visitor]);
+  async function toggleFavorite(p) {
+    try {
+      const favorite = !favorites.includes(String(p.id));
+      const result = await api('/favorites/' + p.id, {
+        method: 'PUT',
+        body: JSON.stringify({ visitor, favorite }),
+      });
+      setFavorites((current) =>
+        favorite ? [...current, String(p.id)] : current.filter((id) => id !== String(p.id)),
+      );
+      setProducts((current) =>
+        current.map((item) =>
+          item.id === p.id ? { ...item, favorite_count: result.count } : item,
+        ),
+      );
+    } catch (e) {
+      notify(e.message, true);
+    }
+  }
   const [products, setProducts] = useState([]),
     [categories, setCategories] = useState([]),
     [store, setStore] = useState({}),
@@ -409,10 +445,25 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
           </div>
         </a>
         <div className="nav-links">
-          <a href="#collection">Koleksi bunga</a>
-          <a href="#moments">Momen spesial</a>
+          <a
+            href="#collection"
+            onClick={() => {
+              setOccasion(false);
+              setCategory('');
+            }}
+          >
+            Koleksi bunga
+          </a>
+          <a
+            href="#collection"
+            onClick={() => {
+              setOccasion(true);
+              setCategory('');
+            }}
+          >
+            Occasion
+          </a>
           <a href="#about">Tentang kami</a>
-          <a href="#tracking">Lacak pesanan</a>
         </div>
         <button className="btn outline" onClick={user ? onDashboard : onLogin}>
           {user ? <LayoutDashboard size={16} /> : <LockKeyhole size={16} />}{' '}
@@ -420,63 +471,72 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
         </button>
       </nav>
       <main>
-        <section className="catalog-hero">
-          <div className="hero-copy">
-            <span className="pill">
-              <Leaf size={14} /> Dirangkai dengan hati, untuk Anda
-            </span>
-            <h1>
-              Bunga yang indah.
-              <br />
-              Cerita yang <em>bermakna.</em>
-            </h1>
-            <p>
-              Temukan rangkaian bunga dan hadiah untuk setiap momen istimewa. Karena perhatian kecil
-              bisa berarti segalanya.
-            </p>
-            <a className="btn primary" href="#collection">
-              Jelajahi koleksi <ArrowUpRight size={19} />
-            </a>
-            <div className="hero-foot">
-              <Heart size={16} />
-              <span>Personal, penuh makna, dibuat dengan cinta.</span>
+        {!occasion && (
+          <section className="catalog-hero">
+            <div className="hero-copy">
+              <span className="pill">
+                <Leaf size={14} /> Dirangkai dengan hati, untuk Anda
+              </span>
+              <h1>
+                Bunga yang indah.
+                <br />
+                Cerita yang <em>bermakna.</em>
+              </h1>
+              <p>
+                Temukan rangkaian bunga dan hadiah untuk setiap momen istimewa. Karena perhatian
+                kecil bisa berarti segalanya.
+              </p>
+              <a className="btn primary" href="#collection">
+                Jelajahi koleksi <ArrowUpRight size={19} />
+              </a>
+              <div className="hero-foot">
+                <Heart size={16} />
+                <span>Personal, penuh makna, dibuat dengan cinta.</span>
+              </div>
             </div>
-          </div>
-          <div className="hero-stamp">
-            <Flower2 size={28} />
-            <span>MADE WITH LOVE</span>
-            <small>Bien Vendre</small>
-          </div>
-        </section>
-        <section className="moments" id="moments">
-          <div>
-            <span className="eyebrow">UNTUK SETIAP CERITA</span>
-            <h2>Apa yang ingin Anda rayakan?</h2>
-          </div>
-          <div className="moment-list">
-            {categories.map((c, i) => (
-              <button
-                className={category === String(c.id) ? 'moment active' : 'moment'}
-                key={c.id}
-                onClick={() => {
-                  setCategory(String(c.id));
-                  document.getElementById('collection').scrollIntoView({ behavior: 'smooth' });
-                }}
-              >
-                <span>{[<Heart />, <Sparkles />, <Flower2 />, <ShoppingBag />][i % 4]}</span>
-                <strong>{c.name}</strong>
-                <small>{c.description}</small>
-                <ArrowUpRight size={17} />
-              </button>
-            ))}
-          </div>
-        </section>
+            <div className="hero-stamp">
+              <Flower2 size={28} />
+              <span>MADE WITH LOVE</span>
+              <small>Bien Vendre</small>
+            </div>
+          </section>
+        )}
+        {!occasion && (
+          <section className="moments" id="moments">
+            <div>
+              <span className="eyebrow">UNTUK SETIAP CERITA</span>
+              <h2>Apa yang ingin Anda rayakan?</h2>
+            </div>
+            <div className="moment-list">
+              {categories.map((c, i) => (
+                <button
+                  className={category === String(c.id) ? 'moment active' : 'moment'}
+                  key={c.id}
+                  onClick={() => {
+                    setOccasion(true);
+                    setCategory(String(c.id));
+                    document.getElementById('collection').scrollIntoView({ behavior: 'smooth' });
+                  }}
+                >
+                  <span>{[<Heart />, <Sparkles />, <Flower2 />, <ShoppingBag />][i % 4]}</span>
+                  <strong>{c.name}</strong>
+                  <small>{c.description}</small>
+                  <ArrowUpRight size={17} />
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
         <section className="collection" id="collection">
           <div className="section-heading">
             <div>
               <span className="eyebrow">OUR THOUGHTFUL COLLECTION</span>
               <h2>
-                {category ? 'Rekomendasi untuk momen Anda' : 'Sedikit bunga, banyak bahagia.'}
+                {occasion
+                  ? 'Bunga untuk setiap occasion'
+                  : category
+                    ? 'Rekomendasi untuk momen Anda'
+                    : 'Sedikit bunga, banyak bahagia.'}
               </h2>
               <p>
                 {category
@@ -494,86 +554,138 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
               />
             </label>
           </div>
-          <div className="filter-tabs">
-            <button className={!category ? 'active' : ''} onClick={() => setCategory('')}>
-              Semua koleksi
-            </button>
-            {categories.map((c) => (
-              <button
-                key={c.id}
-                className={category === String(c.id) ? 'active' : ''}
-                onClick={() => setCategory(String(c.id))}
-              >
-                {c.name}
-              </button>
-            ))}
-          </div>
-          <div className="catalog-tools">
-            <label>
-              Harga minimum
-              <input
-                type="number"
-                min="0"
-                max="1000000000"
-                value={minPrice}
-                onChange={(e) => setMinPrice(e.target.value)}
-                placeholder="Rp 0"
-              />
-            </label>
-            <label>
-              Anggaran
-              <select value={budget} onChange={(e) => setBudget(e.target.value)}>
-                <option value="">Semua harga</option>
-                <option value="200000">Hingga Rp200.000</option>
-                <option value="350000">Hingga Rp350.000</option>
-                <option value="500000">Hingga Rp500.000</option>
-              </select>
-            </label>
-            <label>
-              Urutkan
-              <select value={sort} onChange={(e) => setSort(e.target.value)}>
-                <option value="recommended">Pilihan koleksi</option>
-                <option value="price_asc">Harga terendah</option>
-                <option value="price_desc">Harga tertinggi</option>
-              </select>
-            </label>
-            <span>Temukan rangkaian yang sesuai momen dan anggaran Anda.</span>
-          </div>
-          {loading ? (
-            <div className="empty">
-              <LoaderCircle className="spin" /> Memuat koleksi…
-            </div>
-          ) : error ? (
-            <Empty text={error} />
-          ) : !products.length ? (
-            <Empty text="Belum ada produk yang sesuai. Coba kategori atau pencarian lain." />
-          ) : (
-            <div className="product-grid">
-              {products.map((p, i) => (
-                <button className="product-card" key={p.id} onClick={() => showProduct(p.id)}>
-                  <div className={'product-picture tone-' + (i % 3)}>
-                    <Photo src={p.photo} alt={p.name} />
-                    <span className="view-product">
-                      <Eye size={16} /> Lihat detail
-                    </span>
-                    {p.categories?.[0] && (
-                      <span className="product-tag">{p.categories[0].name}</span>
-                    )}
-                  </div>
-                  <div className="product-card-info">
-                    <div>
-                      <h3>{p.name}</h3>
-                      <p>{p.flower_type}</p>
-                    </div>
-                    <ArrowUpRight size={20} />
-                  </div>
-                  <strong className="product-price">{money(p.price)}</strong>
+          <div className="catalog-layout">
+            <aside className="catalog-sidebar">
+              <h3>Temukan bunga</h3>
+              <div className="filter-tabs">
+                <button className={!category ? 'active' : ''} onClick={() => setCategory('')}>
+                  Semua koleksi
                 </button>
-              ))}
+                {categories.map((c) => (
+                  <button
+                    key={c.id}
+                    className={category === String(c.id) ? 'active' : ''}
+                    onClick={() => setCategory(String(c.id))}
+                  >
+                    {c.name}
+                  </button>
+                ))}
+              </div>
+              <div className="catalog-tools">
+                <label>
+                  Harga minimum
+                  <input
+                    type="number"
+                    min="0"
+                    max="1000000000"
+                    value={minPrice}
+                    onChange={(e) => setMinPrice(e.target.value)}
+                    placeholder="Rp 0"
+                  />
+                </label>
+                <label>
+                  Anggaran
+                  <select value={budget} onChange={(e) => setBudget(e.target.value)}>
+                    <option value="">Semua harga</option>
+                    <option value="200000">Hingga Rp200.000</option>
+                    <option value="350000">Hingga Rp350.000</option>
+                    <option value="500000">Hingga Rp500.000</option>
+                  </select>
+                </label>
+                <label>
+                  Urutkan
+                  <select value={sort} onChange={(e) => setSort(e.target.value)}>
+                    <option value="recommended">Pilihan koleksi</option>
+                    <option value="price_asc">Harga terendah</option>
+                    <option value="price_desc">Harga tertinggi</option>
+                    <option value="popular">Paling banyak favorit</option>
+                  </select>
+                </label>
+                <button
+                  className="btn outline"
+                  onClick={() => {
+                    setMinPrice('500000');
+                    setBudget('');
+                  }}
+                >
+                  Premium · Rp500.000+
+                </button>
+                <button
+                  className="text-btn"
+                  onClick={() => {
+                    setMinPrice('');
+                    setBudget('');
+                    setCategory('');
+                    setSort('recommended');
+                  }}
+                >
+                  Reset filter
+                </button>
+              </div>
+            </aside>
+            <div className="catalog-results">
+              {loading ? (
+                <div className="empty">
+                  <LoaderCircle className="spin" /> Memuat koleksi…
+                </div>
+              ) : error ? (
+                <Empty text={error} />
+              ) : !products.length ? (
+                <Empty text="Belum ada produk yang sesuai. Coba kategori atau pencarian lain." />
+              ) : (
+                <div className="product-grid">
+                  {products.map((p, i) => (
+                    <article className="product-card" key={p.id}>
+                      <div
+                        className={'product-picture tone-' + (i % 3)}
+                        onClick={() => showProduct(p.id)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') showProduct(p.id);
+                        }}
+                      >
+                        <Photo src={p.photo} alt={p.name} />
+                        <span className="view-product">
+                          <Eye size={16} /> Lihat detail
+                        </span>
+                        {p.categories?.[0] && (
+                          <span className="product-tag">{p.categories[0].name}</span>
+                        )}
+                      </div>
+                      <div className="product-card-info">
+                        <div>
+                          <h3>{p.name}</h3>
+                          <p>{p.flower_type}</p>
+                        </div>
+                        <ArrowUpRight size={20} />
+                      </div>
+                      <strong className="product-price">{money(p.price)}</strong>
+                      <button
+                        className={
+                          'favorite-btn ' + (favorites.includes(String(p.id)) ? 'selected' : '')
+                        }
+                        aria-label={
+                          (favorites.includes(String(p.id))
+                            ? 'Hapus favorit '
+                            : 'Tambahkan favorit ') + p.name
+                        }
+                        aria-pressed={favorites.includes(String(p.id))}
+                        onClick={() => toggleFavorite(p)}
+                      >
+                        <Heart
+                          size={17}
+                          fill={favorites.includes(String(p.id)) ? 'currentColor' : 'none'}
+                        />{' '}
+                        {p.favorite_count || 0} favorit
+                      </button>
+                    </article>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </section>
-        <OrderTracker />
         <section className="about-banner" id="about">
           <Flower2 size={50} />
           <div>
@@ -597,12 +709,17 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
         <div>
           {whatsapp && (
             <a href={'https://wa.me/' + whatsapp} target="_blank" rel="noreferrer">
-              WhatsApp <ExternalLink size={14} />
+              <MessageCircle size={17} /> WhatsApp <ExternalLink size={14} />
             </a>
           )}
           {/^https:\/\/(www\.)?instagram\.com\//.test(store.instagram || '') && (
             <a href={store.instagram} target="_blank" rel="noreferrer">
-              Instagram <ExternalLink size={14} />
+              <Instagram size={17} /> Instagram <ExternalLink size={14} />
+            </a>
+          )}
+          {/^(https:\/\/)(www\.)?tiktok\.com\/@[a-zA-Z0-9_.]+\/?$/.test(store.tiktok || '') && (
+            <a href={store.tiktok} target="_blank" rel="noreferrer">
+              <span aria-hidden="true">♪</span> TikTok <ExternalLink size={14} />
             </a>
           )}
         </div>
@@ -726,9 +843,6 @@ function Workspace({ user, view, setView, logout, notify }) {
             <button key={id} className={view === id ? 'active' : ''} onClick={() => go(id)}>
               <Icon size={18} />
               {label}
-              {id === 'orders' && data && (
-                <span className="nav-count">{data.dashboard.summary.pending_orders}</span>
-              )}
             </button>
           ))}
         </nav>
@@ -872,7 +986,7 @@ function Dashboard({ data, user, go }) {
       'Transaksi pesanan selesai',
       'sage',
     ],
-    ['Pesanan aktif', summary.pending_orders, ShoppingBag, 'Baru & sedang diproses', 'peach'],
+    ['Total pesanan', data.orders.length, ShoppingBag, 'Pesanan tercatat', 'peach'],
     ['Pelanggan', summary.customers, Users, 'Berdasarkan nomor telepon', 'lavender'],
     ['Produk aktif', summary.products, Package, 'Tersedia di katalog', 'gold'],
   ];
@@ -950,27 +1064,6 @@ function Dashboard({ data, user, go }) {
                 </div>
               ))}
             </div>
-          </div>
-        </section>
-        <section className="panel">
-          <div className="panel-heading">
-            <div>
-              <h2>Status pesanan</h2>
-              <p>Perjalanan setiap rangkaian</p>
-            </div>
-            <ShoppingBag size={18} />
-          </div>
-          <div className="status-overview">
-            {Object.entries(statuses).map(([key, label]) => (
-              <div key={key}>
-                <Badge status={key} />
-                <strong>{data.orders.filter((o) => o.status === key).length}</strong>
-              </div>
-            ))}
-          </div>
-          <div className="soft-note">
-            <Leaf size={19} />
-            <p>Perhatian pada setiap pesanan membuat pelanggan kembali.</p>
           </div>
         </section>
         <section className="panel recent-orders">
@@ -1091,6 +1184,7 @@ function Products({ data, query, notify, refresh }) {
               <th>Produk</th>
               <th>Jenis & ukuran</th>
               <th>Harga</th>
+              <th>Favorit</th>
               <th>Status</th>
               <th>Aksi</th>
             </tr>
@@ -1112,6 +1206,9 @@ function Products({ data, query, notify, refresh }) {
                   <small className="cell-sub">{p.size}</small>
                 </td>
                 <td className="nowrap">{money(p.price)}</td>
+                <td>
+                  <Heart size={14} /> {p.favorite_count || 0}
+                </td>
                 <td>
                   <span className={'badge ' + (p.active ? 'completed' : 'cancelled')}>
                     <i />
@@ -1515,7 +1612,7 @@ function OrderTable({ orders, user, compact, onDetail, onEdit, onRemove, onStatu
             <th>Pelanggan</th>
             <th>{compact ? 'Produk' : 'Pengiriman'}</th>
             <th>Total</th>
-            <th>Status</th>
+            {!compact && <th>Status</th>}
             {!compact && <th>Aksi</th>}
           </tr>
         </thead>
@@ -1548,9 +1645,11 @@ function OrderTable({ orders, user, compact, onDetail, onEdit, onRemove, onStatu
                 )}
               </td>
               <td className="nowrap">{money(o.total)}</td>
-              <td>
-                <Badge status={o.status} />
-              </td>
+              {!compact && (
+                <td>
+                  <Badge status={o.status} />
+                </td>
+              )}
               {!compact && (
                 <td>
                   <div className="row-actions">
@@ -1692,11 +1791,6 @@ function Orders({ data, user, query, notify, refresh }) {
               </tbody>
             </table>
           </div>
-          <label className="tracking-code-label">
-            Kode pelacakan pribadi
-            <input readOnly value={detail.tracking_code || ''} onFocus={(e) => e.target.select()} />
-            <small className="hint">Bagikan hanya kepada pelanggan pemilik pesanan.</small>
-          </label>
           <div className="order-total">
             <span>Total pesanan</span>
             <strong>{money(detail.total)}</strong>
