@@ -43,10 +43,8 @@ import {
 import { api, setCsrf, money, date, today, orderCode } from './api';
 import './styles.css';
 const statuses = {
-  pending: 'Baru',
-  processing: 'Diproses',
+  pending: 'Belum selesai',
   completed: 'Selesai',
-  cancelled: 'Dibatalkan',
 };
 const asset = '/assets/bouquet-rose.svg';
 function Photo({ src, alt, ...props }) {
@@ -385,6 +383,60 @@ function SocialLinks({ store, whatsapp }) {
         ),
       )}
     </div>
+  );
+}
+function FloatingSocial({ store, whatsapp }) {
+  const links = [
+    {
+      name: 'WhatsApp',
+      icon: <MessageCircle size={19} />,
+      href: whatsapp ? 'https://wa.me/' + whatsapp : '',
+      className: 'wa',
+    },
+    {
+      name: 'Instagram',
+      icon: <Instagram size={19} />,
+      href: /^https:\/\/(www\.)?instagram\.com\//.test(store.instagram || '')
+        ? store.instagram
+        : '',
+      className: 'ig',
+    },
+    {
+      name: 'TikTok',
+      icon: <TikTokIcon size={20} />,
+      href: /^https:\/\/(www\.)?tiktok\.com\/@[a-zA-Z0-9_.]+\/?$/.test(store.tiktok || '')
+        ? store.tiktok
+        : '',
+      className: 'tt',
+    },
+  ];
+  return (
+    <aside className="floating-social" aria-label="Media sosial toko">
+      {links.map(({ name, icon, href, className }) =>
+        href ? (
+          <a
+            key={name}
+            className={className}
+            href={href}
+            target="_blank"
+            rel="noreferrer"
+            title={name}
+            aria-label={name}
+          >
+            {icon}
+          </a>
+        ) : (
+          <span
+            key={name}
+            className={className + ' disabled'}
+            title={name + ' belum dikonfigurasi'}
+            aria-label={name + ' belum dikonfigurasi'}
+          >
+            {icon}
+          </span>
+        ),
+      )}
+    </aside>
   );
 }
 function AboutPage({ store, whatsapp, onExplore }) {
@@ -930,6 +982,7 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
           )}
         </div>
       </footer>
+      <FloatingSocial store={store} whatsapp={whatsapp} />
       {detail && (
         <Modal title="Detail produk" onClose={() => setDetail(null)} wide>
           <div className="product-detail">
@@ -1278,13 +1331,17 @@ function Dashboard({ data, user, go }) {
               Lihat semua <ArrowUpRight size={16} />
             </button>
           </div>
-          <OrderTable orders={data.orders.slice(0, 5)} user={user} compact />
+          <OrderTable
+            orders={data.orders.filter((o) => o.status !== 'cancelled').slice(0, 5)}
+            user={user}
+            compact
+          />
         </section>
         <section className="panel popular-products">
           <div className="panel-heading">
             <div>
               <h2>Favorit pelanggan</h2>
-              <p>Berdasarkan produk terjual</p>
+              <p>Berdasarkan tanda hati pelanggan</p>
             </div>
             <Heart size={18} />
           </div>
@@ -1293,7 +1350,7 @@ function Dashboard({ data, user, go }) {
               <Photo src={p.photo} alt={p.name} />
               <div>
                 <strong>{p.name}</strong>
-                <small>{p.sold} rangkaian terjual</small>
+                <small>{p.favorite_count} favorit</small>
               </div>
               <span>0{i + 1}</span>
             </div>
@@ -1909,6 +1966,7 @@ function Orders({ data, user, query, notify, refresh }) {
     { busy, mutate } = useMutation(notify, refresh);
   const orders = data.orders.filter(
     (o) =>
+      o.status !== 'cancelled' &&
       (!filter || o.status === filter) &&
       (o.customer_name + ' ' + o.phone_number + ' ' + orderCode(o.id))
         .toLowerCase()
@@ -2043,38 +2101,21 @@ function Orders({ data, user, query, notify, refresh }) {
             Saat ini: <Badge status={status.status} />
           </p>
           <div className="status-actions">
-            {(status.status === 'pending'
-              ? ['processing', 'cancelled']
-              : ['completed', 'cancelled']
-            ).map((s) => (
-              <button
-                key={s}
-                className={'btn ' + (s === 'cancelled' ? 'outline' : 'primary')}
-                disabled={busy}
-                onClick={() =>
-                  mutate(
-                    '/orders/' + status.id + '/status',
-                    'PATCH',
-                    { status: s },
-                    () => setStatus(null),
-                    'Status pesanan diperbarui.',
-                  )
-                }
-              >
-                {s === 'completed' ? (
-                  <Check size={17} />
-                ) : s === 'processing' ? (
-                  <ArrowRight size={17} />
-                ) : (
-                  <X size={17} />
-                )}{' '}
-                {s === 'completed'
-                  ? 'Selesaikan & catat penjualan'
-                  : s === 'processing'
-                    ? 'Mulai proses'
-                    : 'Batalkan pesanan'}
-              </button>
-            ))}
+            <button
+              className="btn primary"
+              disabled={busy}
+              onClick={() =>
+                mutate(
+                  '/orders/' + status.id + '/status',
+                  'PATCH',
+                  { status: 'completed' },
+                  () => setStatus(null),
+                  'Pesanan selesai dan penjualan tercatat.',
+                )
+              }
+            >
+              <Check size={17} /> Selesaikan & catat penjualan
+            </button>
           </div>
           <p className="hint">
             Pesanan selesai otomatis menjadi penjualan dan tidak dapat diubah lagi.

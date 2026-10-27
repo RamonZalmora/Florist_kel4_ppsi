@@ -8,7 +8,7 @@ Website katalog dan manajemen penjualan florist dengan tampilan pelanggan, dashb
 
 - Katalog, pencarian, detail produk, dan rekomendasi menurut kategori momen.
 - Pengelolaan produk, kategori, rekomendasi, dan pesanan oleh admin.
-- Pesanan multi-item, permintaan khusus, status pemrosesan, dan riwayat penjualan.
+- Pesanan multi-item, permintaan khusus, status belum selesai atau selesai, dan riwayat penjualan.
 - Dashboard owner, filter periode penjualan, dan unduhan laporan PDF.
 - Login dengan hak akses, password bcrypt, sesi HttpOnly, serta perlindungan CSRF.
 - Tampilan responsif untuk desktop dan HP.
@@ -181,7 +181,7 @@ Tes backend memakai database sementara terpisah dari data aplikasi. Tes browser 
 
 React, Vite, Lucide, Node.js/Express, PGlite/PostgreSQL, Zod, bcrypt, dan PDFKit. Struktur tabel dan aturan penjualan dijelaskan di [DATABASE.md](docs/DATABASE.md).
 
-Pesanan selesai menghasilkan satu penjualan dalam transaksi database. Harga item disimpan sebagai snapshot; perubahan katalog tidak mengubah transaksi selesai. Daftar pesanan dibatasi 500 terbaru, sementara laporan mencakup semua penjualan dalam periode.
+Pesanan yang belum selesai dapat langsung diselesaikan dan menghasilkan satu penjualan dalam transaksi database. Pesanan lama yang dibatalkan tetap disimpan sebagai arsip dan tidak ditampilkan dalam daftar pesanan aktif. Harga item disimpan sebagai snapshot; perubahan katalog tidak mengubah transaksi selesai. Daftar pesanan dibatasi 500 terbaru, sementara laporan mencakup semua penjualan dalam periode.
 
 Pengelolaan akun lanjutan, upload foto, dan konfigurasi domain/HTTPS produksi belum tersedia. Website belum dideploy.
 

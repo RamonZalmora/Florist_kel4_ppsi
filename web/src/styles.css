@@ -3592,3 +3592,337 @@ tr:hover td {
     grid-column: 1 / -1;
   }
 }
+
+/* Vibrant floral editorial */
+.catalog-page {
+  background: #fff8f5;
+  color: #3d2435;
+}
+.public-nav {
+  background: #fff9f5;
+  border-color: #f0dce3;
+}
+.public-nav .brand {
+  color: #743b59;
+}
+.public-nav .nav-links {
+  font-size: 15px;
+  font-weight: 600;
+  color: #69495a;
+}
+.public-nav .nav-links a:hover {
+  color: #b33e72;
+  border-color: #d27698;
+}
+.catalog-hero {
+  border-radius: 0;
+  min-height: 640px;
+  padding: 85px clamp(28px, 7vw, 110px);
+  background:
+    linear-gradient(90deg, #321528ed 0%, #522338c9 40%, #52233810 80%),
+    url('/assets/florist-editorial.webp') center/cover;
+}
+.catalog-hero .hero-copy {
+  max-width: 720px;
+}
+.catalog-hero .hero-copy h1 {
+  font-size: clamp(50px, 6.3vw, 90px);
+  line-height: 1.03;
+  letter-spacing: -3px;
+  color: #fff6ef;
+}
+.catalog-hero .hero-copy h1 em {
+  color: #ffb4ba;
+}
+.catalog-hero .hero-copy p {
+  font-size: 17px;
+  max-width: 475px;
+  color: #fff0eb;
+}
+.catalog-hero .pill {
+  color: #fff4ee;
+  background: #ffffff18;
+  font-size: 12px;
+}
+.catalog-hero .hero-copy .btn {
+  background: #ffd2c9;
+  color: #71364e;
+  font-size: 15px;
+  padding: 17px 26px;
+  border-radius: 999px;
+}
+.catalog-hero .hero-foot {
+  font-size: 13px;
+  color: #fff0e9;
+}
+.hero-stamp {
+  background: #ffe6d0e8;
+  color: #a44061;
+  border-color: #ffbdba;
+}
+.moments {
+  background: #fff0eb;
+  padding-top: 80px;
+  padding-bottom: 80px;
+}
+.moments h2,
+.section-heading h2 {
+  font-size: clamp(34px, 4vw, 52px);
+  color: #5c2c46;
+  letter-spacing: -1.5px;
+}
+.moments .eyebrow,
+.collection .eyebrow {
+  color: #b65c7c;
+  font-size: 11px;
+  letter-spacing: 0.17em;
+}
+.moment-list {
+  gap: 18px;
+  margin-top: 34px;
+}
+.moment {
+  min-height: 205px;
+  padding: 28px;
+  border-radius: 20px;
+  border: 1px solid #e6ccd4;
+  background: linear-gradient(145deg, #ffe8df, #f6c9d4);
+  box-shadow: 0 12px 28px #8d3f5d10;
+}
+.moment:nth-child(2) {
+  background: linear-gradient(145deg, #f4edff, #dcd1f0);
+}
+.moment:nth-child(3) {
+  background: linear-gradient(145deg, #fff6d9, #f5dcb6);
+}
+.moment:nth-child(4) {
+  background: linear-gradient(145deg, #edf6ed, #cce6d1);
+}
+.moment:hover,
+.moment.active {
+  background: #fff7f4;
+  border-color: #c6738e;
+  transform: translateY(-5px);
+  box-shadow: 0 18px 34px #8d3f5d1c;
+}
+.moment strong {
+  color: #583147;
+  font:
+    400 24px Georgia,
+    serif;
+}
+.moment small {
+  color: #73596a;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.moment > span {
+  background: #ffffff9e;
+  color: #a34b6b;
+}
+.collection {
+  padding-top: 75px;
+  padding-bottom: 80px;
+}
+.section-heading p {
+  color: #765f6a;
+  font-size: 15px;
+}
+.product-grid {
+  gap: 28px;
+}
+.product-card {
+  position: relative;
+  background: #fff;
+  border: 1px solid #f0dde2;
+  border-radius: 20px;
+  padding: 11px 11px 18px;
+  box-shadow: 0 12px 32px #843f5d0d;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
+}
+.product-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 38px #843f5d1d;
+}
+.product-picture {
+  border-radius: 14px;
+}
+.product-card-info {
+  padding: 0 8px;
+}
+.product-card h3 {
+  color: #5a2a46;
+  font-size: 24px;
+}
+.product-card p {
+  color: #796571;
+  font-size: 13px;
+}
+.product-price {
+  color: #9d4565;
+  font-size: 17px;
+  padding: 0 8px;
+}
+.favorite-btn {
+  margin-left: 8px;
+  font-size: 13px;
+  color: #9a5c75;
+}
+.favorite-btn.selected {
+  color: #cc3d75;
+}
+.catalog-sidebar {
+  background: #fff0eb;
+  border-color: #efd5db;
+}
+.about-banner {
+  background: #f4dce2;
+  border-color: #eacbd3;
+  color: #69354f;
+}
+.catalog-page footer {
+  background: #4a263b;
+}
+.floating-social {
+  position: fixed;
+  z-index: 30;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.floating-social a,
+.floating-social span {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  color: white;
+  box-shadow: 0 5px 16px #30122140;
+  border: 2px solid #fff;
+  transition: transform 0.2s;
+}
+.floating-social a:hover {
+  transform: scale(1.12);
+}
+.floating-social .wa {
+  background: #1eae60;
+}
+.floating-social .ig {
+  background: linear-gradient(140deg, #8e43b2, #e54b75, #e6a449);
+}
+.floating-social .tt {
+  background: #191721;
+}
+.floating-social .disabled {
+  opacity: 0.48;
+}
+@media (max-width: 720px) {
+  .catalog-hero {
+    min-height: 500px;
+    padding: 55px 24px;
+    background-position: 62% center;
+  }
+  .catalog-hero .hero-copy h1 {
+    font-size: clamp(41px, 11vw, 60px);
+    letter-spacing: -1.5px;
+  }
+  .catalog-hero .hero-copy p {
+    font-size: 15px;
+    max-width: 270px;
+  }
+  .moments {
+    padding-top: 55px;
+    padding-bottom: 55px;
+  }
+  .moment {
+    min-height: 165px;
+    padding: 18px;
+  }
+  .moment strong {
+    font-size: 19px;
+  }
+  .moment small {
+    font-size: 11px;
+  }
+  .product-grid {
+    gap: 16px;
+  }
+  .product-card {
+    border-radius: 14px;
+    padding: 7px 7px 13px;
+  }
+  .product-card h3 {
+    font-size: 18px;
+  }
+  .product-price {
+    font-size: 14px;
+  }
+  .floating-social {
+    right: 7px;
+    gap: 5px;
+  }
+  .floating-social a,
+  .floating-social span {
+    width: 35px;
+    height: 35px;
+  }
+}
+/* Matching workspace palette */
+.workspace {
+  background: #faf5f4;
+}
+.sidebar {
+  background: linear-gradient(165deg, #462439, #68364f 60%, #3e2233);
+}
+.sidebar nav button.active {
+  background: #ffffff26;
+  border-color: #ffd6d133;
+  box-shadow: inset 3px 0 #ffc2b3;
+}
+.sidebar-label {
+  color: #d6b4c3;
+}
+.topbar {
+  background: #fff9f6;
+  border-color: #eedfe3;
+}
+.page-heading h1 {
+  font-family: Georgia, serif;
+  color: #5a2c43;
+}
+.dashboard-banner {
+  background:
+    linear-gradient(90deg, #4b243ced, #4b243c50),
+    url('/assets/florist-editorial.webp') center/cover;
+}
+.stat-card {
+  background: #fffdfb;
+  border-color: #efdee5;
+}
+.stat-card span {
+  color: #795869;
+  font-size: 12px;
+}
+.stat-card strong {
+  color: #743a57;
+}
+.panel {
+  border-color: #efdee5;
+}
+.panel-heading h2 {
+  font-size: 17px;
+  color: #62354c;
+}
+.panel-heading p {
+  font-size: 12px;
+}
+.badge.pending {
+  background: #fff0d3;
+  color: #8d5d20;
+}
