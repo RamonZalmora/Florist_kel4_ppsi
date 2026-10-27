@@ -3297,3 +3297,158 @@ tr:hover td {
     font-size: 11px;
   }
 }
+
+/* About: an editorial introduction to the florist */
+.about-page {
+  color: #17372b;
+  background: #faf7f1;
+}
+.about-intro {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 570px;
+  background: #ece8dd;
+}
+.about-intro-copy {
+  padding: clamp(45px, 8vw, 125px);
+  align-self: center;
+}
+.about-intro h1 {
+  font:
+    400 clamp(45px, 5vw, 76px)/1.06 Georgia,
+    serif;
+  letter-spacing: -2px;
+  margin: 22px 0;
+}
+.about-intro h1 em,
+.about-story h2 em {
+  color: #8e765c;
+  font-weight: 400;
+}
+.about-intro-copy p {
+  max-width: 475px;
+  color: #5f6c60;
+  font-size: 16px;
+  line-height: 1.8;
+  margin-bottom: 30px;
+}
+.about-intro-photo {
+  background: #e6ded0 url('/assets/bouquets/birthday-vase.webp') center / cover;
+  min-height: 400px;
+}
+.about-story {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8%;
+  padding: 100px clamp(24px, 9vw, 140px);
+}
+.about-story h2,
+.about-contact h2 {
+  font:
+    400 clamp(34px, 4vw, 56px)/1.15 Georgia,
+    serif;
+  margin: 18px 0;
+}
+.about-story p,
+.about-contact p {
+  line-height: 1.85;
+  color: #5f6c60;
+  font-size: 15px;
+}
+.about-values {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: #d9dfd4;
+  border-block: 1px solid #d9dfd4;
+}
+.about-values article {
+  background: #f2f4ec;
+  padding: 45px clamp(24px, 5vw, 75px);
+}
+.about-values svg {
+  color: #ad806f;
+}
+.about-values h3,
+.about-care h3 {
+  font:
+    400 23px Georgia,
+    serif;
+  margin: 20px 0 10px;
+}
+.about-values p,
+.about-care p {
+  color: #68796b;
+  line-height: 1.7;
+  font-size: 14px;
+}
+.about-contact {
+  padding: 100px clamp(24px, 9vw, 140px);
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  gap: 10%;
+  align-items: center;
+}
+.about-contact p svg {
+  vertical-align: middle;
+}
+.about-care {
+  background: #e8e3d6;
+  border-radius: 8px;
+  padding: 35px;
+}
+.about-care small {
+  color: #6a786b;
+  line-height: 1.6;
+}
+.social-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 26px;
+}
+.social-links a,
+.social-unavailable {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #cbd2c4;
+  border-radius: 30px;
+  padding: 11px 14px;
+  font-size: 12px;
+  color: #254d3c;
+}
+.social-links a:hover {
+  background: #254d3c;
+  color: white;
+}
+.social-unavailable {
+  opacity: 0.65;
+}
+.social-unavailable small {
+  font-size: 9px;
+}
+@media (max-width: 720px) {
+  .about-intro,
+  .about-story,
+  .about-contact {
+    grid-template-columns: 1fr;
+  }
+  .about-intro-copy {
+    padding: 55px 25px;
+  }
+  .about-intro-photo {
+    min-height: 300px;
+  }
+  .about-story,
+  .about-contact {
+    padding: 60px 25px;
+    gap: 25px;
+  }
+  .about-values {
+    grid-template-columns: 1fr;
+  }
+  .about-values article {
+    padding: 30px 25px;
+  }
+}
