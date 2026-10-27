@@ -6,7 +6,7 @@ Sebelumnya profil/kontak dibaca dari environment. Owner dapat mengubah nama, ala
 
 Nomor WhatsApp berupa angka dengan kode negara dan URL Instagram dibatasi ke profil instagram.com. Tidak perlu restart untuk perubahan data; refresh katalog yang sudah terbuka untuk mengambil nilai terbaru.
 
-## P1 — Laporan owner
+## P1 — Laporan admin dan owner
 
 Halaman laporan mempunyai grafik periode. Agregasi harian untuk rentang sampai 62 hari dan bulanan untuk rentang lebih panjang; hanya tanggal/bulan dengan transaksi yang ditampilkan. Total grafik sama dengan total transaksi pada periode terpilih.
 

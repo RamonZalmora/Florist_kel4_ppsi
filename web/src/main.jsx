@@ -1034,6 +1034,7 @@ const navAdmin = [
   ['categories', 'Kategori', Tags],
   ['recommendations', 'Rekomendasi', Sparkles],
   ['orders', 'Pesanan', ShoppingBag],
+  ['reports', 'Riwayat & laporan', ChartNoAxesCombined],
   ['customers', 'Pelanggan', Users],
 ];
 const navOwner = [
@@ -2535,7 +2536,7 @@ function StoreSettings({ user, notify }) {
           </dl>
           <p className="soft-note">
             {user.role === 'admin'
-              ? 'Anda dapat mengelola produk, kategori, rekomendasi, dan pesanan.'
+              ? 'Anda dapat mengelola produk, kategori, rekomendasi, pesanan, dan melihat laporan penjualan.'
               : 'Anda dapat melihat pesanan, riwayat penjualan, dan mengunduh laporan PDF.'}
           </p>
           <p className="hint">

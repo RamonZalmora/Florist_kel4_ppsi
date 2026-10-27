@@ -1,6 +1,6 @@
 # Bien Vendre · Florist & Gifts
 
-Website katalog dan manajemen penjualan florist dengan tampilan pelanggan, dashboard admin, dan laporan untuk owner. Bahasa Indonesia, mata uang rupiah, dan zona waktu Asia/Jakarta.
+Website katalog dan manajemen penjualan florist dengan tampilan pelanggan, dashboard serta laporan untuk admin dan owner. Bahasa Indonesia, mata uang rupiah, dan zona waktu Asia/Jakarta.
 
 ![Dashboard Bien Vendre](docs/screenshots/admin-desktop.png)
 
@@ -9,14 +9,14 @@ Website katalog dan manajemen penjualan florist dengan tampilan pelanggan, dashb
 - Katalog, pencarian, detail produk, dan rekomendasi menurut kategori momen.
 - Pengelolaan produk, kategori, rekomendasi, dan pesanan oleh admin.
 - Pesanan multi-item, permintaan khusus, status belum selesai atau selesai, dan riwayat penjualan.
-- Dashboard owner, filter periode penjualan, dan unduhan laporan PDF.
+- Dashboard admin dan owner, filter periode penjualan, dan unduhan laporan PDF.
 - Login dengan hak akses, password bcrypt, sesi HttpOnly, serta perlindungan CSRF.
 - Tampilan responsif untuk desktop dan HP.
 
 | Pengguna | Akses |
 |---|---|
 | Pelanggan | Katalog, detail, dan rekomendasi tanpa login; konsultasi melalui kanal toko. |
-| Admin | Mengelola katalog dan mencatat/memproses pesanan. |
+| Admin | Mengelola katalog, mencatat pesanan, melihat penjualan, dan mengunduh laporan. |
 | Owner | Melihat pesanan dan penjualan serta mengunduh laporan. |
 
 ## Mulai cepat di Windows
@@ -225,7 +225,7 @@ Data PostgreSQL mode ini terpisah dari folder PGlite. Pertahankan data lama sebe
 ## Pembaruan fitur operasional
 
 - **Pengaturan toko (owner):** nama, alamat, deskripsi, logo, WhatsApp, Instagram, dan TikTok bisa diubah dari dashboard; tersimpan di database.
-- **Laporan owner:** grafik tren mengikuti periode dan PDF berupa tabel dengan header berulang serta nomor halaman.
+- **Laporan admin dan owner:** grafik tren mengikuti periode dan PDF berupa tabel dengan header berulang serta nomor halaman.
 - **Pelanggan:** empat kartu statistik dan akses baca untuk owner; ringkasan tidak lagi terbatas pada 500 pesanan.
 - **Katalog:** pilihan occasion dan urutan produk paling banyak difavoritkan. Favorit disimpan per browser dan jumlahnya terlihat di halaman produk admin.
 - **Produk contoh:** 20 buket dengan ilustrasi yang dibuat secara digital ditambahkan saat setup jika data demo diaktifkan. Produk yang sudah ada tidak ditimpa; gambar dapat diganti dengan foto asli dari dashboard.
