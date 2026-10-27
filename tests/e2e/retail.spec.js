@@ -44,6 +44,13 @@ test('admin can upload a real photo into the product form; store settings form i
       .setInputFiles({ name: 'foto.png', mimeType: 'image/png', buffer: image });
     await expect(page.getByLabel('URL foto', { exact: true })).toHaveValue(/^\/uploads\/.+\.webp$/);
     photo = await page.getByLabel('URL foto', { exact: true }).inputValue();
+    await expect
+      .poll(() =>
+        page.locator('.upload-preview').evaluate((img) => img.complete && img.naturalWidth > 0),
+      )
+      .toBe(true);
+    const served = await page.context().request.get(photo);
+    expect(served.headers()['content-type']).toContain('image/webp');
     await page.getByRole('button', { name: 'Simpan', exact: true }).click();
     await expect(page.getByRole('dialog')).toHaveCount(0);
     await expect(page.locator('tr').filter({ hasText: name })).toBeVisible();

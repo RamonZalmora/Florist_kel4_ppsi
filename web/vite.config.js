@@ -10,6 +10,9 @@ export default defineConfig({
     port: Number(process.env.WEB_PORT || 3000),
     strictPort: true,
     open: process.env.OPEN_BROWSER === '1' ? '/catalog' : false,
-    proxy: { '/api': `http://127.0.0.1:${process.env.API_PORT || 3001}` },
+    proxy: {
+      '/api': `http://127.0.0.1:${process.env.API_PORT || 3001}`,
+      '/uploads': `http://127.0.0.1:${process.env.API_PORT || 3001}`,
+    },
   },
 });

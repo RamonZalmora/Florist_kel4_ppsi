@@ -222,3 +222,15 @@ docker compose stop
 Data PostgreSQL mode ini terpisah dari folder PGlite. Pertahankan data lama sebelum berpindah mode.
 
 </details>
+
+## Pembaruan fitur operasional
+
+- **Pengaturan toko (admin):** nama, alamat, deskripsi, logo, WhatsApp, dan Instagram bisa diubah dari dashboard; tersimpan di database.
+- **Laporan owner:** grafik tren mengikuti periode dan PDF berupa tabel dengan header berulang serta nomor halaman.
+- **Pelanggan:** empat kartu statistik dan akses baca untuk owner; ringkasan tidak lagi terbatas pada 500 pesanan.
+- **Katalog:** harga minimum + maksimum dan widget pelacakan status menggunakan kode pribadi dari detail pesanan.
+- **Foto produk/logo:** upload JPEG/PNG/WebP dari perangkat, maksimal 5 MB; tersimpan sebagai WebP di `.local/uploads`. Ganti password tetap tersedia di Pengaturan keamanan.
+
+Setelah mengunduh pembaruan, hentikan server, jalankan `npm.cmd ci` sekali untuk memasang dependency baru, lalu buka `Mulai-BienVendre.cmd`. Data lama dipertahankan oleh migrasi. Backup juga folder `.local/uploads` selain database.
+
+Lihat [audit fitur dan batas penggunaan](docs/FEATURE-AUDIT.md). Fokus tetap localhost; tidak perlu akun hosting atau deploy.
