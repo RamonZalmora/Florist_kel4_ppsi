@@ -1,0 +1,1 @@
+UPDATE store_settings SET instagram='https://www.instagram.com/bienvendreofficial?psln=bm10anhqdTk5eG1y', logo=CASE WHEN logo='/assets/logo.svg' THEN '/assets/bien-mark.svg' ELSE logo END, updated_at=now() WHERE id=1;

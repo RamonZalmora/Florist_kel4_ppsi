@@ -82,6 +82,15 @@ export async function migrate() {
       );
       await client.query('INSERT INTO schema_migrations(version) VALUES($1)', ['009']);
     }
+    if (
+      !(await client.query('SELECT version FROM schema_migrations WHERE version=$1', ['010']))
+        .rowCount
+    ) {
+      await client.query(
+        await readFile(new URL('./010_brand_instagram.sql', import.meta.url), 'utf8'),
+      );
+      await client.query('INSERT INTO schema_migrations(version) VALUES($1)', ['010']);
+    }
   });
 }
 if (basename(process.argv[1] || '') === 'migrate.js') {

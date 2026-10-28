@@ -520,7 +520,7 @@ test('store settings persist publicly, customer metrics are readable by owner, a
         name: 'Retail Test Store',
         address: 'Test address',
         whatsapp: '6281234567890',
-        instagram: 'https://share.google/PciYm0L1lPyb6IhXpc',
+        instagram: 'https://www.instagram.com/bienvendreofficial?psln=bm10anhqdTk5eG1y',
         tiktok: 'https://www.tiktok.com/@bienvendre',
         shopee: 'https://shopee.co.id/bienvendreofficial',
         tokopedia: 'https://www.tokopedia.com/bienvendreofficialb?source=universe&st=product',

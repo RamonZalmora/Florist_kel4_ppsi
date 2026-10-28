@@ -18,13 +18,25 @@ export const storeSchema = z.object({
     .string()
     .trim()
     .max(300)
-    .refine(
-      (v) =>
-        v === '' ||
-        /^https:\/\/(www\.)?instagram\.com\/[a-zA-Z0-9_.]+\/?$/.test(v) ||
-        /^https:\/\/share\.google\/[a-zA-Z0-9_-]+\/?$/.test(v),
-      'Gunakan URL Instagram atau tautan share.google yang valid.',
-    ),
+    .refine((v) => {
+      if (v === '') return true;
+      try {
+        const u = new URL(v);
+        return (
+          u.protocol === 'https:' &&
+          !u.username &&
+          !u.password &&
+          !u.port &&
+          ((['instagram.com', 'www.instagram.com'].includes(u.hostname) &&
+            /^\/[a-zA-Z0-9_.]+\/?$/.test(u.pathname)) ||
+            (u.hostname === 'share.google' &&
+              /^\/[a-zA-Z0-9_-]+\/?$/.test(u.pathname) &&
+              !u.search))
+        );
+      } catch {
+        return false;
+      }
+    }, 'Gunakan URL Instagram atau tautan share.google yang valid.'),
   tiktok: z
     .string()
     .trim()

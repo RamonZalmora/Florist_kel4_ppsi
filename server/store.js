@@ -10,7 +10,7 @@ export async function storeInfo() {
       name: 'Bien Vendre',
       address: process.env.STORE_ADDRESS || 'Pekanbaru, Riau',
       whatsapp: '6282380087007',
-      instagram: 'https://share.google/PciYm0L1lPyb6IhXpc',
+      instagram: 'https://www.instagram.com/bienvendreofficial?psln=bm10anhqdTk5eG1y',
       shopee: 'https://shopee.co.id/bienvendreofficial',
       tokopedia: 'https://www.tokopedia.com/bienvendreofficialb?source=universe&st=product',
       tiktok: '',
@@ -18,7 +18,7 @@ export async function storeInfo() {
       about_service: '',
       care_tips: '',
       description: 'Florist & Gifts',
-      logo: '/assets/logo.svg',
+      logo: '/assets/bien-mark.svg',
     }
   );
 }

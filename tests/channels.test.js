@@ -32,6 +32,22 @@ test('store channels update existing settings once without changing other profil
     await migrate();
     row = (await db.query('SELECT whatsapp FROM store_settings WHERE id=1')).rows[0];
     assert.equal(row.whatsapp, '6281234567890');
+    await db.query("DELETE FROM schema_migrations WHERE version='010'");
+    await migrate();
+    row = (await db.query('SELECT instagram,logo,whatsapp FROM store_settings WHERE id=1')).rows[0];
+    assert.equal(
+      row.instagram,
+      'https://www.instagram.com/bienvendreofficial?psln=bm10anhqdTk5eG1y',
+    );
+    assert.equal(row.logo, '/assets/bien-mark.svg');
+    assert.equal(row.whatsapp, '6281234567890');
+    await db.query("UPDATE store_settings SET logo='/uploads/custom.webp' WHERE id=1");
+    await db.query("DELETE FROM schema_migrations WHERE version='010'");
+    await migrate();
+    assert.equal(
+      (await db.query('SELECT logo FROM store_settings WHERE id=1')).rows[0].logo,
+      '/uploads/custom.webp',
+    );
   } finally {
     await db.end();
     rmSync(directory, { recursive: true, force: true });
