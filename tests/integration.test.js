@@ -321,6 +321,28 @@ test('admin and owner reports use sale dates and generate PDFs, including empty 
     200,
   );
 });
+test('WhatsApp contact is initialized once and remains editable by owner', async () => {
+  const { readFile } = await import('node:fs/promises');
+  assert.equal((await request('/store')).data.whatsapp, '628566365052');
+  await db.query("INSERT INTO store_settings(id,name,whatsapp) VALUES(1,'Test','628111111111')");
+  try {
+    await db.query(
+      await readFile(new URL('../server/db/008_whatsapp_contact.sql', import.meta.url), 'utf8'),
+    );
+    assert.equal((await request('/store')).data.whatsapp, '628566365052');
+    const store = (await request('/store')).data;
+    const update = await request('/store', {
+      method: 'PUT',
+      session: owner,
+      body: { ...store, whatsapp: '628222222222' },
+    });
+    assert.equal(update.status, 200);
+    await migrate();
+    assert.equal((await request('/store')).data.whatsapp, '628222222222');
+  } finally {
+    await db.query('DELETE FROM store_settings WHERE id=1');
+  }
+});
 test('dashboard reflects relational data and logout invalidates session', async () => {
   const r = await request('/dashboard', { session: owner });
   assert.equal(r.status, 200);

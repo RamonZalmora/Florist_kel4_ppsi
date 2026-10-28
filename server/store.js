@@ -9,7 +9,7 @@ export async function storeInfo() {
     row || {
       name: 'Bien Vendre',
       address: process.env.STORE_ADDRESS || 'Pekanbaru, Riau',
-      whatsapp: process.env.STORE_WHATSAPP || '',
+      whatsapp: '628566365052',
       instagram: process.env.STORE_INSTAGRAM || '',
       tiktok: '',
       about_story: '',
