@@ -8,7 +8,7 @@ test('product order opens WhatsApp with the chosen product and price', async ({ 
         address: '',
         description: '',
         logo: '',
-        whatsapp: '628566365052',
+        whatsapp: '6282380087007',
         instagram: '',
         tiktok: '',
       },
@@ -21,7 +21,7 @@ test('product order opens WhatsApp with the chosen product and price', async ({ 
   const link = card.getByRole('link', { name: `Pesan ${name} via WhatsApp` });
   await expect(link).toBeVisible();
   const url = new URL(await link.getAttribute('href'));
-  expect(url.origin + url.pathname).toBe('https://wa.me/628566365052');
+  expect(url.origin + url.pathname).toBe('https://wa.me/6282380087007');
   expect(url.searchParams.get('text')).toContain(name);
   expect(url.searchParams.get('text').replace(/\s/g, '')).toContain(price);
   expect(await link.getAttribute('target')).toBe('_blank');

@@ -332,38 +332,94 @@ function Login({ onBack, onLogin }) {
     </div>
   );
 }
-function TikTokIcon({ size = 19 }) {
+function WhatsAppIcon() {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M16.7 2c.2 2 1.3 3.3 3.3 3.4v3.1a7.1 7.1 0 0 1-3.3-.9v6.7c0 3.5-2.4 5.7-5.7 5.7-3 0-5.3-2.2-5.3-5.1 0-3.2 2.5-5.4 5.9-5v3.2c-1.5-.4-2.7.3-2.7 1.8 0 1.2.9 2 2.1 2 1.6 0 2.4-1 2.4-2.8V2h3.3Z" />
+    <svg width="25" height="25" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M12.04 2a9.93 9.93 0 0 0-8.53 15.05L2 22l5.11-1.34A9.94 9.94 0 1 0 12.04 2Zm0 18.13a8.13 8.13 0 0 1-4.14-1.13l-.3-.18-3.03.8.81-2.95-.2-.31a8.16 8.16 0 1 1 6.86 3.77Zm4.48-6.11c-.24-.12-1.44-.71-1.66-.79-.22-.08-.38-.12-.54.12s-.62.79-.76.95c-.14.16-.28.18-.52.06-.24-.12-1.02-.38-1.94-1.2-.72-.64-1.21-1.43-1.35-1.67-.14-.24-.02-.37.11-.49.11-.11.24-.28.36-.42.12-.14.16-.24.24-.4.08-.16.04-.3-.02-.42-.06-.12-.54-1.31-.74-1.8-.19-.47-.39-.4-.54-.41h-.46c-.16 0-.42.06-.64.3-.22.24-.84.82-.84 2.01 0 1.18.86 2.33.98 2.49.12.16 1.69 2.58 4.1 3.62.57.25 1.02.39 1.37.5.58.18 1.12.15 1.54.09.47-.07 1.44-.59 1.64-1.15.2-.56.2-1.04.14-1.15-.06-.1-.22-.16-.46-.28Z" />
     </svg>
   );
 }
-function SocialLinks({ store, whatsapp }) {
-  const channels = [
+function MarketplaceIcon({ name }) {
+  if (name === 'Shopee')
+    return (
+      <svg width="25" height="25" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+        <path
+          d="M8 10h16l1.6 17H6.4L8 10Z"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinejoin="round"
+        />
+        <path d="M12 10V8a4 4 0 0 1 8 0v2" stroke="currentColor" strokeWidth="2" />
+        <path
+          d="M19.4 15.4c-.8-.8-2-1.2-3.4-1.2-1.7 0-2.8.8-2.8 2s.9 1.7 2.9 2c2.1.3 2.9.9 2.9 2s-1.2 2.1-3 2.1c-1.4 0-2.7-.5-3.5-1.3"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+        />
+      </svg>
+    );
+  return (
+    <svg width="27" height="27" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+      <path d="M5 9 4 4l6 3a14 14 0 0 1 12 0l6-3-1 5a11 11 0 1 1-22 0Z" fill="currentColor" />
+      <circle cx="11" cy="15" r="5" fill="#278342" />
+      <circle cx="21" cy="15" r="5" fill="#278342" />
+      <circle cx="11" cy="15" r="2" fill="white" />
+      <circle cx="21" cy="15" r="2" fill="white" />
+      <path d="m13.5 21 2.5 2 2.5-2" stroke="#278342" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+function getSocialChannels(store, whatsapp) {
+  const instagram =
+    /^https:\/\/(?:www\.)?instagram\.com\/[a-zA-Z0-9_.]+\/?$/.test(store.instagram || '') ||
+    /^https:\/\/share\.google\/[a-zA-Z0-9_-]+\/?$/.test(store.instagram || '');
+  const shopee = /^https:\/\/(?:www\.)?shopee\.co\.id\/[a-zA-Z0-9_.-]+\/?$/.test(
+    store.shopee || '',
+  );
+  let tokopedia = false;
+  try {
+    const u = new URL(store.tokopedia);
+    tokopedia =
+      u.protocol === 'https:' &&
+      ['tokopedia.com', 'www.tokopedia.com'].includes(u.hostname) &&
+      /^\/[a-zA-Z0-9_.-]+\/?$/.test(u.pathname) &&
+      !u.username &&
+      !u.password &&
+      !u.port;
+  } catch {
+    /* no valid store link */
+  }
+  return [
     {
       name: 'WhatsApp',
-      icon: <MessageCircle size={19} />,
+      icon: <WhatsAppIcon />,
       href: whatsapp ? 'https://wa.me/' + whatsapp : '',
+      className: 'wa',
+    },
+    {
+      name: 'Shopee',
+      icon: <MarketplaceIcon name="Shopee" />,
+      href: shopee ? store.shopee : '',
+      className: 'shopee',
+    },
+    {
+      name: 'Tokopedia',
+      icon: <MarketplaceIcon name="Tokopedia" />,
+      href: tokopedia ? store.tokopedia : '',
+      className: 'tokopedia',
     },
     {
       name: 'Instagram',
-      icon: <Instagram size={19} />,
-      href: /^https:\/\/(www\.)?instagram\.com\//.test(store.instagram || '')
-        ? store.instagram
-        : '',
-    },
-    {
-      name: 'TikTok',
-      icon: <TikTokIcon />,
-      href: /^https:\/\/(www\.)?tiktok\.com\/@[a-zA-Z0-9_.]+\/?$/.test(store.tiktok || '')
-        ? store.tiktok
-        : '',
+      icon: <Instagram size={25} />,
+      href: instagram ? store.instagram : '',
+      className: 'ig',
     },
   ];
+}
+function SocialLinks({ store, whatsapp }) {
   return (
     <div className="social-links">
-      {channels.map(({ name, icon, href }) =>
+      {getSocialChannels(store, whatsapp).map(({ name, icon, href }) =>
         href ? (
           <a key={name} href={href} target="_blank" rel="noreferrer" aria-label={name}>
             {icon}
@@ -386,33 +442,10 @@ function SocialLinks({ store, whatsapp }) {
   );
 }
 function FloatingSocial({ store, whatsapp }) {
-  const links = [
-    {
-      name: 'WhatsApp',
-      icon: <MessageCircle size={19} />,
-      href: whatsapp ? 'https://wa.me/' + whatsapp : '',
-      className: 'wa',
-    },
-    {
-      name: 'Instagram',
-      icon: <Instagram size={19} />,
-      href: /^https:\/\/(www\.)?instagram\.com\//.test(store.instagram || '')
-        ? store.instagram
-        : '',
-      className: 'ig',
-    },
-    {
-      name: 'TikTok',
-      icon: <TikTokIcon size={20} />,
-      href: /^https:\/\/(www\.)?tiktok\.com\/@[a-zA-Z0-9_.]+\/?$/.test(store.tiktok || '')
-        ? store.tiktok
-        : '',
-      className: 'tt',
-    },
-  ];
   return (
     <aside className="floating-social" aria-label="Media sosial toko">
-      {links.map(({ name, icon, href, className }) =>
+      <span className="floating-label">HUBUNGI</span>
+      {getSocialChannels(store, whatsapp).map(({ name, icon, href, className }) =>
         href ? (
           <a
             key={name}
@@ -981,23 +1014,7 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
           <Flower2 /> Bien Vendre
         </div>
         <span>© {new Date().getFullYear()} · Florist & Gifts</span>
-        <div>
-          {whatsapp && (
-            <a href={'https://wa.me/' + whatsapp} target="_blank" rel="noreferrer">
-              <MessageCircle size={17} /> WhatsApp <ExternalLink size={14} />
-            </a>
-          )}
-          {/^https:\/\/(www\.)?instagram\.com\//.test(store.instagram || '') && (
-            <a href={store.instagram} target="_blank" rel="noreferrer">
-              <Instagram size={17} /> Instagram <ExternalLink size={14} />
-            </a>
-          )}
-          {/^(https:\/\/)(www\.)?tiktok\.com\/@[a-zA-Z0-9_.]+\/?$/.test(store.tiktok || '') && (
-            <a href={store.tiktok} target="_blank" rel="noreferrer">
-              <TikTokIcon size={17} /> TikTok <ExternalLink size={14} />
-            </a>
-          )}
-        </div>
+        <SocialLinks store={store} whatsapp={whatsapp} />
       </footer>
       <FloatingSocial store={store} whatsapp={whatsapp} />
       {detail && (
@@ -2532,6 +2549,10 @@ function StoreSettings({ user, notify }) {
               <dd>{store.whatsapp || 'Belum dikonfigurasi'}</dd>
               <dt>Instagram</dt>
               <dd>{store.instagram || 'Belum dikonfigurasi'}</dd>
+              <dt>Shopee</dt>
+              <dd>{store.shopee || 'Belum dikonfigurasi'}</dd>
+              <dt>Tokopedia</dt>
+              <dd>{store.tokopedia || 'Belum dikonfigurasi'}</dd>
             </dl>
           )}
           <p className="hint">

@@ -5,8 +5,10 @@ test('about page works directly and through navigation on all screen sizes', asy
   await page.getByRole('link', { name: 'Tentang kami', exact: true }).click();
   await expect(page).toHaveURL(/\/about$/);
   await expect(page.getByRole('heading', { name: /Untuk momen yang/ })).toBeVisible();
-  for (const name of ['WhatsApp', 'Instagram', 'TikTok']) {
-    await expect(page.locator('.social-links').getByText(name, { exact: true })).toBeVisible();
+  for (const name of ['WhatsApp', 'Shopee', 'Tokopedia', 'Instagram']) {
+    await expect(
+      page.locator('.about-contact .social-links').getByText(name, { exact: true }),
+    ).toBeVisible();
   }
   await page.reload();
   await expect(page.getByRole('heading', { name: /Untuk momen yang/ })).toBeVisible();
@@ -27,7 +29,8 @@ test('about page links to the channels configured by the store', async ({ page }
         logo: '',
         whatsapp: '6281234567890',
         instagram: 'https://www.instagram.com/florist/',
-        tiktok: 'https://www.tiktok.com/@florist',
+        shopee: 'https://shopee.co.id/bienvendreofficial',
+        tokopedia: 'https://www.tokopedia.com/bienvendreofficialb?source=universe&st=product',
         about_story: 'Cerita khusus dari owner',
         about_service: 'Konsultasi khusus dari owner',
         care_tips: 'Tips khusus dari owner',
@@ -39,13 +42,18 @@ test('about page links to the channels configured by the store', async ({ page }
   await expect(page.getByText('Konsultasi khusus dari owner')).toBeVisible();
   await expect(page.getByText('Tips khusus dari owner')).toBeVisible();
   await expect(
-    page.locator('.social-links').getByRole('link', { name: 'WhatsApp' }),
+    page.locator('.about-contact .social-links').getByRole('link', { name: 'WhatsApp' }),
   ).toHaveAttribute('href', 'https://wa.me/6281234567890');
   await expect(
-    page.locator('.social-links').getByRole('link', { name: 'Instagram' }),
+    page.locator('.about-contact .social-links').getByRole('link', { name: 'Instagram' }),
   ).toHaveAttribute('href', 'https://www.instagram.com/florist/');
-  await expect(page.locator('.social-links').getByRole('link', { name: 'TikTok' })).toHaveAttribute(
+  await expect(
+    page.locator('.about-contact .social-links').getByRole('link', { name: 'Shopee' }),
+  ).toHaveAttribute('href', 'https://shopee.co.id/bienvendreofficial');
+  await expect(
+    page.locator('.about-contact .social-links').getByRole('link', { name: 'Tokopedia' }),
+  ).toHaveAttribute(
     'href',
-    'https://www.tiktok.com/@florist',
+    'https://www.tokopedia.com/bienvendreofficialb?source=universe&st=product',
   );
 });

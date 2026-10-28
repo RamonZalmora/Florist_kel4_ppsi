@@ -224,12 +224,12 @@ Data PostgreSQL mode ini terpisah dari folder PGlite. Pertahankan data lama sebe
 
 ## Pembaruan fitur operasional
 
-- **Pengaturan toko (owner):** nama, alamat, deskripsi, logo, WhatsApp, Instagram, dan TikTok bisa diubah dari dashboard; tersimpan di database.
+- **Pengaturan toko (owner):** nama, alamat, deskripsi, logo, WhatsApp, Instagram, Shopee, dan Tokopedia bisa diubah dari dashboard; tersimpan di database.
 - **Laporan admin dan owner:** grafik tren mengikuti periode dan PDF berupa tabel dengan header berulang serta nomor halaman.
 - **Pelanggan:** empat kartu statistik dan akses baca untuk owner; ringkasan tidak lagi terbatas pada 500 pesanan.
 - **Katalog:** pilihan occasion dan urutan produk paling banyak difavoritkan. Favorit disimpan per browser dan jumlahnya terlihat di halaman produk admin.
 - **Produk contoh:** 20 buket dengan ilustrasi yang dibuat secara digital ditambahkan saat setup jika data demo diaktifkan. Produk yang sudah ada tidak ditimpa; gambar dapat diganti dengan foto asli dari dashboard.
-- **Tentang kami:** profil florist, panduan perawatan bunga, dan kanal WhatsApp, Instagram serta TikTok yang dapat diatur owner.
+- **Tentang kami:** profil florist, panduan perawatan bunga, dan kanal WhatsApp, Instagram, Shopee serta Tokopedia yang dapat diatur owner.
 - **Foto produk/logo:** upload JPEG/PNG/WebP dari perangkat, maksimal 5 MB; tersimpan sebagai WebP di `.local/uploads`. Ganti password tetap tersedia di Pengaturan keamanan.
 
 Setelah mengunduh pembaruan, hentikan server, jalankan `npm.cmd ci` sekali untuk memasang dependency baru, lalu buka `Mulai-BienVendre.cmd`. Data lama dipertahankan oleh migrasi. Backup juga folder `.local/uploads` selain database.

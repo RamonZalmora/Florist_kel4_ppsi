@@ -8,9 +8,10 @@ test('floating channels stay on screen and use store links', async ({ page }) =>
         address: '',
         description: '',
         logo: '',
-        whatsapp: '6281234567890',
-        instagram: 'https://www.instagram.com/florist/',
-        tiktok: 'https://www.tiktok.com/@florist',
+        whatsapp: '6282380087007',
+        instagram: 'https://share.google/PciYm0L1lPyb6IhXpc',
+        shopee: 'https://shopee.co.id/bienvendreofficial',
+        tokopedia: 'https://www.tokopedia.com/bienvendreofficialb?source=universe&st=product',
       },
     }),
   );
@@ -18,16 +19,21 @@ test('floating channels stay on screen and use store links', async ({ page }) =>
   const dock = page.locator('.floating-social');
   await expect(dock.getByRole('link', { name: 'WhatsApp' })).toHaveAttribute(
     'href',
-    'https://wa.me/6281234567890',
+    'https://wa.me/6282380087007',
   );
   await expect(dock.getByRole('link', { name: 'Instagram' })).toHaveAttribute(
     'href',
-    'https://www.instagram.com/florist/',
+    'https://share.google/PciYm0L1lPyb6IhXpc',
   );
-  await expect(dock.getByRole('link', { name: 'TikTok' })).toHaveAttribute(
+  await expect(dock.getByRole('link', { name: 'Shopee' })).toHaveAttribute(
     'href',
-    'https://www.tiktok.com/@florist',
+    'https://shopee.co.id/bienvendreofficial',
   );
+  await expect(dock.getByRole('link', { name: 'Tokopedia' })).toHaveAttribute(
+    'href',
+    'https://www.tokopedia.com/bienvendreofficialb?source=universe&st=product',
+  );
+  await expect(dock.getByRole('link', { name: 'TikTok' })).toHaveCount(0);
   const before = await dock.boundingBox();
   await page.evaluate(() => window.scrollTo(0, 900));
   const after = await dock.boundingBox();

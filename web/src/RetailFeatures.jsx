@@ -153,15 +153,27 @@ export function StoreEditor({ store, onSaved, notify }) {
           />
         </label>
       </div>
-      <label>
-        TikTok toko
-        <input
-          name="tiktok"
-          defaultValue={store.tiktok || ''}
-          placeholder="https://www.tiktok.com/@akun_toko"
-          maxLength={300}
-        />
-      </label>
+      <div className="form-grid">
+        <label>
+          Shopee toko
+          <input
+            name="shopee"
+            defaultValue={store.shopee || ''}
+            placeholder="https://shopee.co.id/nama_toko"
+            maxLength={300}
+          />
+        </label>
+        <label>
+          Tokopedia toko
+          <input
+            name="tokopedia"
+            defaultValue={store.tokopedia || ''}
+            placeholder="https://www.tokopedia.com/nama_toko"
+            maxLength={300}
+          />
+        </label>
+      </div>
+      <input type="hidden" name="tiktok" value={store.tiktok || ''} />
       <PhotoField name="logo" initialValue={store.logo} onBusyChange={setUploading} />
       <button className="btn primary" disabled={busy || uploading}>
         <ShieldCheck size={17} />

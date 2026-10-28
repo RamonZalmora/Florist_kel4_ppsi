@@ -3949,3 +3949,64 @@ tr:hover td {
   color: #827780;
   font-size: 11px;
 }
+/* Store channels: persistent, easy to tap */
+.floating-social {
+  right: 12px;
+  top: 50%;
+  padding: 8px;
+  gap: 8px;
+  border: 1px solid #f4dbe0;
+  border-radius: 28px;
+  background: #fffaf6ef;
+  box-shadow: 0 10px 32px #572a4340;
+  backdrop-filter: blur(8px);
+}
+.floating-social a,
+.floating-social span:not(.floating-label) {
+  width: 52px;
+  height: 52px;
+  border: 2px solid #fff;
+  box-shadow: 0 4px 12px #42203128;
+}
+.floating-social .floating-label {
+  display: block;
+  color: #785266;
+  text-align: center;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+.floating-social .shopee {
+  background: #ee4d2d;
+}
+.floating-social .tokopedia {
+  background: #278342;
+}
+.social-links {
+  row-gap: 8px;
+}
+@media (max-width: 720px) {
+  .floating-social {
+    right: 5px;
+    padding: 5px;
+    gap: 5px;
+    border-radius: 25px;
+  }
+  .floating-social a,
+  .floating-social span:not(.floating-label) {
+    width: 43px;
+    height: 43px;
+  }
+  .floating-social .floating-label {
+    font-size: 7px;
+  }
+}
+.floating-social .floating-label {
+  width: auto;
+  height: auto;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 1px 0;
+}
