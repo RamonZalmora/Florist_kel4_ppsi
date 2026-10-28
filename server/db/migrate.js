@@ -73,6 +73,15 @@ export async function migrate() {
       );
       await client.query('INSERT INTO schema_migrations(version) VALUES($1)', ['008']);
     }
+    if (
+      !(await client.query('SELECT version FROM schema_migrations WHERE version=$1', ['009']))
+        .rowCount
+    ) {
+      await client.query(
+        await readFile(new URL('./009_store_channels.sql', import.meta.url), 'utf8'),
+      );
+      await client.query('INSERT INTO schema_migrations(version) VALUES($1)', ['009']);
+    }
   });
 }
 if (basename(process.argv[1] || '') === 'migrate.js') {

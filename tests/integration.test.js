@@ -323,7 +323,7 @@ test('admin and owner reports use sale dates and generate PDFs, including empty 
 });
 test('WhatsApp contact is initialized once and remains editable by owner', async () => {
   const { readFile } = await import('node:fs/promises');
-  assert.equal((await request('/store')).data.whatsapp, '628566365052');
+  assert.equal((await request('/store')).data.whatsapp, '6282380087007');
   await db.query("INSERT INTO store_settings(id,name,whatsapp) VALUES(1,'Test','628111111111')");
   try {
     await db.query(
@@ -520,8 +520,10 @@ test('store settings persist publicly, customer metrics are readable by owner, a
         name: 'Retail Test Store',
         address: 'Test address',
         whatsapp: '6281234567890',
-        instagram: 'https://www.instagram.com/bienvendre/',
+        instagram: 'https://share.google/PciYm0L1lPyb6IhXpc',
         tiktok: 'https://www.tiktok.com/@bienvendre',
+        shopee: 'https://shopee.co.id/bienvendreofficial',
+        tokopedia: 'https://www.tokopedia.com/bienvendreofficialb?source=universe&st=product',
         about_story: 'Cerita florist',
         about_service: 'Konsultasi personal',
         care_tips: 'Ganti air bunga',
@@ -545,6 +547,26 @@ test('store settings persist publicly, customer metrics are readable by owner, a
     );
     assert.equal((await request('/store', { method: 'PUT', session, body: settings })).status, 200);
     assert.deepEqual((await request('/store')).data, settings);
+    assert.equal(
+      (
+        await request('/store', {
+          method: 'PUT',
+          session,
+          body: { ...settings, shopee: 'https://shopee.co.id.evil.example/shop' },
+        })
+      ).status,
+      422,
+    );
+    assert.equal(
+      (
+        await request('/store', {
+          method: 'PUT',
+          session,
+          body: { ...settings, tokopedia: 'https://tokopedia.com.evil.example/shop' },
+        })
+      ).status,
+      422,
+    );
     const customer = await request('/customers', { session });
     assert.equal(customer.status, 200);
     assert.ok(Number(customer.data.summary.customers) >= 1);
