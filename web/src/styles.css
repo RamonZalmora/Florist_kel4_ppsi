@@ -3926,3 +3926,26 @@ tr:hover td {
   background: #fff0d3;
   color: #8d5d20;
 }
+.product-order {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 12px 8px 0;
+  padding: 11px;
+  border-radius: 10px;
+  background: #e9f5ed;
+  color: #236e44;
+  font-size: 12px;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+.product-order:hover {
+  background: #d4ecdb;
+}
+.product-order-unavailable {
+  display: block;
+  margin: 12px 8px 0;
+  color: #827780;
+  font-size: 11px;
+}

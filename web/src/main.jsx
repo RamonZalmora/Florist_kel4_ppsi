@@ -647,7 +647,9 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
       ? 'https://wa.me/' +
         whatsapp +
         '?text=' +
-        encodeURIComponent('Halo Bien Vendre, saya ingin konsultasi tentang ' + p.name + '.')
+        encodeURIComponent(
+          `Halo, saya ingin memesan ${p.name} seharga ${money(p.price)}. Apakah produk ini tersedia?`,
+        )
       : null;
   return (
     <div className="catalog-page">
@@ -883,6 +885,21 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
                             />{' '}
                             {p.favorite_count || 0} favorit
                           </button>
+                          {consult(p) ? (
+                            <a
+                              className="product-order"
+                              href={consult(p)}
+                              target="_blank"
+                              rel="noreferrer"
+                              aria-label={'Pesan ' + p.name + ' via WhatsApp'}
+                            >
+                              <MessageCircle size={16} /> Pesan via WhatsApp
+                            </a>
+                          ) : (
+                            <span className="product-order-unavailable">
+                              WhatsApp belum tersedia
+                            </span>
+                          )}
                         </article>
                       ))}
                     </div>
@@ -1012,7 +1029,7 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
                   target="_blank"
                   rel="noreferrer"
                 >
-                  <Phone size={18} /> Konsultasi via WhatsApp
+                  <Phone size={18} /> Pesan via WhatsApp
                 </a>
               ) : (
                 <p className="hint">

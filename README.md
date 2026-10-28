@@ -135,7 +135,7 @@ Lihat [panduan pemindahan data](docs/MIGRATION.md). Tersedia `npm run db:import`
 
 ## Konfigurasi toko
 
-Isi `STORE_WHATSAPP`, `STORE_INSTAGRAM`, dan `STORE_ADDRESS` pada `.env` menggunakan kontak asli toko. Restart mode dev setelah perubahan konfigurasi. Tombol kanal digital tampil setelah dikonfigurasi.
+Owner dapat mengubah nomor WhatsApp, Instagram, dan alamat toko melalui Pengaturan toko. Tombol pesan membuka WhatsApp dengan nama dan harga produk; pelanggan tetap menekan tombol kirim sendiri.
 
 Data dan ilustrasi awal adalah contoh. Ganti produk, harga, deskripsi, dan gambar melalui dashboard. Foto menggunakan URL HTTPS atau aset lokal; upload berkas langsung belum tersedia.
 
