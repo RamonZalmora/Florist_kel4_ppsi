@@ -260,7 +260,8 @@ function Login({ onBack, onLogin }) {
     <div className="login-page">
       <div className="login-art">
         <a className="brand" href="/catalog">
-          <Flower2 /> Bien Vendre<span>FLORIST & GIFTS</span>
+          <img className="login-brand-mark" src="/assets/bien-mark.svg" alt="" /> Bien Vendre
+          <span>FLORIST & GIFTS</span>
         </a>
         <div>
           <span className="eyebrow">A LITTLE BLOOM, A LOT OF LOVE</span>
@@ -282,7 +283,7 @@ function Login({ onBack, onLogin }) {
         </button>
         <div className="login-form">
           <div className="flower-mark">
-            <Flower2 size={30} />
+            <img className="login-brand-mark" src="/assets/bien-mark.svg" alt="" />
           </div>
           <span className="eyebrow">RUANG KERJA BIEN VENDRE</span>
           <h2>Selamat datang kembali.</h2>
@@ -370,9 +371,20 @@ function MarketplaceIcon({ name }) {
   );
 }
 function getSocialChannels(store, whatsapp) {
-  const instagram =
-    /^https:\/\/(?:www\.)?instagram\.com\/[a-zA-Z0-9_.]+\/?$/.test(store.instagram || '') ||
-    /^https:\/\/share\.google\/[a-zA-Z0-9_-]+\/?$/.test(store.instagram || '');
+  let instagram = false;
+  try {
+    const u = new URL(store.instagram);
+    instagram =
+      u.protocol === 'https:' &&
+      !u.username &&
+      !u.password &&
+      !u.port &&
+      ((['instagram.com', 'www.instagram.com'].includes(u.hostname) &&
+        /^\/[a-zA-Z0-9_.]+\/?$/.test(u.pathname)) ||
+        (u.hostname === 'share.google' && /^\/[a-zA-Z0-9_-]+\/?$/.test(u.pathname) && !u.search));
+  } catch {
+    /* not configured */
+  }
   const shopee = /^https:\/\/(?:www\.)?shopee\.co\.id\/[a-zA-Z0-9_.-]+\/?$/.test(
     store.shopee || '',
   );
@@ -477,6 +489,11 @@ function AboutPage({ store, whatsapp, onExplore }) {
     <div className="about-page">
       <section className="about-intro">
         <div className="about-intro-copy">
+          <img
+            className="about-brand-seal"
+            src="/assets/bien-logo-generated.webp"
+            alt="Logo Bien Vendre"
+          />
           <span className="eyebrow">THE STORY OF {store.name || 'BIEN VENDRE'}</span>
           <h1>
             Untuk momen yang <em>ingin dikenang.</em>
@@ -1011,7 +1028,7 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
       </main>
       <footer>
         <div className="brand">
-          <Flower2 /> Bien Vendre
+          <img className="footer-logo" src="/assets/bien-mark.svg" alt="" /> Bien Vendre
         </div>
         <span>© {new Date().getFullYear()} · Florist & Gifts</span>
         <SocialLinks store={store} whatsapp={whatsapp} />
@@ -1122,9 +1139,7 @@ function Workspace({ user, view, setView, logout, notify }) {
     <div className="workspace">
       <aside className={'sidebar ' + (mobile ? 'open' : '')}>
         <a className="brand" href="/catalog">
-          <div className="brand-icon">
-            <Flower2 size={23} />
-          </div>
+          <img className="workspace-logo" src="/assets/bien-mark.svg" alt="" />
           <div>
             Bien Vendre<small>FLORIST & GIFTS</small>
           </div>

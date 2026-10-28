@@ -4010,3 +4010,293 @@ tr:hover td {
   box-shadow: none;
   padding: 1px 0;
 }
+
+/* Bien Vendre: midnight navy, ivory petals and warm gold. */
+:root {
+  --green: #183d88;
+  --dark: #090e36;
+  --line: #c9d7ee;
+}
+.catalog-page {
+  background: #f8faff;
+  color: #14234e;
+}
+.public-nav {
+  background: #fff;
+  border-color: #c8d8f2;
+  box-shadow: 0 6px 25px #152f650b;
+}
+.public-nav .brand {
+  color: #080d39;
+}
+.public-nav .brand small {
+  color: #8b6c28;
+  opacity: 1;
+}
+.public-nav .nav-links {
+  color: #243b71;
+}
+.public-nav .nav-links a:hover {
+  color: #1e58b1;
+  border-color: #c29a42;
+}
+.store-logo {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+}
+.workspace-logo,
+.footer-logo {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.catalog-hero {
+  background:
+    linear-gradient(90deg, #060b2cf0 0%, #0a133abe 43%, #0a133a18 78%),
+    url('/assets/bien-hero.webp') center/cover;
+}
+.catalog-hero .hero-copy h1 {
+  color: #fffdf4;
+}
+.catalog-hero .hero-copy h1 em {
+  color: #e3bc69;
+}
+.catalog-hero .hero-copy p {
+  color: #ebeffa;
+}
+.catalog-hero .hero-copy .btn {
+  background: #f2d58e;
+  color: #111a41;
+}
+.catalog-hero .hero-copy .btn:hover {
+  background: #ffe5a6;
+}
+.hero-stamp {
+  background: #fdfbf4e8;
+  color: #172d65;
+  border-color: #d1b575;
+}
+.moments {
+  background: #f0f5ff;
+}
+.moments h2,
+.section-heading h2 {
+  color: #0b1948;
+}
+.moments .eyebrow,
+.collection .eyebrow {
+  color: #a17a2d;
+}
+.moment {
+  background: linear-gradient(150deg, #fff, #edf3ff);
+  border: 1px solid #98b5e1;
+  box-shadow: 0 10px 26px #20427a0d;
+}
+.moment:nth-child(2),
+.moment:nth-child(3),
+.moment:nth-child(4) {
+  background: linear-gradient(145deg, #fff, #edf3ff);
+}
+.moment:hover,
+.moment.active {
+  background: #fff;
+  border-color: #416eaf;
+  box-shadow: 0 14px 30px #20427a18;
+}
+.moment strong {
+  color: #12275b;
+}
+.moment small {
+  color: #4d5e80;
+}
+.moment > span,
+.moment:nth-child(2) > span,
+.moment:nth-child(3) > span,
+.moment:nth-child(4) > span {
+  background: #e3ecfb;
+  color: #285497;
+}
+.section-heading p {
+  color: #586786;
+}
+.product-card {
+  background: #fff;
+  border: 1px solid #a9c0e8;
+  box-shadow: 0 10px 28px #132c5b0d;
+}
+.product-card:hover {
+  box-shadow: 0 18px 34px #132c5b1c;
+}
+.product-card h3 {
+  color: #102451;
+}
+.product-card p {
+  color: #596984;
+}
+.product-price {
+  color: #956d24;
+}
+.favorite-btn {
+  color: #536a9a;
+}
+.favorite-btn.selected {
+  color: #c34268;
+}
+.catalog-sidebar {
+  background: #f0f5ff;
+  border-color: #a9c0e8;
+}
+.about-banner,
+.about-care {
+  background: #edf3ff;
+  border-color: #afc4e5;
+  color: #183566;
+}
+.about-page {
+  background: #f8faff;
+  color: #14234e;
+}
+.about-intro {
+  background: #eff4fc;
+}
+.about-intro h1,
+.about-story h2,
+.about-contact h2 {
+  color: #0b1948;
+}
+.about-intro h1 em,
+.about-story h2 em {
+  color: #a17831;
+}
+.about-intro-photo {
+  background-image: url('/assets/bien-hero.webp');
+}
+.about-brand-seal {
+  display: block;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 22px;
+}
+.about-values {
+  background: #ccd9ed;
+  border-color: #ccd9ed;
+}
+.about-values article {
+  background: #f1f5fc;
+}
+.about-values svg {
+  color: #a78235;
+}
+.social-links a,
+.social-unavailable {
+  color: #20447d;
+  border-color: #b4c8e9;
+}
+.social-links a:hover {
+  background: #173974;
+  color: white;
+}
+.catalog-page footer {
+  background: #070b30;
+}
+.floating-social {
+  border-color: #b9cdef;
+  box-shadow: 0 10px 32px #081a4250;
+}
+.workspace {
+  background: #f3f6fb;
+}
+.sidebar {
+  background: linear-gradient(165deg, #070a2c, #10265b 62%, #091332);
+}
+.sidebar nav button.active {
+  background: #ffffff20;
+  border-color: #93b4ef66;
+  box-shadow: inset 3px 0 #e2ba63;
+}
+.sidebar-label {
+  color: #b4c7e9;
+}
+.topbar {
+  background: #fff;
+  border-color: #dce7f6;
+}
+.page-heading h1 {
+  color: #111f50;
+}
+.dashboard-banner {
+  background:
+    linear-gradient(90deg, #080d31ed, #101e4e70),
+    url('/assets/bien-hero.webp') center/cover;
+}
+.stat-card,
+.panel {
+  background: #fff;
+  border: 1px solid #b9cdee;
+}
+.stat-card span {
+  color: #53627f;
+}
+.stat-card strong,
+.panel-heading h2 {
+  color: #14285b;
+}
+.workspace-logo {
+  width: 42px;
+  height: 42px;
+}
+.btn.primary {
+  background: #183d88;
+  border-color: #183d88;
+  color: white;
+}
+.btn.primary:hover {
+  background: #2454a8;
+}
+.catalog-hero .hero-copy .btn {
+  background: #f2d58e;
+  color: #111a41;
+}
+@media (max-width: 720px) {
+  .store-logo {
+    width: 40px;
+    height: 40px;
+  }
+  .about-brand-seal {
+    width: 80px;
+    height: 80px;
+  }
+}
+.login-brand-mark {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  object-fit: contain;
+}
+.login-art {
+  background:
+    linear-gradient(90deg, #080d31e6, #101e4e80),
+    url('/assets/bien-hero.webp') center/cover;
+}
+.login-panel {
+  background: #fbfcff;
+}
+.login-panel .flower-mark {
+  background: #e8eef9;
+}
+.moment::after {
+  content: '';
+  position: absolute;
+  right: 20px;
+  bottom: 18px;
+  width: 38px;
+  height: 38px;
+  background: url('/assets/bien-mark.svg') center/contain no-repeat;
+  opacity: 0.13;
+  pointer-events: none;
+}

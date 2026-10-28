@@ -6,7 +6,7 @@ test('configured store channels and product order use the supplied links', async
     WhatsApp: 'https://wa.me/6282380087007',
     Shopee: 'https://shopee.co.id/bienvendreofficial',
     Tokopedia: 'https://www.tokopedia.com/bienvendreofficialb?source=universe&st=product',
-    Instagram: 'https://share.google/PciYm0L1lPyb6IhXpc',
+    Instagram: 'https://www.instagram.com/bienvendreofficial?psln=bm10anhqdTk5eG1y',
   };
   for (const [name, url] of Object.entries(expected))
     await expect(dock.getByRole('link', { name })).toHaveAttribute('href', url);
