@@ -3,6 +3,7 @@ import { basename } from 'node:path';
 import { db, transaction, databaseDriver } from './pool.js';
 import { installRealCatalog } from './real-catalog.js';
 import { installCatalogBatchTwo } from './catalog-batch-two.js';
+import { installOccasionCatalog } from './occasion-catalog.js';
 export async function migrate() {
   await transaction(async (client) => {
     if (databaseDriver === 'postgres') await client.query('SELECT pg_advisory_xact_lock(493812)');
@@ -108,6 +109,14 @@ export async function migrate() {
       if ((await client.query('SELECT id FROM products LIMIT 1')).rowCount)
         await installCatalogBatchTwo(client);
       await client.query('INSERT INTO schema_migrations(version) VALUES($1)', ['012']);
+    }
+    if (
+      !(await client.query('SELECT version FROM schema_migrations WHERE version=$1', ['013']))
+        .rowCount
+    ) {
+      if ((await client.query('SELECT id FROM products LIMIT 1')).rowCount)
+        await installOccasionCatalog(client);
+      await client.query('INSERT INTO schema_migrations(version) VALUES($1)', ['013']);
     }
   });
 }

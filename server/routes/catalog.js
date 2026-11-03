@@ -12,6 +12,18 @@ import {
   fail,
 } from '../validation.js';
 export const catalog = Router();
+const productTypes = {
+  bunga: ['bunga', 'flower', 'mawar', 'edelweiss'],
+  kering: ['kering', 'dried', 'edelweiss'],
+  foto: ['foto', 'photo'],
+  snack: ['snack', 'makanan', 'wafer'],
+  uang: ['uang'],
+  akrilik: ['akrilik', 'acrylic'],
+  frame: ['frame', 'mahar'],
+  boneka: ['boneka', 'bear'],
+  vas: ['vas'],
+  klobot: ['klobot', 'kulit jagung'],
+};
 catalog.get('/store', async (req, res) => res.json(await storeInfo()));
 catalog.get('/categories', async (req, res) =>
   res.json(
@@ -33,6 +45,7 @@ catalog.get('/products', async (req, res) => {
     : null;
   if (minPrice !== null && maxPrice !== null && minPrice > maxPrice)
     fail(422, 'Harga minimum tidak boleh melebihi harga maksimum.');
+  const type = req.query.type ? z.enum(Object.keys(productTypes)).parse(req.query.type) : null;
   const sort = z
     .enum(['recommended', 'price_asc', 'price_desc', 'popular', 'newest'])
     .parse(req.query.sort || 'recommended');
@@ -46,8 +59,14 @@ catalog.get('/products', async (req, res) => {
   res.json(
     (
       await db.query(
-        `SELECT p.*,(SELECT count(*)::int FROM product_favorites f WHERE f.product_id=p.id) AS favorite_count,COALESCE((SELECT json_agg(json_build_object('id',c.id,'name',c.name)) FROM recommendations r JOIN categories c ON c.id=r.category_id WHERE r.product_id=p.id),'[]') AS categories FROM products p WHERE p.active=true AND (p.name ILIKE $1 OR p.description ILIKE $1) AND ($2::bigint IS NULL OR EXISTS(SELECT 1 FROM recommendations r WHERE r.product_id=p.id AND r.category_id=$2)) AND ($3::numeric IS NULL OR p.price<=$3) AND ($4::numeric IS NULL OR p.price>=$4) ORDER BY ${order}`,
-        ['%' + search + '%', category, maxPrice, minPrice],
+        `SELECT p.*,(SELECT count(*)::int FROM product_favorites f WHERE f.product_id=p.id) AS favorite_count,COALESCE((SELECT json_agg(json_build_object('id',c.id,'name',c.name)) FROM recommendations r JOIN categories c ON c.id=r.category_id WHERE r.product_id=p.id),'[]') AS categories FROM products p WHERE p.active=true AND (p.name ILIKE $1 OR p.description ILIKE $1) AND ($2::bigint IS NULL OR EXISTS(SELECT 1 FROM recommendations r WHERE r.product_id=p.id AND r.category_id=$2)) AND ($3::numeric IS NULL OR p.price<=$3) AND ($4::numeric IS NULL OR p.price>=$4) AND ($5::text[] IS NULL OR lower(p.name || ' ' || p.flower_type) LIKE ANY($5::text[])) ORDER BY ${order}`,
+        [
+          '%' + search + '%',
+          category,
+          maxPrice,
+          minPrice,
+          type ? productTypes[type].map((value) => `%${value}%`) : null,
+        ],
       )
     ).rows,
   );

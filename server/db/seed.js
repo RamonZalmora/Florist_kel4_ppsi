@@ -3,6 +3,7 @@ import { db, transaction } from './pool.js';
 import { migrate } from './migrate.js';
 import { installRealCatalog } from './real-catalog.js';
 import { installCatalogBatchTwo } from './catalog-batch-two.js';
+import { installOccasionCatalog } from './occasion-catalog.js';
 try {
   await migrate();
   await transaction(async (client) => {
@@ -23,6 +24,7 @@ try {
     }
     await installRealCatalog(client);
     await installCatalogBatchTwo(client);
+    await installOccasionCatalog(client);
   });
   console.log('Setup selesai. Akun, data penjualan, dan produk lama tetap tersimpan.');
 } finally {

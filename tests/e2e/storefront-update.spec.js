@@ -8,6 +8,8 @@ test('home shows nine popular products and occasion supports paging and sorting'
   const api = await (await page.request.get('/api/products?sort=popular')).json();
   await expect(page.locator('.product-card h3').first()).toHaveText(api[0].name);
   await page.getByRole('link', { name: 'Occasion', exact: true }).click();
+  const collapsedFilters = page.locator('.catalog-filter-panel:not([open]) > summary');
+  if (await collapsedFilters.isVisible()) await collapsedFilters.click();
   await expect(page.locator('.product-card')).toHaveCount(9);
   await expect(page.getByLabel('Urutkan')).toHaveValue('newest');
   const first = await page.locator('.product-card h3').first().textContent();

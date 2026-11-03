@@ -88,11 +88,12 @@ test('owner has customer metrics, report chart and store edit access', async ({ 
     await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
   ).toBeTruthy();
 });
-test('catalog no longer exposes order tracking or price filters', async ({ page }) => {
+test('catalog offers budget filters without order tracking', async ({ page }) => {
   await page.goto('/catalog');
   await expect(page.getByRole('button', { name: 'Lacak pesanan' })).toHaveCount(0);
   await page.getByRole('link', { name: 'Occasion', exact: true }).click();
-  await expect(page.getByLabel('Harga minimum')).toHaveCount(0);
-  await expect(page.getByLabel('Anggaran')).toHaveCount(0);
+  const collapsedFilters = page.locator('.catalog-filter-panel:not([open]) > summary');
+  if (await collapsedFilters.isVisible()) await collapsedFilters.click();
+  await expect(page.getByRole('button', { name: /Hemat/ })).toBeVisible();
   await expect(page.getByLabel('Urutkan')).toHaveValue('newest');
 });

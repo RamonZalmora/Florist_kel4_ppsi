@@ -583,6 +583,7 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
     [page, setPage] = useState(location.pathname === '/about' ? 'about' : 'catalog'),
     [occasion, setOccasion] = useState(false),
     [catalogPage, setCatalogPage] = useState(1),
+    [filtersOpen, setFiltersOpen] = useState(() => window.matchMedia('(min-width: 721px)').matches),
     [favorites, setFavorites] = useState([]);
   const [visitor] = useState(() => {
     let id = localStorage.getItem('bv_visitor');
@@ -620,6 +621,8 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
     [categories, setCategories] = useState([]),
     [store, setStore] = useState({}),
     [category, setCategory] = useState(''),
+    [productType, setProductType] = useState(''),
+    [budget, setBudget] = useState(''),
     [search, setSearch] = useState(''),
     [loading, setLoading] = useState(true),
     [error, setError] = useState(''),
@@ -642,6 +645,10 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
             search,
             sort: occasion ? sort : 'popular',
             ...(category ? { category } : {}),
+            ...(productType ? { type: productType } : {}),
+            ...(budget === 'hemat' ? { max_price: '99999.99' } : {}),
+            ...(budget === 'menengah' ? { min_price: '100000', max_price: '249999.99' } : {}),
+            ...(budget === 'premium' ? { min_price: '250000' } : {}),
           }),
       )
         .then((p) => {
@@ -661,8 +668,8 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
       active = false;
       clearTimeout(timer);
     };
-  }, [category, search, sort, occasion]);
-  useEffect(() => setCatalogPage(1), [category, search, sort, occasion]);
+  }, [category, productType, budget, search, sort, occasion]);
+  useEffect(() => setCatalogPage(1), [category, productType, budget, search, sort, occasion]);
   useEffect(() => {
     const syncPage = () => setPage(location.pathname === '/about' ? 'about' : 'catalog');
     window.addEventListener('popstate', syncPage);
@@ -723,6 +730,9 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
               navigatePublic('catalog', '#collection');
               setOccasion(false);
               setCategory('');
+              setProductType('');
+              setBudget('');
+              setSearch('');
             }}
           >
             Koleksi bunga
@@ -734,6 +744,9 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
               navigatePublic('catalog', '#collection');
               setOccasion(true);
               setCategory('');
+              setProductType('');
+              setBudget('');
+              setSearch('');
             }}
           >
             Occasion
@@ -800,14 +813,24 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
                       onClick={() => {
                         setOccasion(true);
                         setCategory(String(c.id));
+                        setProductType('');
+                        setBudget('');
+                        setSearch('');
                         document
                           .getElementById('collection')
                           .scrollIntoView({ behavior: 'smooth' });
                       }}
                     >
-                      <span>{[<Heart />, <Sparkles />, <Flower2 />, <ShoppingBag />][i % 4]}</span>
+                      <span className="moment-image">
+                        <img src={c.photo} alt="" loading="lazy" />
+                      </span>
+                      <span className="moment-icon">
+                        {[<Heart />, <Sparkles />, <Flower2 />, <ShoppingBag />][i % 4]}
+                      </span>
                       <strong>{c.name}</strong>
-                      <small>{c.description}</small>
+                      <small>
+                        {c.product_count} pilihan · {c.description}
+                      </small>
                       <ArrowUpRight size={17} />
                     </button>
                   ))}
@@ -844,42 +867,135 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
               <div className={occasion ? 'catalog-layout' : 'catalog-home-layout'}>
                 {occasion && (
                   <aside className="catalog-sidebar">
-                    <h3>Temukan bunga</h3>
-                    <div className="filter-tabs">
-                      <button className={!category ? 'active' : ''} onClick={() => setCategory('')}>
-                        Semua koleksi
-                      </button>
-                      {categories.map((c) => (
+                    <details
+                      className="catalog-filter-panel"
+                      open={filtersOpen}
+                      onToggle={(e) => setFiltersOpen(e.currentTarget.open)}
+                    >
+                      <summary>
+                        <span>
+                          <small>PERSONALISASI PILIHAN</small>Temukan hadiah
+                        </span>
+                        <span className="filter-indicator">
+                          {Number(Boolean(category)) +
+                            Number(Boolean(productType)) +
+                            Number(Boolean(budget))}{' '}
+                          filter
+                        </span>
+                      </summary>
+                      <div className="filter-group">
+                        <h3>
+                          Occasion <small>momen spesial</small>
+                        </h3>
+                        <div className="filter-tabs">
+                          <button
+                            className={!category ? 'active' : ''}
+                            aria-pressed={!category}
+                            onClick={() => setCategory('')}
+                          >
+                            Semua koleksi
+                          </button>
+                          {categories.map((c) => (
+                            <button
+                              key={c.id}
+                              className={category === String(c.id) ? 'active' : ''}
+                              aria-pressed={category === String(c.id)}
+                              onClick={() => setCategory(String(c.id))}
+                            >
+                              <span>{c.name}</span>
+                              <span className="filter-count">{c.product_count}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="filter-group">
+                        <h3>
+                          Jenis produk <small>pilih kesukaanmu</small>
+                        </h3>
+                        <div className="filter-chips">
+                          {[
+                            ['', 'Semua'],
+                            ['bunga', 'Bunga'],
+                            ['kering', 'Bunga kering'],
+                            ['foto', 'Foto'],
+                            ['snack', 'Snack'],
+                            ['uang', 'Uang'],
+                            ['akrilik', 'Akrilik'],
+                            ['frame', 'Frame & mahar'],
+                            ['boneka', 'Boneka'],
+                            ['vas', 'Vas'],
+                            ['klobot', 'Klobot'],
+                          ].map(([value, label]) => (
+                            <button
+                              key={value}
+                              className={productType === value ? 'active' : ''}
+                              aria-pressed={productType === value}
+                              onClick={() => setProductType(value)}
+                            >
+                              {label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="filter-group">
+                        <h3>
+                          Harga <small>sesuai anggaran</small>
+                        </h3>
+                        <div className="budget-list">
+                          {[
+                            ['', 'Semua harga', ''],
+                            ['hemat', 'Hemat', 'Di bawah Rp100.000'],
+                            ['menengah', 'Menengah', 'Rp100.000–Rp249.999'],
+                            ['premium', 'Premium', 'Mulai Rp250.000'],
+                          ].map(([value, label, description]) => (
+                            <button
+                              key={value}
+                              className={budget === value ? 'active' : ''}
+                              aria-pressed={budget === value}
+                              onClick={() => setBudget(value)}
+                            >
+                              <span className="budget-dot" />
+                              <span>
+                                <strong>{label}</strong>
+                                {description && <small>{description}</small>}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="catalog-tools">
+                        <label>
+                          Urutkan
+                          <select value={sort} onChange={(e) => setSort(e.target.value)}>
+                            <option value="newest">Terbaru diperbarui</option>
+                            <option value="popular">Paling banyak favorit</option>
+                          </select>
+                        </label>
                         <button
-                          key={c.id}
-                          className={category === String(c.id) ? 'active' : ''}
-                          onClick={() => setCategory(String(c.id))}
+                          className="text-btn"
+                          onClick={() => {
+                            setCategory('');
+                            setProductType('');
+                            setBudget('');
+                            setSearch('');
+                            setSort('newest');
+                          }}
                         >
-                          {c.name}
+                          Reset filter
                         </button>
-                      ))}
-                    </div>
-                    <div className="catalog-tools">
-                      <label>
-                        Urutkan
-                        <select value={sort} onChange={(e) => setSort(e.target.value)}>
-                          <option value="newest">Terbaru diperbarui</option>
-                          <option value="popular">Paling banyak favorit</option>
-                        </select>
-                      </label>
-                      <button
-                        className="text-btn"
-                        onClick={() => {
-                          setCategory('');
-                          setSort('newest');
-                        }}
-                      >
-                        Reset filter
-                      </button>
-                    </div>
+                      </div>
+                    </details>
                   </aside>
                 )}
                 <div className="catalog-results">
+                  {occasion && !loading && !error && (
+                    <div className="catalog-result-bar">
+                      <span>
+                        <strong>{products.length}</strong> produk ditemukan
+                      </span>
+                      <span>DIRANGKAI UNTUK CERITAMU</span>
+                    </div>
+                  )}
                   {loading ? (
                     <div className="empty">
                       <LoaderCircle className="spin" /> Memuat koleksi…

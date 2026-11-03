@@ -50,6 +50,8 @@ test('customer can sort the occasion catalog', async ({ page }) => {
   await page.goto('/catalog');
   await expect(page.locator('.product-card')).toHaveCount(9);
   await page.getByRole('link', { name: 'Occasion', exact: true }).click();
+  const collapsedFilters = page.locator('.catalog-filter-panel:not([open]) > summary');
+  if (await collapsedFilters.isVisible()) await collapsedFilters.click();
   await expect(page.getByLabel('Urutkan')).toHaveValue('newest');
   await page.getByLabel('Urutkan').selectOption('popular');
   await expect(page.locator('.product-card')).toHaveCount(9);
