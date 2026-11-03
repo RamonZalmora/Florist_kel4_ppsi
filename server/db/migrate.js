@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { basename } from 'node:path';
 import { db, transaction, databaseDriver } from './pool.js';
+import { installRealCatalog } from './real-catalog.js';
 export async function migrate() {
   await transaction(async (client) => {
     if (databaseDriver === 'postgres') await client.query('SELECT pg_advisory_xact_lock(493812)');
@@ -90,6 +91,14 @@ export async function migrate() {
         await readFile(new URL('./010_brand_instagram.sql', import.meta.url), 'utf8'),
       );
       await client.query('INSERT INTO schema_migrations(version) VALUES($1)', ['010']);
+    }
+    if (
+      !(await client.query('SELECT version FROM schema_migrations WHERE version=$1', ['011']))
+        .rowCount
+    ) {
+      if ((await client.query('SELECT id FROM products LIMIT 1')).rowCount)
+        await installRealCatalog(client);
+      await client.query('INSERT INTO schema_migrations(version) VALUES($1)', ['011']);
     }
   });
 }

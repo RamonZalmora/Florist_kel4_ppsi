@@ -13,7 +13,7 @@ orders.get('/', async (req, res) => {
     ).rows,
   );
 });
-async function saveOrder(client, input, userId, id) {
+async function saveOrder(client, input, userId, id, existingItems = []) {
   const products = (
     await client.query(
       'SELECT id,name,price,active FROM products WHERE id=ANY($1::bigint[]) FOR SHARE',
@@ -22,8 +22,13 @@ async function saveOrder(client, input, userId, id) {
   ).rows;
   const items = input.items.map((i) => {
     const p = products.find((p) => String(p.id) === String(i.product_id));
-    if (!p || !p.active) fail(422, 'Produk tidak ditemukan atau tidak aktif.');
-    return { ...i, product_name: p.name, price: p.price };
+    const previous = existingItems.find((item) => String(item.product_id) === String(i.product_id));
+    if (!p || (!p.active && !previous)) fail(422, 'Produk tidak ditemukan atau tidak aktif.');
+    return {
+      ...i,
+      product_name: !p.active ? previous.product_name : p.name,
+      price: !p.active ? previous.price : p.price,
+    };
   });
   const totalCents = items.reduce((n, i) => n + Math.round(Number(i.price) * 100) * i.quantity, 0);
   if (totalCents > 99999999999999) fail(422, 'Total pesanan melebihi batas nilai database.');
@@ -72,7 +77,13 @@ orders.put('/:id', authorize('admin'), async (req, res) => {
       if (!row) fail(404, 'Pesanan tidak ditemukan.');
       if (['completed', 'cancelled'].includes(row.status))
         fail(409, 'Pesanan selesai atau dibatalkan tidak dapat diubah.');
-      return saveOrder(client, input, req.user.id, id);
+      const previousItems = (
+        await client.query(
+          'SELECT product_id,product_name,price FROM order_items WHERE order_id=$1',
+          [id],
+        )
+      ).rows;
+      return saveOrder(client, input, req.user.id, id, previousItems);
     }),
   );
 });

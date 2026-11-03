@@ -258,6 +258,50 @@ test('order totals are server-derived and completion records one immutable sale'
   );
   assert.equal((await request('/orders', { session: owner })).status, 200);
 });
+test('unfinished orders keep archived products and their original price while new orders cannot use them', async () => {
+  const response = await request('/manage/products', {
+    method: 'POST',
+    session: admin,
+    body: { ...product, name: 'Archived order item ' + suffix, price: 170000 },
+  });
+  assert.equal(response.status, 201);
+  const productId = response.data.id;
+  created.products.push(productId);
+  const body = {
+    customer_name: 'Archived customer ' + suffix,
+    phone_number: '081234567999',
+    order_date: '2026-10-01',
+    delivery_date: '2026-10-12',
+    request: '',
+    items: [{ product_id: productId, quantity: 1 }],
+  };
+  const order = await request('/orders', { method: 'POST', session: admin, body });
+  assert.equal(order.status, 201);
+  created.orders.push(order.data.id);
+  assert.equal(
+    (
+      await request('/manage/products/' + productId, {
+        method: 'PUT',
+        session: admin,
+        body: { ...product, name: 'Updated archive ' + suffix, price: 999000, active: false },
+      })
+    ).status,
+    200,
+  );
+  const edited = await request('/orders/' + order.data.id, {
+    method: 'PUT',
+    session: admin,
+    body: { ...body, items: [{ product_id: productId, quantity: 2 }] },
+  });
+  assert.equal(edited.status, 200);
+  assert.equal(Number(edited.data.total), 340000);
+  const saved = (
+    await db.query('SELECT product_name,price FROM order_items WHERE order_id=$1', [order.data.id])
+  ).rows[0];
+  assert.equal(saved.product_name, 'Archived order item ' + suffix);
+  assert.equal(Number(saved.price), 170000);
+  assert.equal((await request('/orders', { method: 'POST', session: admin, body })).status, 422);
+});
 test('transaction rollback rejects nonexistent, duplicated and inactive product items', async () => {
   const baseInput = {
     customer_name: 'Invalid ' + suffix,
