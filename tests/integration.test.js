@@ -571,6 +571,7 @@ test('store settings persist publicly, customer metrics are readable by owner, a
       settings = {
         name: 'Retail Test Store',
         address: 'Test address',
+        map_url: 'https://maps.app.goo.gl/cZhMm6Z3326uHWz77',
         whatsapp: '6281234567890',
         instagram: 'https://www.instagram.com/bienvendreofficial?psln=bm10anhqdTk5eG1y',
         tiktok: 'https://www.tiktok.com/@bienvendre',
@@ -599,6 +600,22 @@ test('store settings persist publicly, customer metrics are readable by owner, a
     );
     assert.equal((await request('/store', { method: 'PUT', session, body: settings })).status, 200);
     assert.deepEqual((await request('/store')).data, settings);
+    assert.equal(
+      (
+        await request('/store', {
+          method: 'PUT',
+          session,
+          body: { ...settings, map_url: 'https://evil.example/maps' },
+        })
+      ).status,
+      422,
+    );
+    const { map_url, ...legacySettings } = settings;
+    assert.equal(
+      (await request('/store', { method: 'PUT', session, body: legacySettings })).status,
+      200,
+    );
+    assert.equal((await request('/store')).data.map_url, map_url);
     assert.equal(
       (
         await request('/store', {

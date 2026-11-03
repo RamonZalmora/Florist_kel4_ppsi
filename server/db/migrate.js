@@ -118,6 +118,15 @@ export async function migrate() {
         await installOccasionCatalog(client);
       await client.query('INSERT INTO schema_migrations(version) VALUES($1)', ['013']);
     }
+    if (
+      !(await client.query('SELECT version FROM schema_migrations WHERE version=$1', ['014']))
+        .rowCount
+    ) {
+      await client.query(
+        "ALTER TABLE store_settings ADD COLUMN map_url varchar(1000) NOT NULL DEFAULT 'https://maps.app.goo.gl/cZhMm6Z3326uHWz77'",
+      );
+      await client.query('INSERT INTO schema_migrations(version) VALUES($1)', ['014']);
+    }
   });
 }
 if (basename(process.argv[1] || '') === 'migrate.js') {

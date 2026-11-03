@@ -97,6 +97,16 @@ export function StoreEditor({ store, onSaved, notify }) {
         <textarea name="address" defaultValue={store.address} maxLength={500} />
       </label>
       <label>
+        Link Google Maps
+        <input
+          type="url"
+          name="map_url"
+          defaultValue={store.map_url}
+          placeholder="https://maps.app.goo.gl/..."
+          maxLength={1000}
+        />
+      </label>
+      <label>
         Deskripsi toko
         <textarea name="description" defaultValue={store.description} maxLength={1500} />
       </label>

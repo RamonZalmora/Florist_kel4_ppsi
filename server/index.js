@@ -20,6 +20,7 @@ app.use(
   helmet({
     contentSecurityPolicy: {
       directives: {
+        frameSrc: ["'self'", 'https://maps.google.com', 'https://www.google.com'],
         imgSrc: ["'self'", 'data:', 'https:'],
         upgradeInsecureRequests: process.env.COOKIE_SECURE === 'true' ? [] : null,
       },

@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { createRoot } from 'react-dom/client';
 import {
   Flower2,
+  MapPin,
   LayoutDashboard,
   Package,
   Tags,
@@ -550,6 +551,64 @@ function AboutPage({ store, whatsapp, onExplore }) {
           <h3>Informasi yang jelas</h3>
           <p>Lihat deskripsi, jenis, ukuran, dan harga produk untuk membantu memilih rangkaian.</p>
         </article>
+      </section>
+      <section className="about-location" aria-label="Lokasi toko">
+        <div className="location-copy">
+          <span className="eyebrow">VISIT & CONNECT</span>
+          <h2>
+            Temukan kami.
+            <br />
+            <em>Mulai cerita Anda.</em>
+          </h2>
+          <p>
+            Diskusikan rangkaian pilihan, ketersediaan produk, dan detail pengambilan bersama tim
+            Bien Vendre.
+          </p>
+          {store.address && (
+            <div className="location-address">
+              <MapPin size={21} />
+              <div>
+                <strong>Alamat toko</strong>
+                <p>{store.address}</p>
+              </div>
+            </div>
+          )}
+          <p className="hint">
+            Hubungi toko sebelum berkunjung untuk memastikan jadwal dan ketersediaan.
+          </p>
+        </div>
+        <div className="location-destination">
+          {store.map_url === 'https://maps.app.goo.gl/cZhMm6Z3326uHWz77' ? (
+            <iframe
+              className="location-map"
+              title="Peta lokasi Bien Vendre"
+              src="https://maps.google.com/maps?q=0.4734722222,101.3748055556&z=16&output=embed"
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+            />
+          ) : (
+            <div className="location-art" aria-hidden="true">
+              <div className="location-ring" />
+              <MapPin size={55} />
+              <span>BIEN VENDRE</span>
+            </div>
+          )}
+          <div className="location-destination-info">
+            <span className="eyebrow">GOOGLE MAPS</span>
+            <h3>Titik lokasi toko</h3>
+            {store.map_url === 'https://maps.app.goo.gl/cZhMm6Z3326uHWz77' && (
+              <p className="location-coordinates">0°28′24.5″N · 101°22′29.3″E</p>
+            )}
+            <p>Buka lokasi untuk melihat alamat, rute, dan petunjuk arah.</p>
+            {store.map_url ? (
+              <a className="btn primary" href={store.map_url} target="_blank" rel="noreferrer">
+                Buka Google Maps <ArrowUpRight size={17} />
+              </a>
+            ) : (
+              <span className="hint">Lokasi dapat ditanyakan melalui kontak toko.</span>
+            )}
+          </div>
+        </div>
       </section>
       <section className="about-contact">
         <div>
@@ -1295,12 +1354,57 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
           />
         )}
       </main>
-      <footer>
-        <div className="brand">
-          <img className="footer-logo" src="/assets/bien-mark.svg" alt="" /> Bien Vendre
+      <footer className="public-footer">
+        <div className="footer-main">
+          <div className="footer-brand">
+            <div className="brand">
+              <img className="footer-logo" src={store.logo || '/assets/bien-mark.svg'} alt="" />
+              {store.name || 'Bien Vendre'}
+            </div>
+            <p>
+              Bunga dan hadiah untuk momen yang ingin dikenang. Temukan perhatian kecil yang terasa
+              istimewa.
+            </p>
+            <span className="footer-signature">Thoughtfully arranged. Beautifully yours.</span>
+          </div>
+          <div className="footer-column">
+            <h3>Jelajahi</h3>
+            <a href="/catalog">Beranda</a>
+            <a href="/catalog?view=collection">Koleksi bunga & hadiah</a>
+            <a href="/about">Tentang kami</a>
+            <p>Pernikahan · Wisuda · Hadiah · Dekorasi</p>
+          </div>
+          <div className="footer-column footer-location">
+            <h3>Lokasi & konsultasi</h3>
+            {store.address && (
+              <p>
+                <MapPin size={17} />
+                <span>{store.address}</span>
+              </p>
+            )}
+            {store.map_url && (
+              <a href={store.map_url} target="_blank" rel="noreferrer">
+                Lihat lokasi di Google Maps <ArrowUpRight size={14} />
+              </a>
+            )}
+            {whatsapp && (
+              <a href={'https://wa.me/' + whatsapp} target="_blank" rel="noreferrer">
+                <MessageCircle size={16} />+{whatsapp}
+              </a>
+            )}
+            <small>Konfirmasi jadwal kunjungan dan detail pesanan melalui WhatsApp.</small>
+          </div>
         </div>
-        <span>© {new Date().getFullYear()} · Florist & Gifts</span>
-        <SocialLinks store={store} whatsapp={whatsapp} />
+        <div className="footer-channels">
+          <span>Terhubung dengan kami</span>
+          <SocialLinks store={store} whatsapp={whatsapp} />
+        </div>
+        <div className="footer-bottom">
+          <span>
+            © {new Date().getFullYear()} {store.name || 'Bien Vendre'} · Florist & Gifts
+          </span>
+          <span>Dirangkai dengan perhatian, untuk setiap cerita.</span>
+        </div>
       </footer>
       <FloatingSocial store={store} whatsapp={whatsapp} />
       {detail && (

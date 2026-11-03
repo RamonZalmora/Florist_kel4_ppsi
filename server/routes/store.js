@@ -7,6 +7,28 @@ export const storeSettings = Router();
 export const storeSchema = z.object({
   name: z.string().trim().min(1).max(120),
   address: z.string().trim().max(500),
+  map_url: z
+    .string()
+    .trim()
+    .max(1000)
+    .refine((value) => {
+      if (!value) return true;
+      try {
+        const url = new URL(value);
+        return (
+          url.protocol === 'https:' &&
+          !url.username &&
+          !url.password &&
+          !url.port &&
+          ((url.hostname === 'maps.app.goo.gl' && /^\/[A-Za-z0-9]+$/.test(url.pathname)) ||
+            (['www.google.com', 'google.com', 'maps.google.com'].includes(url.hostname) &&
+              url.pathname.startsWith('/maps')))
+        );
+      } catch {
+        return false;
+      }
+    }, 'Gunakan tautan Google Maps yang valid.')
+    .optional(),
   whatsapp: z
     .string()
     .trim()
@@ -85,7 +107,7 @@ export const storeSchema = z.object({
 storeSettings.put('/', authenticate, authorize('owner'), async (req, res) => {
   const v = storeSchema.parse(req.body);
   const { rows } = await db.query(
-    'INSERT INTO store_settings(id,name,address,whatsapp,instagram,description,logo,tiktok,about_story,about_service,care_tips,shopee,tokopedia) VALUES(1,$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) ON CONFLICT(id) DO UPDATE SET name=excluded.name,address=excluded.address,whatsapp=excluded.whatsapp,instagram=excluded.instagram,tiktok=excluded.tiktok,shopee=excluded.shopee,tokopedia=excluded.tokopedia,about_story=excluded.about_story,about_service=excluded.about_service,care_tips=excluded.care_tips,description=excluded.description,logo=excluded.logo,updated_at=now() RETURNING name,address,whatsapp,instagram,tiktok,shopee,tokopedia,description,logo,about_story,about_service,care_tips',
+    "INSERT INTO store_settings(id,name,address,whatsapp,instagram,description,logo,tiktok,about_story,about_service,care_tips,shopee,tokopedia,map_url) VALUES(1,$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,COALESCE($13,'https://maps.app.goo.gl/cZhMm6Z3326uHWz77')) ON CONFLICT(id) DO UPDATE SET name=excluded.name,address=excluded.address,map_url=COALESCE($13,store_settings.map_url),whatsapp=excluded.whatsapp,instagram=excluded.instagram,tiktok=excluded.tiktok,shopee=excluded.shopee,tokopedia=excluded.tokopedia,about_story=excluded.about_story,about_service=excluded.about_service,care_tips=excluded.care_tips,description=excluded.description,logo=excluded.logo,updated_at=now() RETURNING name,address,map_url,whatsapp,instagram,tiktok,shopee,tokopedia,description,logo,about_story,about_service,care_tips",
     [
       v.name,
       v.address,
@@ -99,6 +121,7 @@ storeSettings.put('/', authenticate, authorize('owner'), async (req, res) => {
       v.care_tips,
       v.shopee,
       v.tokopedia,
+      v.map_url ?? null,
     ],
   );
   res.json(rows[0]);

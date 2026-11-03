@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test('about page works directly and through navigation on all screen sizes', async ({ page }) => {
   await page.goto('/catalog');
-  await page.getByRole('link', { name: 'Tentang kami', exact: true }).click();
+  await page.locator('.nav-links').getByRole('link', { name: 'Tentang kami', exact: true }).click();
   await expect(page).toHaveURL(/\/about$/);
   await expect(page.getByRole('heading', { name: /Untuk momen yang/ })).toBeVisible();
   for (const name of ['WhatsApp', 'Shopee', 'Tokopedia', 'Instagram']) {
@@ -56,4 +56,20 @@ test('about page links to the channels configured by the store', async ({ page }
     'href',
     'https://www.tokopedia.com/bienvendreofficialb?source=universe&st=product',
   );
+});
+
+test('about and footer show the supplied map location', async ({ page }) => {
+  await page.goto('/about');
+  await expect(page.getByTitle('Peta lokasi Bien Vendre')).toHaveAttribute(
+    'src',
+    /0\.4734722222,101\.3748055556/,
+  );
+  await expect(page.getByRole('link', { name: 'Buka Google Maps', exact: true })).toHaveAttribute(
+    'href',
+    'https://maps.app.goo.gl/cZhMm6Z3326uHWz77',
+  );
+  await expect(
+    page.locator('.public-footer').getByRole('link', { name: /Lihat lokasi di Google Maps/ }),
+  ).toHaveAttribute('href', 'https://maps.app.goo.gl/cZhMm6Z3326uHWz77');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });

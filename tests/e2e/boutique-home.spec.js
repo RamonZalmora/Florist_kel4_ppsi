@@ -36,7 +36,7 @@ test('compact home shows grouped collections, complete photos and working collec
   await expect(
     page.locator('.catalog-sidebar').getByRole('button', { name: /Wedding/ }),
   ).toHaveAttribute('aria-pressed', 'true');
-  await page.getByRole('link', { name: 'Beranda', exact: true }).click();
+  await page.locator('.nav-links').getByRole('link', { name: 'Beranda', exact: true }).click();
   await page
     .locator('.home-single')
     .filter({ hasText: 'Snack' })
