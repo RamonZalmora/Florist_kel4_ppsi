@@ -833,7 +833,12 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
     );
   }
   return (
-    <div className={'catalog-page ' + (!occasion && page === 'catalog' ? 'boutique-home' : '')}>
+    <div
+      className={
+        'catalog-page ' +
+        (!occasion && page === 'catalog' ? 'boutique-home' : occasion ? 'collection-view' : '')
+      }
+    >
       <nav className="public-nav">
         <a className="brand" href="/catalog">
           {store.logo ? (
@@ -986,21 +991,25 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
             )}
             <section className="collection" id="collection">
               <div className="section-heading">
-                <div>
-                  <span className="eyebrow">OUR THOUGHTFUL COLLECTION</span>
-                  <h2>
-                    {occasion
-                      ? 'Bunga untuk setiap occasion'
-                      : category
-                        ? 'Rekomendasi untuk momen Anda'
-                        : 'Sedikit bunga, banyak bahagia.'}
-                  </h2>
-                  <p>
-                    {category
-                      ? 'Pilihan produk yang dikurasi berdasarkan kategori.'
-                      : 'Pilih rangkaian yang paling dekat dengan cerita Anda.'}
-                  </p>
-                </div>
+                {occasion ? (
+                  <h1 className="collection-title">Koleksi kami</h1>
+                ) : (
+                  <div>
+                    <span className="eyebrow">OUR THOUGHTFUL COLLECTION</span>
+                    <h2>
+                      {occasion
+                        ? 'Bunga untuk setiap occasion'
+                        : category
+                          ? 'Rekomendasi untuk momen Anda'
+                          : 'Sedikit bunga, banyak bahagia.'}
+                    </h2>
+                    <p>
+                      {category
+                        ? 'Pilihan produk yang dikurasi berdasarkan kategori.'
+                        : 'Pilih rangkaian yang paling dekat dengan cerita Anda.'}
+                    </p>
+                  </div>
+                )}
                 <label className="search-box">
                   <Search size={18} />
                   <input
@@ -1020,9 +1029,7 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
                       onToggle={(e) => setFiltersOpen(e.currentTarget.open)}
                     >
                       <summary>
-                        <span>
-                          <small>PERSONALISASI PILIHAN</small>Temukan hadiah
-                        </span>
+                        <span>Filter koleksi</span>
                         <span className="filter-indicator">
                           {Number(Boolean(category)) +
                             Number(Boolean(productType)) +
@@ -1140,7 +1147,6 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
                       <span>
                         <strong>{products.length}</strong> produk ditemukan
                       </span>
-                      <span>DIRANGKAI UNTUK CERITAMU</span>
                     </div>
                   )}
                   {loading ? (
