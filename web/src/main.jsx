@@ -1569,7 +1569,13 @@ function Workspace({ user, view, setView, logout, notify }) {
           <div className="topbar-right">
             <span className="today">
               <CalendarDays size={15} />
-              {date(new Date())}
+              {new Date().toLocaleDateString('id-ID', {
+                timeZone: 'Asia/Jakarta',
+                weekday: 'short',
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
+              })}
             </span>
             <button
               className="icon-btn"
@@ -1583,37 +1589,39 @@ function Workspace({ user, view, setView, logout, notify }) {
           </div>
         </header>
         <main className="workspace-content">
-          <div className="page-heading">
-            <div>
-              <span className="eyebrow">BIEN VENDRE / {user.role.toUpperCase()}</span>
-              <h1>{view === 'dashboard' ? 'Dashboard' : title}</h1>
-              <p>
-                {view === 'dashboard'
-                  ? `Selamat datang, ${user.name}. Mari buat hari ini bermakna.`
-                  : {
-                      products: 'Kelola setiap rangkaian dalam koleksi Anda.',
-                      categories: 'Kategori momen untuk rekomendasi yang lebih personal.',
-                      recommendations: 'Hubungkan produk terbaik dengan momen yang tepat.',
-                      orders: 'Setiap pesanan adalah cerita yang perlu dirawat.',
-                      customers: 'Kenali pelanggan dari pesanan yang telah dicatat.',
-                      reports: 'Pantau penjualan dan unduh laporan berdasarkan periode.',
-                      settings: 'Informasi toko dan akses akun Anda.',
-                      data: 'Jelajahi dan unduh data bisnis Anda secara aman.',
-                    }[view]}
-              </p>
+          {view !== 'dashboard' && (
+            <div className="page-heading">
+              <div>
+                <span className="eyebrow">BIEN VENDRE / {user.role.toUpperCase()}</span>
+                <h1>{view === 'dashboard' ? 'Dashboard' : title}</h1>
+                <p>
+                  {view === 'dashboard'
+                    ? `Selamat datang, ${user.name}. Mari buat hari ini bermakna.`
+                    : {
+                        products: 'Kelola setiap rangkaian dalam koleksi Anda.',
+                        categories: 'Kategori momen untuk rekomendasi yang lebih personal.',
+                        recommendations: 'Hubungkan produk terbaik dengan momen yang tepat.',
+                        orders: 'Setiap pesanan adalah cerita yang perlu dirawat.',
+                        customers: 'Kenali pelanggan dari pesanan yang telah dicatat.',
+                        reports: 'Pantau penjualan dan unduh laporan berdasarkan periode.',
+                        settings: 'Informasi toko dan akses akun Anda.',
+                        data: 'Jelajahi dan unduh data bisnis Anda secara aman.',
+                      }[view]}
+                </p>
+              </div>
+              {view !== 'dashboard' && view !== 'settings' && view !== 'reports' && (
+                <label className="search-box">
+                  <Search size={17} />
+                  <input
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="Cari data…"
+                    aria-label="Cari data"
+                  />
+                </label>
+              )}
             </div>
-            {view !== 'dashboard' && view !== 'settings' && view !== 'reports' && (
-              <label className="search-box">
-                <Search size={17} />
-                <input
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Cari data…"
-                  aria-label="Cari data"
-                />
-              </label>
-            )}
-          </div>
+          )}
           {error ? (
             <Empty text={error}>
               <button className="btn outline" onClick={refresh}>
@@ -1651,15 +1659,19 @@ function Workspace({ user, view, setView, logout, notify }) {
   );
 }
 function Dashboard({ data, user, go }) {
-  const { summary, trend, popular } = data.dashboard,
-    max = Math.max(...trend.map((t) => Number(t.total)), 1),
+  const [salesCategory, setSalesCategory] = useState('');
+  const { summary, trend } = data.dashboard;
+  const popular = data.dashboard.popular
+    .filter((p) => !salesCategory || p.categories.some((c) => String(c.id) === salesCategory))
+    .slice(0, 4);
+  const max = Math.max(...trend.map((t) => Number(t.total)), 1),
     total = trend.reduce((n, t) => n + Number(t.total), 0),
-    favoriteTotal = popular.reduce((n, item) => n + Number(item.favorite_count), 0),
+    favoriteTotal = popular.reduce((n, item) => n + Number(item.sold_count), 0),
     favoriteColors = ['#22d3ee', '#3b82f6', '#7c9cf5', '#b1c7f4'];
   let favoriteCursor = 0;
   const favoriteSegments = popular.map((item, i) => {
     const start = favoriteCursor;
-    favoriteCursor += favoriteTotal ? (Number(item.favorite_count) / favoriteTotal) * 100 : 0;
+    favoriteCursor += favoriteTotal ? (Number(item.sold_count) / favoriteTotal) * 100 : 0;
     return `${favoriteColors[i % favoriteColors.length]} ${start}% ${favoriteCursor}%`;
   });
   const stats = [
@@ -1676,20 +1688,45 @@ function Dashboard({ data, user, go }) {
   ];
   return (
     <>
-      <div className="dashboard-banner">
-        <div>
-          <span className="eyebrow">LET YOUR BUSINESS BLOOM</span>
-          <h2>
-            Rangkai kebahagiaan,
-            <br />
-            tumbuhkan <em>cerita indah.</em>
-          </h2>
-          <p>Setiap detail kecil membuat momen mereka istimewa.</p>
+      <section className="dashboard-command" aria-label="Ringkasan operasional">
+        <div className="command-brand">
+          <img src="/assets/dashboard-emblem.webp" alt="" />
+          <div>
+            <span className="eyebrow">BIEN VENDRE / {user.role.toUpperCase()}</span>
+            <strong>{user.name}</strong>
+            <small>
+              <span className="online-dot" /> Ringkasan operasional toko
+            </small>
+          </div>
         </div>
-        <span className="banner-pill">
-          <Flower2 size={17} /> Made with love
-        </span>
-      </div>
+        <div className="command-pulse">
+          <ShoppingBag size={18} />
+          <span>
+            <strong>{summary.pending_orders}</strong> belum selesai
+          </span>
+          <span className="command-divider" />
+          <Check size={18} />
+          <span>
+            <strong>{summary.completed_orders}</strong> selesai
+          </span>
+        </div>
+        <div className="command-actions">
+          <button className="btn outline" onClick={() => go('orders')}>
+            <ShoppingBag size={16} />
+            Pesanan
+          </button>
+          <button className="btn primary" onClick={() => go('reports')}>
+            <ChartNoAxesCombined size={16} />
+            Laporan
+          </button>
+        </div>
+      </section>
+      {Number(summary.demo_orders) > 0 && (
+        <div className="dashboard-demo">
+          <Sparkles size={15} />
+          {summary.demo_orders} pesanan simulasi berlabel [DEMO] ikut mengisi grafik dan laporan.
+        </div>
+      )}
       <div className="stat-grid">
         {stats.map(([label, value, Icon, hint, tone]) => (
           <article className="stat-card" key={label}>
@@ -1769,19 +1806,34 @@ function Dashboard({ data, user, go }) {
         <section className="panel popular-products">
           <div className="panel-heading">
             <div>
-              <h2>Favorit pelanggan</h2>
-              <p>Berdasarkan tanda hati pelanggan</p>
+              <h2>Produk paling dibeli</h2>
+              <p>Jumlah barang dari pesanan selesai</p>
             </div>
-            <Heart size={18} />
+            <ShoppingBag size={18} />
           </div>
+          <label className="bestseller-filter">
+            Kategori produk
+            <select
+              aria-label="Kategori produk terlaris"
+              value={salesCategory}
+              onChange={(e) => setSalesCategory(e.target.value)}
+            >
+              <option value="">Semua kategori</option>
+              {data.categories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </label>
           <div className="favorite-insight">
             <div
               className="favorite-ring"
               role="img"
               aria-label={
                 favoriteTotal
-                  ? `Total ${favoriteTotal} favorit pada empat produk teratas`
-                  : 'Belum ada favorit pada produk teratas'
+                  ? `Total ${favoriteTotal} barang terjual pada empat produk teratas`
+                  : 'Belum ada penjualan selesai untuk kategori ini'
               }
               style={{
                 background: favoriteTotal
@@ -1791,20 +1843,25 @@ function Dashboard({ data, user, go }) {
             >
               <div>
                 <strong>{favoriteTotal}</strong>
-                <small>FAVORIT</small>
+                <small>TERJUAL</small>
               </div>
             </div>
             <div className="favorite-insight-copy">
-              <strong>Yang paling disukai</strong>
-              <span>Jumlah tanda hati untuk empat produk teratas</span>
+              <strong>Terlaris di toko</strong>
+              <span>Empat produk dengan jumlah pembelian tertinggi</span>
             </div>
           </div>
+          {!popular.length && (
+            <p className="bestseller-empty">Belum ada produk terjual pada kategori ini.</p>
+          )}
           {popular.map((p, i) => (
             <div className="popular-row" key={p.id}>
               <Photo src={p.photo} alt={p.name} />
               <div>
                 <strong>{p.name}</strong>
-                <small>{p.favorite_count} favorit</small>
+                <small>
+                  {p.sold_count} terjual{!p.active ? ' · Arsip' : ''}
+                </small>
               </div>
               <span style={{ color: favoriteColors[i % favoriteColors.length] }}>0{i + 1}</span>
             </div>

@@ -8,7 +8,7 @@ test('admin adds and changes occasions directly in the product form', async ({ p
     await page.getByLabel('Username', { exact: true }).fill('admin');
     await page.getByLabel('Password', { exact: true }).fill(process.env.SEED_ADMIN_PASSWORD);
     await page.getByRole('button', { name: 'Masuk ke dashboard' }).click();
-    await expect(page.getByRole('heading', { name: 'Dashboard', exact: true })).toBeVisible();
+    await expect(page.locator('.stat-grid')).toBeVisible();
     const menu = page.getByRole('button', { name: 'Buka menu' });
     if (await menu.isVisible()) await menu.click();
     await page.locator('.sidebar nav').getByRole('button', { name: 'Produk', exact: true }).click();

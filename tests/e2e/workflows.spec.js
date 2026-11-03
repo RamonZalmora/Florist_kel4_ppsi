@@ -131,7 +131,7 @@ async function login(page, role) {
     .getByLabel('Password', { exact: true })
     .fill(process.env[role === 'admin' ? 'SEED_ADMIN_PASSWORD' : 'SEED_OWNER_PASSWORD']);
   await page.getByRole('button', { name: 'Masuk ke dashboard' }).click();
-  await expect(page.getByRole('heading', { name: 'Dashboard', exact: true })).toBeVisible();
+  await expect(page.locator('.stat-grid')).toBeVisible();
 }
 async function navigate(page, label) {
   const menu = page.getByRole('button', { name: 'Buka menu' });

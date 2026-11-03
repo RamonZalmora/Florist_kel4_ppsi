@@ -236,3 +236,9 @@ Data PostgreSQL mode ini terpisah dari folder PGlite. Pertahankan data lama sebe
 Setelah mengunduh pembaruan, hentikan server, jalankan `npm.cmd ci` sekali untuk memasang dependency baru, lalu buka `Mulai-BienVendre.cmd`. Data lama dipertahankan oleh migrasi. Backup juga folder `.local/uploads` selain database.
 
 Lihat [audit fitur dan batas penggunaan](docs/FEATURE-AUDIT.md). Fokus tetap localhost; tidak perlu akun hosting atau deploy.
+
+### Data simulasi lokal
+
+Setup lokal menambahkan satu kali 30 pesanan berlabel `[DEMO]`: 24 selesai dan enam belum selesai. Nama serta nomor kontak adalah simulasi, bukan pelanggan asli. Data ini mengisi grafik, laporan penjualan, dan produk paling dibeli berdasarkan pesanan selesai. Kategori pada produk terlaris mengikuti hubungan produk dengan Occasion.
+
+Untuk melewati penambahan demo, atur `SEED_DEMO=false` sebelum setup. Untuk menghapus data simulasi setelah mencoba, hentikan server dan jalankan `npm run demo:clear`. Perintah ini hanya menghapus pesanan dan penjualan dengan penanda demo; setup berikutnya tidak akan menambahkannya ulang.

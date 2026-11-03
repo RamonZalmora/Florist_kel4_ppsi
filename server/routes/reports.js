@@ -144,13 +144,13 @@ dashboard.use(authenticate);
 dashboard.get('/', async (req, res) => {
   const [summary, trend, popular] = await Promise.all([
     db.query(
-      `SELECT (SELECT COALESCE(sum(total_sale),0) FROM sales WHERE date_trunc('month',sale_date)=date_trunc('month',(now() AT TIME ZONE 'Asia/Jakarta')::date)) AS revenue,(SELECT count(*)::int FROM orders) AS total_orders,(SELECT count(*)::int FROM orders WHERE status IN ('pending','processing')) AS pending_orders,(SELECT count(DISTINCT phone_number)::int FROM orders) AS customers,(SELECT count(*)::int FROM products WHERE active=true) AS products,(SELECT count(*)::int FROM orders WHERE status='completed') AS completed_orders`,
+      `SELECT (SELECT COALESCE(sum(total_sale),0) FROM sales WHERE date_trunc('month',sale_date)=date_trunc('month',(now() AT TIME ZONE 'Asia/Jakarta')::date)) AS revenue,(SELECT count(*)::int FROM orders) AS total_orders,(SELECT count(*)::int FROM orders WHERE status IN ('pending','processing')) AS pending_orders,(SELECT count(DISTINCT phone_number)::int FROM orders) AS customers,(SELECT count(*)::int FROM products WHERE active=true) AS products,(SELECT count(*)::int FROM orders WHERE status='completed') AS completed_orders,(SELECT count(*)::int FROM orders WHERE request LIKE 'DATA SIMULASI%') AS demo_orders`,
     ),
     db.query(
       `SELECT to_char(d.day,'YYYY-MM-DD') AS day,COALESCE(sum(s.total_sale),0) AS total FROM generate_series((now() AT TIME ZONE 'Asia/Jakarta')::date-6,(now() AT TIME ZONE 'Asia/Jakarta')::date,'1 day'::interval) d(day) LEFT JOIN sales s ON s.sale_date=d.day::date GROUP BY d.day ORDER BY d.day`,
     ),
     db.query(
-      `SELECT p.id,p.name,p.photo,count(f.visitor_id)::int AS favorite_count FROM products p LEFT JOIN product_favorites f ON f.product_id=p.id WHERE p.active=true GROUP BY p.id ORDER BY favorite_count DESC,p.id DESC LIMIT 4`,
+      `SELECT p.id,p.name,p.photo,p.active,sum(oi.quantity)::int AS sold_count,COALESCE((SELECT json_agg(json_build_object('id',c.id,'name',c.name)) FROM recommendations r JOIN categories c ON c.id=r.category_id WHERE r.product_id=p.id),'[]') AS categories FROM products p JOIN order_items oi ON oi.product_id=p.id JOIN orders o ON o.id=oi.order_id AND o.status='completed' JOIN sales s ON s.order_id=o.id GROUP BY p.id ORDER BY sold_count DESC,p.id DESC`,
     ),
   ]);
   res.json({ summary: summary.rows[0], trend: trend.rows, popular: popular.rows });

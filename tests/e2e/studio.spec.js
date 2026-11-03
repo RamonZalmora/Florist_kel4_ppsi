@@ -5,7 +5,7 @@ async function login(page) {
   await page.getByLabel('Username', { exact: true }).fill('owner');
   await page.getByLabel('Password', { exact: true }).fill(process.env.SEED_OWNER_PASSWORD);
   await page.getByRole('button', { name: 'Masuk ke dashboard' }).click();
-  await expect(page.getByRole('heading', { name: 'Dashboard', exact: true })).toBeVisible();
+  await expect(page.locator('.stat-grid')).toBeVisible();
 }
 async function go(page, label) {
   const menu = page.getByRole('button', { name: 'Buka menu' });

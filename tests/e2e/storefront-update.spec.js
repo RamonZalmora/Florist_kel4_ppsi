@@ -29,7 +29,7 @@ test('only owner can change store profile and neither role sees delivery agenda'
     await page.getByLabel('Username', { exact: true }).fill(role);
     await page.getByLabel('Password', { exact: true }).fill(password);
     await page.getByRole('button', { name: 'Masuk ke dashboard' }).click();
-    await expect(page.getByRole('heading', { name: 'Dashboard', exact: true })).toBeVisible();
+    await expect(page.locator('.stat-grid')).toBeVisible();
   }
   async function settings() {
     const menu = page.getByRole('button', { name: 'Buka menu' });

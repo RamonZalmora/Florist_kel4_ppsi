@@ -46,7 +46,7 @@ test('admin orders show two statuses and can complete directly', async ({ page }
   await page.getByLabel('Username', { exact: true }).fill('admin');
   await page.getByLabel('Password', { exact: true }).fill(process.env.SEED_ADMIN_PASSWORD);
   await page.getByRole('button', { name: 'Masuk ke dashboard' }).click();
-  await expect(page.getByRole('heading', { name: 'Dashboard', exact: true })).toBeVisible();
+  await expect(page.locator('.stat-grid')).toBeVisible();
   const api = page.context().request;
   const me = await (await api.get('/api/auth/me')).json();
   const product = (await (await api.get('/api/products')).json())[0];
@@ -64,7 +64,7 @@ test('admin orders show two statuses and can complete directly', async ({ page }
   expect(created.status()).toBe(201);
   const order = await created.json();
   await page.reload();
-  await expect(page.getByRole('heading', { name: 'Dashboard', exact: true })).toBeVisible();
+  await expect(page.locator('.stat-grid')).toBeVisible();
   const menu = page.getByRole('button', { name: 'Buka menu' });
   if (await menu.isVisible()) await menu.click();
   await page.locator('.sidebar nav').getByRole('button', { name: 'Pesanan', exact: true }).click();

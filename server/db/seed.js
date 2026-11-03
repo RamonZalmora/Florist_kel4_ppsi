@@ -1,4 +1,5 @@
 import bcrypt from 'bcryptjs';
+import { seedDemoOrders } from './demo-orders.js';
 import { db, transaction } from './pool.js';
 import { migrate } from './migrate.js';
 import { installRealCatalog } from './real-catalog.js';
@@ -25,6 +26,8 @@ try {
     await installRealCatalog(client);
     await installCatalogBatchTwo(client);
     await installOccasionCatalog(client);
+    if (process.env.SEED_DEMO !== 'false' && process.env.NODE_ENV !== 'production')
+      await seedDemoOrders(client);
   });
   console.log('Setup selesai. Akun, data penjualan, dan produk lama tetap tersimpan.');
 } finally {

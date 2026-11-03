@@ -20,7 +20,8 @@
     "db:import": "node scripts/import-postgres.js",
     "db:backup": "node scripts/backup-db.js",
     "db:restore": "node scripts/restore-db.js",
-    "db:inspect": "node scripts/inspect-db.js"
+    "db:inspect": "node scripts/inspect-db.js",
+    "demo:clear": "node scripts/clear-demo.js"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.9",

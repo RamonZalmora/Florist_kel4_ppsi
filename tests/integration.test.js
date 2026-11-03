@@ -726,7 +726,7 @@ test('favorites are idempotent, persisted per visitor, and visible in catalog an
   assert.ok((await request('/favorites/' + visitor)).data.includes(String(id)));
   const dashboard = (await request('/dashboard', { session: admin })).data;
   assert.equal(dashboard.popular[0].id, id);
-  assert.equal(dashboard.popular[0].favorite_count, 1);
+  assert.equal(Number(dashboard.popular.find((p) => p.id === id).sold_count), 3);
   assert.equal(
     (await request('/products?sort=popular')).data.find((p) => p.id === id).favorite_count,
     1,

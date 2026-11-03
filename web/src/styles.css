@@ -6808,3 +6808,173 @@ tr:hover td {
     padding: 10px 6px;
   }
 }
+
+/* Compact operations workspace for both store roles. */
+.workspace-content:has(.dashboard-command) {
+  padding-top: 22px;
+}
+.topbar .today {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 13px;
+  border: 1px solid #bfd9e9;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #fff, #e9f5ff);
+  color: #3c6a86;
+  font-size: 12px;
+  box-shadow: 0 3px 0 #deebf4;
+}
+.dashboard-command {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 22px;
+  padding: 18px 22px;
+  border: 1px solid #b8d7eb;
+  border-radius: 20px;
+  background: radial-gradient(ellipse at 20% 0%, #fff, #edf8ff 60%, #def1fa);
+  box-shadow:
+    0 5px 0 #d3e5f2,
+    0 12px 28px #224f7110;
+  margin-bottom: 20px;
+}
+.command-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.command-brand img {
+  width: 76px;
+  height: 76px;
+  object-fit: contain;
+  filter: drop-shadow(0 5px 5px #1e638c25);
+}
+.command-brand strong,
+.command-brand small {
+  display: block;
+}
+.command-brand strong {
+  font:
+    500 24px Georgia,
+    serif;
+  color: #193f5e;
+  margin: 5px 0;
+}
+.command-brand small {
+  font-size: 11px;
+  color: #6e8da0;
+}
+.command-brand .eyebrow {
+  font-size: 9px;
+}
+.command-pulse {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #4b7a94;
+  font-size: 11px;
+  flex-wrap: wrap;
+}
+.command-pulse strong {
+  font-size: 18px;
+  color: #215978;
+}
+.command-divider {
+  height: 24px;
+  width: 1px;
+  background: #c9e0ed;
+  margin: 0 7px;
+}
+.command-actions {
+  display: flex;
+  gap: 8px;
+}
+.command-actions .btn {
+  padding: 10px 12px;
+  font-size: 12px;
+}
+.dashboard-demo {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: 0 0 18px;
+  padding: 10px 14px;
+  background: #fff7df;
+  border: 1px solid #ecd89d;
+  border-radius: 10px;
+  color: #8a6b23;
+  font-size: 11px;
+}
+.bestseller-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-size: 11px;
+  color: #7590a2;
+  margin: 0 18px 15px;
+}
+.bestseller-filter select {
+  width: 100%;
+  border: 1px solid #c5ddec;
+  background: #f5fbff;
+  border-radius: 10px;
+  padding: 10px;
+  color: #214f6d;
+  font-size: 12px;
+}
+.bestseller-empty {
+  font-size: 12px;
+  line-height: 1.7;
+  color: #7b94a6;
+  padding: 10px 18px;
+}
+.chart-panel .bar {
+  background: linear-gradient(180deg, #3ccbe0, #1a7bb3);
+  border-radius: 8px 8px 3px 3px;
+  box-shadow:
+    3px 0 0 #207fbb22,
+    inset 0 1px 0 #ffffff77;
+}
+.chart-panel .bar.current {
+  background: linear-gradient(180deg, #53e0c8, #169fae);
+}
+@media (max-width: 1100px) {
+  .dashboard-command {
+    flex-wrap: wrap;
+  }
+  .command-actions {
+    margin-left: auto;
+  }
+}
+@media (max-width: 720px) {
+  .dashboard-command {
+    padding: 14px;
+    gap: 13px;
+  }
+  .command-brand img {
+    width: 58px;
+    height: 58px;
+  }
+  .command-brand strong {
+    font-size: 21px;
+  }
+  .command-pulse {
+    width: 100%;
+  }
+  .command-actions {
+    margin: 0;
+    width: 100%;
+  }
+  .command-actions .btn {
+    flex: 1;
+  }
+  .topbar .today {
+    font-size: 10px;
+    padding: 7px;
+  }
+  .dashboard-demo {
+    align-items: flex-start;
+    line-height: 1.6;
+  }
+}
