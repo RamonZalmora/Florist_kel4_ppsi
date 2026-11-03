@@ -1,12 +1,12 @@
 import { test, expect } from '@playwright/test';
 
-test('home shows nine popular products and occasion supports paging and sorting', async ({
+test('home groups products by occasion and catalog supports paging and sorting', async ({
   page,
 }) => {
   await page.goto('/catalog');
-  await expect(page.locator('.product-card')).toHaveCount(9);
-  const api = await (await page.request.get('/api/products?sort=popular')).json();
-  await expect(page.locator('.product-card h3').first()).toHaveText(api[0].name);
+  await expect(page.locator('.home-product-group')).toHaveCount(4);
+  for (const group of await page.locator('.home-product-group').all())
+    await expect(group.locator('.product-card')).toHaveCount(4);
   await page.getByRole('link', { name: 'Occasion', exact: true }).click();
   const collapsedFilters = page.locator('.catalog-filter-panel:not([open]) > summary');
   if (await collapsedFilters.isVisible()) await collapsedFilters.click();

@@ -100,7 +100,7 @@ test('customer can browse, search, filter and read complete product details', as
   await expect(
     page.getByRole('heading', { name: 'Bunga yang indah. Cerita yang bermakna.' }),
   ).toBeVisible();
-  await expect(page.locator('.product-card')).toHaveCount(9);
+  await expect(page.locator('.home-product-group')).toHaveCount(4);
   await page.getByRole('link', { name: 'Occasion', exact: true }).click();
   await page.getByRole('textbox', { name: 'Cari produk' }).fill('Bouquet Bunga Matahari Ceria');
   await expect(page.locator('.product-card')).toHaveCount(1);

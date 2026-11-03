@@ -708,8 +708,115 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
           `Halo, saya ingin memesan ${p.name} seharga ${money(p.price)}. Apakah produk ini tersedia?`,
         )
       : null;
+  function openCollection(categoryId = '', type = '') {
+    setOccasion(true);
+    setCategory(String(categoryId));
+    setProductType(type);
+    setBudget('');
+    setSearch('');
+    setTimeout(
+      () => document.getElementById('collection')?.scrollIntoView({ behavior: 'smooth' }),
+      0,
+    );
+  }
+  const used = new Set();
+  const homeGroups = ['Wedding', 'Wisuda', 'Hadiah', 'Dekorasi']
+    .map((name) => {
+      const group = categories.find((c) => c.name.toLowerCase() === name.toLowerCase());
+      const preferred = {
+        Wedding: /wedding|hand bouquet/i,
+        Wisuda: /wisuda|graduation/i,
+        Hadiah: /bouquet|buket/i,
+        Dekorasi: /vas|bunga meja/i,
+      }[name];
+      const items = products
+        .filter(
+          (p) =>
+            !used.has(String(p.id)) &&
+            p.categories?.some((c) => String(c.id) === String(group?.id)),
+        )
+        .sort((a, b) => Number(preferred.test(b.name)) - Number(preferred.test(a.name)))
+        .slice(0, 4);
+      items.forEach((p) => used.add(String(p.id)));
+      return { ...group, name, items };
+    })
+    .filter((group) => group.items.length);
+  const singleTypes = [
+    ['snack', 'Snack', /snack|wafer/i],
+    ['uang', 'Uang', /uang/i],
+    ['akrilik', 'Akrilik', /akrilik/i],
+    ['frame', 'Frame & mahar', /frame/i],
+    ['boneka', 'Boneka', /boneka/i],
+    ['klobot', 'Klobot', /klobot/i],
+  ];
+  const homeSingles = singleTypes
+    .map(([type, label, match]) => {
+      const item = products.find(
+        (p) => !used.has(String(p.id)) && match.test(p.name + ' ' + p.flower_type),
+      );
+      if (item) used.add(String(item.id));
+      return { type, label, item };
+    })
+    .filter((entry) => entry.item);
+  function renderProduct(p, i) {
+    return (
+      <article className="product-card" key={p.id}>
+        <div
+          className={'product-picture tone-' + (i % 3)}
+          onClick={() => showProduct(p.id)}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') showProduct(p.id);
+          }}
+        >
+          <Photo src={p.photo} alt={p.name} />
+          <span className="view-product">
+            <Eye size={16} /> Lihat detail
+          </span>
+          {p.photo?.startsWith('/assets/catalog/') ? (
+            <span className="product-tag">Foto ilustrasi</span>
+          ) : p.categories?.[0] ? (
+            <span className="product-tag">{p.categories[0].name}</span>
+          ) : null}
+        </div>
+        <div className="product-card-info">
+          <div>
+            <h3>{p.name}</h3>
+            <p>{p.flower_type}</p>
+          </div>
+          <ArrowUpRight size={20} />
+        </div>
+        <strong className="product-price">{money(p.price)}</strong>
+        <button
+          className={'favorite-btn ' + (favorites.includes(String(p.id)) ? 'selected' : '')}
+          aria-label={
+            (favorites.includes(String(p.id)) ? 'Hapus favorit ' : 'Tambahkan favorit ') + p.name
+          }
+          aria-pressed={favorites.includes(String(p.id))}
+          onClick={() => toggleFavorite(p)}
+        >
+          <Heart size={17} fill={favorites.includes(String(p.id)) ? 'currentColor' : 'none'} />{' '}
+          {p.favorite_count || 0} favorit
+        </button>
+        {consult(p) ? (
+          <a
+            className="product-order"
+            href={consult(p)}
+            target="_blank"
+            rel="noreferrer"
+            aria-label={'Pesan ' + p.name + ' via WhatsApp'}
+          >
+            <MessageCircle size={16} /> Pesan via WhatsApp
+          </a>
+        ) : (
+          <span className="product-order-unavailable">WhatsApp belum tersedia</span>
+        )}
+      </article>
+    );
+  }
   return (
-    <div className="catalog-page">
+    <div className={'catalog-page ' + (!occasion && page === 'catalog' ? 'boutique-home' : '')}>
       <nav className="public-nav">
         <a className="brand" href="/catalog">
           {store.logo ? (
@@ -792,10 +899,33 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
                     <span>Personal, penuh makna, dibuat dengan cinta.</span>
                   </div>
                 </div>
-                <div className="hero-stamp">
-                  <Flower2 size={28} />
-                  <span>MADE WITH LOVE</span>
-                  <small>Bien Vendre</small>
+                <div className="hero-showcase">
+                  <div className="hero-orbit">
+                    <Sparkles size={22} />
+                    <span>Little details. Lasting memories.</span>
+                  </div>
+                  <img
+                    className="hero-bouquet"
+                    src="/assets/catalog/product-21.webp"
+                    alt="Ilustrasi rangkaian bunga wedding premium"
+                  />
+                  <div className="hero-note">
+                    <span className="dimensional-icon">
+                      <Heart size={22} />
+                    </span>
+                    <div>
+                      <strong>A little joy, beautifully wrapped.</strong>
+                      <small>Bunga · Hadiah · Momen berharga</small>
+                    </div>
+                  </div>
+                  <button className="hero-mini" onClick={() => openCollection('', 'boneka')}>
+                    <img src="/assets/catalog/product-54.webp" alt="" />
+                    <span>
+                      Hadiah kecil,
+                      <br />
+                      <strong>kesan istimewa ↗</strong>
+                    </span>
+                  </button>
                 </div>
               </section>
             )}
@@ -1004,73 +1134,63 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
                     <Empty text={error} />
                   ) : !products.length ? (
                     <Empty text="Belum ada produk yang sesuai. Coba kategori atau pencarian lain." />
-                  ) : (
-                    <div className="product-grid">
-                      {visibleProducts.map((p, i) => (
-                        <article className="product-card" key={p.id}>
-                          <div
-                            className={'product-picture tone-' + (i % 3)}
-                            onClick={() => showProduct(p.id)}
-                            role="button"
-                            tabIndex={0}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' || e.key === ' ') showProduct(p.id);
-                            }}
-                          >
-                            <Photo src={p.photo} alt={p.name} />
-                            <span className="view-product">
-                              <Eye size={16} /> Lihat detail
-                            </span>
-                            {p.photo?.startsWith('/assets/catalog/') ? (
-                              <span className="product-tag">Foto ilustrasi</span>
-                            ) : p.categories?.[0] ? (
-                              <span className="product-tag">{p.categories[0].name}</span>
-                            ) : null}
-                          </div>
-                          <div className="product-card-info">
-                            <div>
-                              <h3>{p.name}</h3>
-                              <p>{p.flower_type}</p>
+                  ) : !occasion && !search ? (
+                    <div className="home-curation">
+                      <div className="home-group-grid">
+                        {homeGroups.map((group, i) => (
+                          <section className={'home-product-group group-tone-' + i} key={group.id}>
+                            <div className="home-group-heading">
+                              <div>
+                                <span className="eyebrow">0{i + 1} / THE COLLECTION</span>
+                                <h3>{group.name === 'Hadiah' ? 'Gifts, with love' : group.name}</h3>
+                                <p>{group.description}</p>
+                              </div>
+                              <button
+                                aria-label={'Lihat koleksi ' + group.name}
+                                onClick={() => openCollection(group.id)}
+                              >
+                                <ArrowUpRight size={20} />
+                              </button>
                             </div>
-                            <ArrowUpRight size={20} />
-                          </div>
-                          <strong className="product-price">{money(p.price)}</strong>
-                          <button
-                            className={
-                              'favorite-btn ' + (favorites.includes(String(p.id)) ? 'selected' : '')
-                            }
-                            aria-label={
-                              (favorites.includes(String(p.id))
-                                ? 'Hapus favorit '
-                                : 'Tambahkan favorit ') + p.name
-                            }
-                            aria-pressed={favorites.includes(String(p.id))}
-                            onClick={() => toggleFavorite(p)}
-                          >
-                            <Heart
-                              size={17}
-                              fill={favorites.includes(String(p.id)) ? 'currentColor' : 'none'}
-                            />{' '}
-                            {p.favorite_count || 0} favorit
-                          </button>
-                          {consult(p) ? (
-                            <a
-                              className="product-order"
-                              href={consult(p)}
-                              target="_blank"
-                              rel="noreferrer"
-                              aria-label={'Pesan ' + p.name + ' via WhatsApp'}
-                            >
-                              <MessageCircle size={16} /> Pesan via WhatsApp
-                            </a>
-                          ) : (
-                            <span className="product-order-unavailable">
-                              WhatsApp belum tersedia
+                            <div className="home-group-products">
+                              {group.items.map(renderProduct)}
+                            </div>
+                          </section>
+                        ))}
+                      </div>
+                      {homeSingles.length > 0 && (
+                        <section className="home-discover">
+                          <div className="home-discover-heading">
+                            <span className="dimensional-icon">
+                              <Sparkles />
                             </span>
-                          )}
-                        </article>
-                      ))}
+                            <div>
+                              <span className="eyebrow">LITTLE FINDS, BIG SMILES</span>
+                              <h3>Temukan kesukaan lainnya.</h3>
+                            </div>
+                          </div>
+                          <div className="home-single-grid">
+                            {homeSingles.map(({ type, label, item }) => (
+                              <div className="home-single" key={type}>
+                                <button
+                                  className="single-type"
+                                  onClick={() => openCollection('', type)}
+                                >
+                                  {label}
+                                  <ArrowUpRight size={14} />
+                                </button>
+                                {renderProduct(item, 0)}
+                              </div>
+                            ))}
+                          </div>
+                        </section>
+                      )}
+                      {!homeGroups.length && (
+                        <div className="product-grid">{visibleProducts.map(renderProduct)}</div>
+                      )}
                     </div>
+                  ) : (
+                    <div className="product-grid">{visibleProducts.map(renderProduct)}</div>
                   )}
                   {!loading &&
                     !error &&
