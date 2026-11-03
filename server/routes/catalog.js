@@ -59,7 +59,7 @@ catalog.get('/products', async (req, res) => {
   res.json(
     (
       await db.query(
-        `SELECT p.*,(SELECT count(*)::int FROM product_favorites f WHERE f.product_id=p.id) AS favorite_count,COALESCE((SELECT json_agg(json_build_object('id',c.id,'name',c.name)) FROM recommendations r JOIN categories c ON c.id=r.category_id WHERE r.product_id=p.id),'[]') AS categories FROM products p WHERE p.active=true AND (p.name ILIKE $1 OR p.description ILIKE $1) AND ($2::bigint IS NULL OR EXISTS(SELECT 1 FROM recommendations r WHERE r.product_id=p.id AND r.category_id=$2)) AND ($3::numeric IS NULL OR p.price<=$3) AND ($4::numeric IS NULL OR p.price>=$4) AND ($5::text[] IS NULL OR lower(p.name || ' ' || p.flower_type) LIKE ANY($5::text[])) ORDER BY ${order}`,
+        `SELECT p.*,COALESCE((SELECT sum(oi.quantity) FROM order_items oi JOIN sales s ON s.order_id=oi.order_id WHERE oi.product_id=p.id),0) AS sold_count,(SELECT count(*)::int FROM product_favorites f WHERE f.product_id=p.id) AS favorite_count,COALESCE((SELECT json_agg(json_build_object('id',c.id,'name',c.name)) FROM recommendations r JOIN categories c ON c.id=r.category_id WHERE r.product_id=p.id),'[]') AS categories FROM products p WHERE p.active=true AND (p.name ILIKE $1 OR p.description ILIKE $1) AND ($2::bigint IS NULL OR EXISTS(SELECT 1 FROM recommendations r WHERE r.product_id=p.id AND r.category_id=$2)) AND ($3::numeric IS NULL OR p.price<=$3) AND ($4::numeric IS NULL OR p.price>=$4) AND ($5::text[] IS NULL OR lower(p.name || ' ' || p.flower_type) LIKE ANY($5::text[])) ORDER BY ${order}`,
         [
           '%' + search + '%',
           category,

@@ -6,7 +6,7 @@ test('home groups products by occasion and catalog supports paging and sorting',
   await page.goto('/catalog');
   await expect(page.locator('.home-product-group')).toHaveCount(4);
   for (const group of await page.locator('.home-product-group').all())
-    await expect(group.locator('.product-card')).toHaveCount(4);
+    await expect(group.locator('.product-card')).toHaveCount(3);
   await page.getByRole('link', { name: 'Koleksi bunga', exact: true }).click();
   const collapsedFilters = page.locator('.catalog-filter-panel:not([open]) > summary');
   if (await collapsedFilters.isVisible()) await collapsedFilters.click();

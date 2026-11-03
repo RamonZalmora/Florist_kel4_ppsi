@@ -737,13 +737,15 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
         Dekorasi: /vas|bunga meja/i,
       }[name];
       const items = products
-        .filter(
-          (p) =>
-            !used.has(String(p.id)) &&
-            p.categories?.some((c) => String(c.id) === String(group?.id)),
+        .filter((p) => p.categories?.some((c) => String(c.id) === String(group?.id)))
+        .sort(
+          (a, b) =>
+            Number(b.sold_count || 0) - Number(a.sold_count || 0) ||
+            Number(preferred.test(b.name)) - Number(preferred.test(a.name)) ||
+            Number(b.favorite_count || 0) - Number(a.favorite_count || 0) ||
+            Number(b.id) - Number(a.id),
         )
-        .sort((a, b) => Number(preferred.test(b.name)) - Number(preferred.test(a.name)))
-        .slice(0, 4);
+        .slice(0, 3);
       items.forEach((p) => used.add(String(p.id)));
       return { ...group, name, items };
     })
@@ -765,9 +767,17 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
       return { type, label, item };
     })
     .filter((entry) => entry.item);
-  function renderProduct(p, i) {
+  function renderProduct(p, i, ranked = false) {
     return (
-      <article className="product-card" key={p.id}>
+      <article
+        className={'product-card' + (ranked === true ? ' ranked-product rank-' + (i + 1) : '')}
+        key={p.id}
+      >
+        {ranked === true && (
+          <span className="product-rank">
+            {i === 0 && Number(p.sold_count) > 0 ? '01 / Terlaris' : '0' + (i + 1) + ' / Pilihan'}
+          </span>
+        )}
         <div
           className={'product-picture tone-' + (i % 3)}
           onClick={() => showProduct(p.id)}
@@ -1146,6 +1156,16 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
                       <div className="home-group-grid">
                         {homeGroups.map((group, i) => (
                           <section className={'home-product-group group-tone-' + i} key={group.id}>
+                            <img
+                              className="occasion-sculpture"
+                              src={
+                                '/assets/occasions/' +
+                                ['wedding', 'wisuda', 'hadiah', 'dekorasi'][i] +
+                                '.webp'
+                              }
+                              alt=""
+                              aria-hidden="true"
+                            />
                             <div className="home-group-heading">
                               <div>
                                 <span className="eyebrow">0{i + 1} / THE COLLECTION</span>
@@ -1156,11 +1176,11 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
                                 aria-label={'Lihat koleksi ' + group.name}
                                 onClick={() => openCollection(group.id)}
                               >
-                                <ArrowUpRight size={20} />
+                                Lihat lebih banyak <ArrowUpRight size={15} />
                               </button>
                             </div>
                             <div className="home-group-products">
-                              {group.items.map(renderProduct)}
+                              {group.items.map((p, index) => renderProduct(p, index, true))}
                             </div>
                           </section>
                         ))}

@@ -5460,3 +5460,276 @@ tr:hover td {
     flex-wrap: wrap;
   }
 }
+
+/* Sculpted navy collection cards and sales ranking */
+.boutique-home .catalog-hero {
+  border: 1px solid #387497;
+  background:
+    radial-gradient(ellipse at 75% 25%, #27617a 0%, transparent 55%),
+    linear-gradient(125deg, #071c37, #103b5b 58%, #145b73);
+  box-shadow:
+    0 14px 0 -10px #102c48,
+    0 22px 36px #102e4c30,
+    inset 0 2px 0 #ffffff55,
+    inset 0 -3px 0 #05172b80;
+}
+.boutique-home .hero-copy h1 {
+  color: #f0faff;
+}
+.boutique-home .hero-copy h1 em {
+  color: #7dd9ec;
+}
+.boutique-home .hero-copy p,
+.boutique-home .hero-foot {
+  color: #bad7e8;
+}
+.boutique-home .hero-copy .pill {
+  background: #ffffff10;
+  color: #c7eaf5;
+  border-color: #72b5d449;
+}
+.boutique-home .hero-copy .btn {
+  background: linear-gradient(135deg, #c3f3fa, #71c9e3);
+  color: #113a54;
+  box-shadow:
+    0 4px 0 #417e98,
+    0 10px 22px #020f2355;
+}
+.boutique-home .hero-orbit {
+  color: #c1ebf4;
+}
+.home-group-grid {
+  gap: 36px 24px;
+  padding-top: 25px;
+}
+.home-product-group,
+.home-product-group.group-tone-1,
+.home-product-group.group-tone-2,
+.home-product-group.group-tone-3 {
+  position: relative;
+  overflow: visible;
+  padding: 22px 18px 18px;
+  background: linear-gradient(150deg, #163f60, #0b2542 70%, #103b56);
+  border: 1px solid #5487aa;
+  border-radius: 24px;
+  box-shadow:
+    0 5px 0 #08223b,
+    0 17px 28px #173c6526,
+    inset 0 2px 0 #c5e7ff55,
+    inset 2px 0 0 #a9d7f31c;
+}
+.occasion-sculpture {
+  position: absolute;
+  top: -30px;
+  left: 16px;
+  width: 100px;
+  height: 100px;
+  object-fit: contain;
+  z-index: 1;
+  filter: drop-shadow(0 9px 7px #0005);
+  pointer-events: none;
+}
+.home-group-heading {
+  padding-left: 105px;
+  min-height: 68px;
+  align-items: flex-start;
+  gap: 6px;
+  margin-bottom: 17px;
+}
+.home-group-heading h3 {
+  color: #f0f8ff;
+  font-size: 25px;
+}
+.home-group-heading .eyebrow {
+  color: #8fc9e4;
+  font-size: 7px;
+}
+.home-group-heading p {
+  color: #a6c4d8;
+  font-size: 10px;
+}
+.home-group-heading > button {
+  width: auto;
+  height: auto;
+  flex: none;
+  border-radius: 9px;
+  padding: 7px 8px;
+  gap: 4px;
+  display: flex;
+  color: #ceefff;
+  background: linear-gradient(135deg, #ffffff17, #ffffff05);
+  border: 1px solid #7db8d252;
+  box-shadow: 0 3px 0 #061b2d;
+  font-size: 9px;
+  white-space: nowrap;
+}
+.home-group-products {
+  grid-template-columns: minmax(0, 1.12fr) minmax(0, 1fr);
+  gap: 10px;
+  align-items: stretch;
+}
+.boutique-home .ranked-product {
+  position: relative;
+  border: 1px solid #b8d9ed;
+  box-shadow:
+    0 4px 0 #c1d8e7,
+    0 7px 15px #020f241c,
+    inset 0 1px 0 #fff;
+  background: linear-gradient(145deg, #fff, #ecf6ff);
+  min-width: 0;
+}
+.product-rank {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  background: #103c5de8;
+  color: #e0f7ff;
+  border: 1px solid #80b6d35c;
+  border-radius: 6px;
+  font-size: 8px;
+  padding: 4px 6px;
+  letter-spacing: 0.04em;
+}
+.boutique-home .rank-1 {
+  grid-row: span 2;
+  display: flex;
+  flex-direction: column;
+}
+.boutique-home .rank-1 .product-picture {
+  aspect-ratio: 1/1.04;
+  flex: none;
+}
+.boutique-home .rank-1 .product-card-info {
+  min-height: 0;
+  flex: 1;
+}
+.boutique-home .rank-1 .product-card-info h3 {
+  font-size: 14px;
+}
+.boutique-home .rank-1 .product-price {
+  font-size: 16px;
+  margin-top: 8px;
+}
+.boutique-home .rank-2,
+.boutique-home .rank-3 {
+  display: grid;
+  grid-template-columns: minmax(65px, 0.85fr) minmax(0, 1fr);
+  column-gap: 7px;
+  align-content: start;
+}
+.boutique-home .rank-2 .product-picture,
+.boutique-home .rank-3 .product-picture {
+  grid-column: 1;
+  grid-row: 1/5;
+  aspect-ratio: auto;
+  height: 100%;
+  min-height: 130px;
+}
+.boutique-home .rank-2 .product-card-info,
+.boutique-home .rank-3 .product-card-info {
+  grid-column: 2;
+  min-height: 0;
+  padding-top: 25px;
+}
+.boutique-home .rank-2 .product-card-info h3,
+.boutique-home .rank-3 .product-card-info h3 {
+  font-size: 10px;
+}
+.boutique-home .rank-2 .product-price,
+.boutique-home .rank-3 .product-price {
+  grid-column: 2;
+  font-size: 11px;
+  padding-top: 6px;
+}
+.boutique-home .rank-2 .favorite-btn,
+.boutique-home .rank-3 .favorite-btn {
+  grid-column: 2;
+  font-size: 8px;
+}
+.boutique-home .ranked-product .product-order {
+  grid-column: 1/-1;
+  font-size: 10px;
+}
+@media (max-width: 1100px) and (min-width: 721px) {
+  .home-group-grid {
+    grid-template-columns: 1fr;
+  }
+  .home-group-heading {
+    padding-left: 105px;
+  }
+}
+@media (max-width: 720px) {
+  .home-group-heading {
+    padding-left: 70px;
+    min-height: 72px;
+    flex-wrap: wrap;
+  }
+  .occasion-sculpture {
+    width: 85px;
+    height: 85px;
+    left: 2px;
+    top: -20px;
+  }
+  .home-group-heading h3 {
+    font-size: 22px;
+  }
+  .home-group-heading p {
+    font-size: 9px;
+  }
+  .home-group-heading > button {
+    position: absolute;
+    right: 12px;
+    top: 10px;
+    font-size: 8px;
+    padding: 5px;
+  }
+  .home-group-heading > div {
+    padding-top: 15px;
+  }
+  .home-product-group {
+    padding: 18px 10px 12px;
+  }
+  .home-group-grid {
+    gap: 30px;
+  }
+  .home-group-products {
+    gap: 8px;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .boutique-home .rank-1 .product-card-info h3 {
+    font-size: 12px;
+  }
+  .boutique-home .rank-1 .product-price {
+    font-size: 14px;
+  }
+  .boutique-home .rank-2,
+  .boutique-home .rank-3 {
+    display: flex;
+    flex-direction: column;
+  }
+  .boutique-home .rank-2 .product-picture,
+  .boutique-home .rank-3 .product-picture {
+    height: 82px;
+    min-height: 0;
+    flex: none;
+  }
+  .boutique-home .rank-2 .product-card-info,
+  .boutique-home .rank-3 .product-card-info {
+    padding-top: 5px;
+  }
+  .boutique-home .rank-2 .product-card-info h3,
+  .boutique-home .rank-3 .product-card-info h3 {
+    font-size: 10px;
+  }
+  .boutique-home .rank-2 .favorite-btn,
+  .boutique-home .rank-3 .favorite-btn {
+    display: none;
+  }
+  .boutique-home .ranked-product .product-order {
+    font-size: 9px;
+  }
+}
+.home-group-products {
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+}

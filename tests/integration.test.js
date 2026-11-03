@@ -225,6 +225,10 @@ test('order totals are server-derived and completion records one immutable sale'
   });
   assert.equal(r.status, 200);
   assert.equal(Number(r.data.total), 370370.34);
+  assert.equal(
+    Number((await request('/products')).data.find((item) => item.id === p).sold_count),
+    0,
+  );
   const results = await Promise.all([
     request('/orders/' + id + '/status', {
       method: 'PATCH',
@@ -240,6 +244,10 @@ test('order totals are server-derived and completion records one immutable sale'
   assert.ok(results.every((r) => r.status === 200));
   const sales = await db.query('SELECT * FROM sales WHERE order_id=$1', [id]);
   assert.equal(sales.rowCount, 1);
+  assert.equal(
+    Number((await request('/products')).data.find((item) => item.id === p).sold_count),
+    3,
+  );
   assert.equal(Number(sales.rows[0].total_sale), 370370.34);
   assert.equal((await request('/orders/' + id, { method: 'DELETE', session: admin })).status, 409);
   assert.equal(
