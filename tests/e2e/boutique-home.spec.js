@@ -19,7 +19,7 @@ test('compact home shows grouped collections, complete photos and working collec
   await expect(page.locator('.home-single')).toHaveCount(6);
   const wedding = page.locator('.home-product-group').first();
   await expect(wedding.locator('.rank-1 h3')).toHaveText('Bouquet Wedding Baby’s Breath');
-  await expect(wedding.locator('.product-rank').first()).toContainText('Terlaris');
+  await expect(page.locator('.product-rank, .product-tag')).toHaveCount(0);
   const largest = await wedding.locator('.rank-1').boundingBox();
   const second = await wedding.locator('.rank-2').boundingBox();
   const third = await wedding.locator('.rank-3').boundingBox();

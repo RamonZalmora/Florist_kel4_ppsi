@@ -832,11 +832,6 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
         className={'product-card' + (ranked === true ? ' ranked-product rank-' + (i + 1) : '')}
         key={p.id}
       >
-        {ranked === true && (
-          <span className="product-rank">
-            {i === 0 && Number(p.sold_count) > 0 ? '01 / Terlaris' : '0' + (i + 1) + ' / Pilihan'}
-          </span>
-        )}
         <div
           className={'product-picture tone-' + (i % 3)}
           onClick={() => showProduct(p.id)}
@@ -850,11 +845,6 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
           <span className="view-product">
             <Eye size={16} /> Lihat detail
           </span>
-          {p.photo?.startsWith('/assets/catalog/') ? (
-            <span className="product-tag">Foto ilustrasi</span>
-          ) : p.categories?.[0] ? (
-            <span className="product-tag">{p.categories[0].name}</span>
-          ) : null}
         </div>
         <div className="product-card-info">
           <div>
@@ -987,7 +977,7 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
                   </div>
                   <img
                     className="hero-bouquet layered-flowers"
-                    src="/assets/hero-layered-flowers.webp"
+                    src="/assets/hero-grand-flowers.webp"
                     alt="Ilustrasi rangkaian bunga bertumpuk bernuansa biru, lavender, dan blush"
                   />
                   <div className="hero-note">
@@ -1221,17 +1211,18 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
                       <div className="home-group-grid">
                         {homeGroups.map((group, i) => (
                           <section className={'home-product-group group-tone-' + i} key={group.id}>
-                            <img
-                              className="occasion-sculpture"
-                              src={
-                                '/assets/occasions/' +
-                                ['wedding', 'wisuda', 'hadiah', 'dekorasi'][i] +
-                                '.webp'
-                              }
-                              alt=""
-                              aria-hidden="true"
-                            />
                             <div className="home-group-heading">
+                              <img
+                                className="occasion-sculpture"
+                                src={
+                                  '/assets/occasions/' +
+                                  ['wedding', 'wisuda', 'hadiah', 'dekorasi'][i] +
+                                  '.webp'
+                                }
+                                alt=""
+                                aria-hidden="true"
+                              />
+
                               <div>
                                 <h3>{group.name}</h3>
                               </div>

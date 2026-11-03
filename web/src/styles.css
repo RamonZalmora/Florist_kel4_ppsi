@@ -6596,3 +6596,138 @@ tr:hover td {
 .about-page .about-values {
   background: transparent;
 }
+
+/* Open occasion imagery and inset collection emblems. */
+.boutique-home .moment,
+.boutique-home .moment:nth-child(n),
+.boutique-home .moment:hover {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  border-radius: 0;
+  min-height: 0;
+  padding: 0;
+  overflow: visible;
+  gap: 9px;
+  align-items: center;
+}
+.boutique-home .moment .moment-image {
+  position: relative;
+  inset: auto;
+  display: block;
+  width: 100%;
+  height: 155px;
+  padding: 0;
+  margin: 0;
+  background: none;
+}
+.boutique-home .moment .moment-image img {
+  height: 100%;
+  width: 100%;
+  object-fit: contain;
+  border-radius: 0;
+  filter: drop-shadow(0 8px 8px #2a638b18);
+}
+.boutique-home .moment strong {
+  position: static;
+  display: block;
+  text-align: center;
+  background: transparent;
+  padding: 0;
+  color: #1b4d6d;
+  min-height: 0;
+  font:
+    500 16px Georgia,
+    serif;
+}
+.boutique-home .moment > svg {
+  display: none;
+}
+.boutique-home .home-product-group {
+  grid-template-rows: 76px minmax(0, 1fr);
+}
+.home-group-heading {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr) auto;
+  padding-left: 0;
+  gap: 12px;
+  min-height: 76px;
+  align-items: center;
+}
+.home-group-heading .occasion-sculpture {
+  position: static;
+  inset: auto;
+  width: 76px;
+  height: 76px;
+  object-fit: contain;
+  filter: drop-shadow(0 5px 5px #29516b24);
+}
+.home-group-heading h3 {
+  font-size: 32px;
+}
+.home-group-heading > button {
+  position: static;
+  align-self: center;
+}
+.boutique-home .rank-2 .product-card-info,
+.boutique-home .rank-3 .product-card-info {
+  padding-top: 5px;
+}
+.catalog-page .public-footer {
+  background:
+    radial-gradient(ellipse at 5% 0%, #33799566, transparent 55%),
+    linear-gradient(120deg, #102b4a 5%, #1d617a 55%, #123c5a);
+  border-top: 1px solid #82bfd280;
+  box-shadow: inset 0 1px 0 #ffffff20;
+}
+.boutique-home .hero-showcase {
+  height: 350px;
+}
+.boutique-home .layered-flowers {
+  max-width: 650px;
+  width: 112%;
+  height: 112%;
+}
+@media (max-width: 720px) {
+  .boutique-home .moment .moment-image {
+    height: 90px;
+  }
+  .boutique-home .moment strong {
+    font-size: 12px;
+  }
+  .boutique-home .home-product-group {
+    grid-template-rows: 84px minmax(0, 1fr);
+  }
+  .home-group-heading {
+    grid-template-columns: 64px minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    column-gap: 10px;
+    row-gap: 2px;
+    min-height: 84px;
+  }
+  .home-group-heading .occasion-sculpture {
+    grid-row: 1/3;
+    width: 64px;
+    height: 72px;
+  }
+  .home-group-heading > div {
+    padding: 0;
+    align-self: end;
+  }
+  .home-group-heading h3 {
+    font-size: 28px;
+  }
+  .home-group-heading > button {
+    grid-column: 2;
+    justify-self: start;
+    align-self: start;
+    font-size: 9px;
+  }
+  .boutique-home .hero-showcase {
+    height: 270px;
+  }
+  .boutique-home .layered-flowers {
+    width: 100%;
+    height: 100%;
+  }
+}
