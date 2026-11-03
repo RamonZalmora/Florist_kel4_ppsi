@@ -1,4 +1,4 @@
-// Explicitly labelled local demonstration orders; never real customer contact data.
+// Local sample orders remain identifiable by their simulation request and placeholder phone.
 export async function seedDemoOrders(client) {
   const marker = 'demo-orders-30-v1';
   if (
@@ -68,7 +68,7 @@ export async function seedDemoOrders(client) {
       await client.query(
         `INSERT INTO orders(customer_name,phone_number,order_date,delivery_date,request,status,total,created_by,created_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9::timestamptz) RETURNING id`,
         [
-          '[DEMO] ' + names[i % names.length],
+          names[i % names.length],
           '08000000' + String((i % names.length) + 1).padStart(4, '0'),
           day(offset - 1),
           day(completed ? offset : 1 + (i % 3)),
@@ -100,7 +100,7 @@ export async function seedDemoOrders(client) {
 export async function clearDemoOrders(client) {
   const ids = (
     await client.query(
-      "SELECT id FROM orders WHERE customer_name LIKE '[DEMO]%' AND request LIKE 'DATA SIMULASI%' AND phone_number LIKE '08000000%' FOR UPDATE",
+      "SELECT id FROM orders WHERE request LIKE 'DATA SIMULASI%' AND phone_number LIKE '08000000%' FOR UPDATE",
     )
   ).rows.map((row) => row.id);
   if (!ids.length) return 0;

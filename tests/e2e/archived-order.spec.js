@@ -7,7 +7,7 @@ test('admin can edit an unfinished order containing an archived product', async 
   await page.getByLabel('Username', { exact: true }).fill('admin');
   await page.getByLabel('Password', { exact: true }).fill(process.env.SEED_ADMIN_PASSWORD);
   await page.getByRole('button', { name: 'Masuk ke dashboard' }).click();
-  await expect(page.locator('.stat-grid')).toBeVisible();
+  await expect(page.locator('.sales-stats')).toBeVisible();
   const api = page.context().request;
   const me = await (await api.get('/api/auth/me')).json();
   const headers = { 'X-CSRF-Token': me.csrf_token };
@@ -46,7 +46,7 @@ test('admin can edit an unfinished order containing an archived product', async 
       ).ok(),
     ).toBe(true);
     await page.reload();
-    await expect(page.locator('.stat-grid')).toBeVisible();
+    await expect(page.locator('.sales-stats')).toBeVisible();
     const menu = page.getByRole('button', { name: 'Buka menu' });
     if (await menu.isVisible()) await menu.click();
     await page

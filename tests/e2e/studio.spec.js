@@ -5,7 +5,7 @@ async function login(page) {
   await page.getByLabel('Username', { exact: true }).fill('owner');
   await page.getByLabel('Password', { exact: true }).fill(process.env.SEED_OWNER_PASSWORD);
   await page.getByRole('button', { name: 'Masuk ke dashboard' }).click();
-  await expect(page.locator('.stat-grid')).toBeVisible();
+  await expect(page.locator('.sales-stats')).toBeVisible();
 }
 async function go(page, label) {
   const menu = page.getByRole('button', { name: 'Buka menu' });
@@ -15,6 +15,7 @@ async function go(page, label) {
 test('owner can inspect data and export JSON', async ({ page }, info) => {
   await login(page);
   await go(page, 'Data bisnis');
+  await page.locator('.business-export summary').click();
   await expect(page.getByRole('button', { name: 'Unduh JSON' })).toBeVisible();
   await expect(page.locator('tbody tr').first()).toBeVisible();
   await page.getByLabel('Konfirmasi password owner').fill(process.env.SEED_OWNER_PASSWORD);
@@ -28,6 +29,7 @@ test('owner can inspect data and export JSON', async ({ page }, info) => {
   ).toBeTruthy();
   await page.screenshot({ path: `docs/screenshots/data-${info.project.name}.png`, fullPage: true });
   await go(page, 'Pengaturan');
+  await page.getByRole('tab', { name: 'Keamanan akun' }).click();
   await expect(page.getByRole('heading', { name: 'Keamanan & pemulihan akun' })).toBeVisible();
 });
 test('forgot-password screen explains local mail and invalid reset links fail safely', async ({

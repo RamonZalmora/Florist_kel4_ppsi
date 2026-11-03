@@ -7,3 +7,5 @@ test-results/
 playwright-report/
 *.log
 .local/
+/Florist_kel4_ppsi/
+/docs/screenshots/

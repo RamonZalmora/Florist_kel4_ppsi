@@ -5,7 +5,8 @@ import { authenticate, authorize } from '../auth.js';
 import { db, transaction } from '../db/pool.js';
 import { fail } from '../validation.js';
 const tables = {
-  store_settings: 'id,name,address,whatsapp,instagram,description,logo,updated_at',
+  store_settings:
+    'id,name,address,map_url,latitude,longitude,whatsapp,instagram,tiktok,shopee,tokopedia,description,logo,about_story,about_service,care_tips,updated_at',
   product_types: 'id,name,description,photo,code',
   products: 'id,name,price,flower_type,product_type_id,size,description,photo,active',
   categories: 'id,name,description,photo',
@@ -36,14 +37,37 @@ dataStudio.get('/:table', async (req, res) => {
       .min(0)
       .max(10000000)
       .parse(req.query.offset || 0);
+  const limit = z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(50)
+    .parse(req.query.limit || 50);
+  const q = z
+    .string()
+    .trim()
+    .max(120)
+    .parse(req.query.q || '');
+  const fields = tables[table].split(',');
+  const where = q
+    ? ' WHERE ' + fields.map((field) => `COALESCE(${field}::text,'') ILIKE $1`).join(' OR ')
+    : '';
+  const params = q ? ['%' + q + '%'] : [];
+  const total = Number(
+    (await db.query(`SELECT count(*) AS count FROM ${table}${where}`, params)).rows[0].count,
+  );
+  const actualOffset = Math.min(offset, Math.max(0, Math.ceil(total / limit) - 1) * limit);
   res.json({
     rows: (
-      await db.query(`SELECT ${tables[table]} FROM ${table} ORDER BY id LIMIT 50 OFFSET $1`, [
-        offset,
-      ])
+      await db.query(
+        `SELECT ${tables[table]} FROM ${table}${where} ORDER BY id LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+        [...params, limit, actualOffset],
+      )
     ).rows,
-    offset,
-    limit: 50,
+    offset: actualOffset,
+    limit,
+    total,
+    columns: fields,
   });
 });
 dataStudio.post('/export', async (req, res) => {

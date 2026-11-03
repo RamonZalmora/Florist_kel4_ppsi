@@ -66,10 +66,13 @@ test('about and footer show the supplied map location', async ({ page }) => {
   );
   await expect(page.getByRole('link', { name: 'Buka Google Maps', exact: true })).toHaveAttribute(
     'href',
-    'https://maps.app.goo.gl/cZhMm6Z3326uHWz77',
+    'https://www.google.com/maps/search/?api=1&query=0.4734722222,101.3748055556',
   );
   await expect(
     page.locator('.public-footer').getByRole('link', { name: /Lihat lokasi di Google Maps/ }),
-  ).toHaveAttribute('href', 'https://maps.app.goo.gl/cZhMm6Z3326uHWz77');
+  ).toHaveAttribute(
+    'href',
+    'https://www.google.com/maps/search/?api=1&query=0.4734722222,101.3748055556',
+  );
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });

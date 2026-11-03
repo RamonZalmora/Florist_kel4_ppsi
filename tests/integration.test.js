@@ -395,6 +395,172 @@ test('WhatsApp contact is initialized once and remains editable by owner', async
     await db.query('DELETE FROM store_settings WHERE id=1');
   }
 });
+test('dashboard periods use sale dates and occasion counts include all categories without counting pending orders', async () => {
+  const baseline = (await request('/dashboard', { session: admin })).data;
+  const categoryIds = [],
+    orderIds = [];
+  let productId, secondProductId;
+  const total = (rows) => rows.reduce((sum, row) => sum + Number(row.total), 0);
+  try {
+    for (const name of ['Period A', 'Period B', 'Period empty']) {
+      categoryIds.push(
+        (await db.query('INSERT INTO categories(name) VALUES($1) RETURNING id', [name + suffix]))
+          .rows[0].id,
+      );
+    }
+    productId = (
+      await db.query(
+        "INSERT INTO products(name,price,flower_type,size,description) VALUES($1,10000,'Mawar','M','Period test') RETURNING id",
+        ['Period bouquet ' + suffix],
+      )
+    ).rows[0].id;
+    const typeId = (await db.query('SELECT id FROM product_types ORDER BY id LIMIT 1')).rows[0].id;
+    await db.query('UPDATE products SET product_type_id=$1 WHERE id=$2', [typeId, productId]);
+    for (const categoryId of categoryIds.slice(0, 2)) {
+      await db.query('INSERT INTO recommendations(product_id,category_id) VALUES($1,$2)', [
+        productId,
+        categoryId,
+      ]);
+    }
+    const days = [0, 6, 7, 29, 30];
+    for (let i = 0; i < days.length + 1; i++) {
+      const pending = i === days.length;
+      const quantity = i + 1;
+      const orderId = (
+        await db.query(
+          "INSERT INTO orders(customer_name,phone_number,order_date,delivery_date,total,status,created_by) VALUES('Period test','081234567890','2020-01-01','2020-01-01',$1,$2,$3) RETURNING id",
+          [quantity * 10000, pending ? 'pending' : 'completed', adminId],
+        )
+      ).rows[0].id;
+      orderIds.push(orderId);
+      await db.query(
+        "INSERT INTO order_items(order_id,product_id,product_name,quantity,price) VALUES($1,$2,'Period bouquet',$3,10000)",
+        [orderId, productId, quantity],
+      );
+      if (!pending) {
+        await db.query(
+          "INSERT INTO sales(order_id,sale_date,total_sale) VALUES($1,(now() AT TIME ZONE 'Asia/Jakarta')::date-$2::int,$3)",
+          [orderId, days[i], quantity * 10000],
+        );
+      }
+    }
+    secondProductId = (
+      await db.query(
+        "INSERT INTO products(name,price,flower_type,size,description,product_type_id) VALUES($1,10000,'Mawar','M','Second item test',$2) RETURNING id",
+        ['Second period bouquet ' + suffix, typeId],
+      )
+    ).rows[0].id;
+    for (const categoryId of categoryIds.slice(0, 2)) {
+      await db.query('INSERT INTO recommendations(product_id,category_id) VALUES($1,$2)', [
+        secondProductId,
+        categoryId,
+      ]);
+    }
+    await db.query(
+      "INSERT INTO order_items(order_id,product_id,product_name,quantity,price) VALUES($1,$2,'Second period bouquet',2,10000)",
+      [orderIds[0], secondProductId],
+    );
+    await db.query('UPDATE orders SET total=total+20000 WHERE id=$1', [orderIds[0]]);
+    await db.query('UPDATE sales SET total_sale=total_sale+20000 WHERE order_id=$1', [orderIds[0]]);
+    for (const session of [admin, owner]) {
+      const response = await request('/dashboard', { session });
+      assert.equal(response.status, 200);
+      const dashboard = response.data;
+      assert.equal(dashboard.trend.length, 7);
+      assert.equal(dashboard.trend30.length, 30);
+      assert.deepEqual(dashboard.trend, dashboard.trend30.slice(-7));
+      assert.equal(Math.round(total(dashboard.trend) - total(baseline.trend)), 50000);
+      assert.equal(Math.round(total(dashboard.trend30) - total(baseline.trend30)), 120000);
+      assert.equal(
+        Number(dashboard.completedOrderSales.all_time) -
+          Number(baseline.completedOrderSales.all_time),
+        5,
+      );
+      assert.equal(
+        Number(dashboard.completedOrderSales.last_30_days) -
+          Number(baseline.completedOrderSales.last_30_days),
+        4,
+      );
+      const sevenDays = new Set(dashboard.trend.map((day) => day.day));
+      const type = dashboard.productTypeSales.find((row) => row.id === typeId);
+      const baselineType = baseline.productTypeSales.find((row) => row.id === typeId);
+      assert.equal(Number(type.total_orders) - Number(baselineType.total_orders), 5);
+      assert.equal(
+        type.sales.reduce((sum, row) => sum + Number(row.orders), 0) -
+          baselineType.sales.reduce((sum, row) => sum + Number(row.orders), 0),
+        4,
+      );
+      for (const productType of dashboard.productTypeSales) {
+        assert.ok(
+          Number(productType.total_orders) <= Number(dashboard.completedOrderSales.all_time),
+        );
+        assert.ok(
+          productType.sales.reduce((sum, day) => sum + Number(day.orders), 0) <=
+            Number(dashboard.completedOrderSales.last_30_days),
+        );
+      }
+      for (const categoryId of categoryIds.slice(0, 2)) {
+        const occasion = dashboard.occasionSales.find((row) => row.id === categoryId);
+        assert.equal(Number(occasion.total_orders), 5);
+        assert.equal(
+          occasion.sales.reduce((sum, row) => sum + Number(row.orders), 0),
+          4,
+        );
+        assert.equal(
+          occasion.sales
+            .filter((row) => sevenDays.has(row.day))
+            .reduce((sum, row) => sum + Number(row.orders), 0),
+          2,
+        );
+      }
+      assert.deepEqual(dashboard.occasionSales.find((row) => row.id === categoryIds[2]).sales, []);
+      assert.equal(
+        Number(dashboard.occasionSales.find((row) => row.id === categoryIds[2]).total_orders),
+        0,
+      );
+    }
+    const complete = await request('/orders/' + orderIds.at(-1) + '/status', {
+      method: 'PATCH',
+      session: admin,
+      body: { status: 'completed' },
+    });
+    assert.equal(complete.status, 200);
+    const updated = (await request('/dashboard', { session: admin })).data;
+    assert.equal(
+      Number(updated.completedOrderSales.all_time) - Number(baseline.completedOrderSales.all_time),
+      6,
+    );
+    assert.equal(
+      Number(updated.completedOrderSales.last_30_days) -
+        Number(baseline.completedOrderSales.last_30_days),
+      5,
+    );
+    assert.equal(
+      Number(updated.productTypeSales.find((row) => row.id === typeId).total_orders) -
+        Number(baseline.productTypeSales.find((row) => row.id === typeId).total_orders),
+      6,
+    );
+    for (const categoryId of categoryIds.slice(0, 2)) {
+      assert.equal(
+        Number(updated.occasionSales.find((row) => row.id === categoryId).total_orders),
+        6,
+      );
+    }
+  } finally {
+    await db.query('DELETE FROM sales WHERE order_id=ANY($1::bigint[])', [orderIds]);
+    await db.query('DELETE FROM orders WHERE id=ANY($1::bigint[])', [orderIds]);
+    if (productId) {
+      await db.query('DELETE FROM recommendations WHERE product_id=$1', [productId]);
+      await db.query('DELETE FROM products WHERE id=$1', [productId]);
+    }
+    if (secondProductId) {
+      await db.query('DELETE FROM recommendations WHERE product_id=$1', [secondProductId]);
+      await db.query('DELETE FROM products WHERE id=$1', [secondProductId]);
+    }
+    await db.query('DELETE FROM categories WHERE id=ANY($1::bigint[])', [categoryIds]);
+  }
+});
+
 test('dashboard reflects relational data and logout invalidates session', async () => {
   const r = await request('/dashboard', { session: owner });
   assert.equal(r.status, 200);
@@ -524,6 +690,18 @@ test('owner data explorer is read-only, paginated and exports no credentials', a
     const rows = await request('/data/products', { session });
     assert.equal(rows.status, 200);
     assert.ok(rows.data.rows.length <= 50);
+    const searched = await request('/data/products?limit=1&q=' + encodeURIComponent(product.name), {
+      session,
+    });
+    assert.equal(searched.status, 200);
+    assert.equal(searched.data.limit, 1);
+    assert.ok(searched.data.total >= 1);
+    assert.equal(searched.data.rows.length, 1);
+    assert.ok(searched.data.columns.includes('name'));
+    const empty = await request('/data/products?limit=10&q=no-match-987654321', { session });
+    assert.equal(empty.data.total, 0);
+    assert.deepEqual(empty.data.rows, []);
+    assert.equal((await request('/data/products?limit=51', { session })).status, 422);
     assert.equal(
       (await request('/data/export', { method: 'POST', session, body: { password: 'wrong' } }))
         .status,
@@ -571,6 +749,8 @@ test('store settings persist publicly, customer metrics are readable by owner, a
       settings = {
         name: 'Retail Test Store',
         address: 'Test address',
+        latitude: 0.5071,
+        longitude: 101.4478,
         map_url: 'https://maps.app.goo.gl/cZhMm6Z3326uHWz77',
         whatsapp: '6281234567890',
         instagram: 'https://www.instagram.com/bienvendreofficial?psln=bm10anhqdTk5eG1y',
@@ -600,6 +780,32 @@ test('store settings persist publicly, customer metrics are readable by owner, a
     );
     assert.equal((await request('/store', { method: 'PUT', session, body: settings })).status, 200);
     assert.deepEqual((await request('/store')).data, settings);
+    for (const coordinates of [
+      { latitude: 91, longitude: 100 },
+      { latitude: 0, longitude: 181 },
+      { latitude: null, longitude: 100 },
+      { latitude: '0.5', longitude: 100 },
+    ]) {
+      assert.equal(
+        (await request('/store', { method: 'PUT', session, body: { ...settings, ...coordinates } }))
+          .status,
+        422,
+      );
+    }
+    const { latitude, longitude, ...withoutCoordinates } = settings;
+    assert.equal(
+      (await request('/store', { method: 'PUT', session, body: withoutCoordinates })).status,
+      200,
+    );
+    assert.equal((await request('/store')).data.latitude, latitude);
+    const cleared = await request('/store', {
+      method: 'PUT',
+      session,
+      body: { ...settings, latitude: null, longitude: null },
+    });
+    assert.equal(cleared.status, 200);
+    assert.equal((await request('/store')).data.longitude, null);
+    assert.equal((await request('/store', { method: 'PUT', session, body: settings })).status, 200);
     assert.equal(
       (
         await request('/store', {
@@ -680,6 +886,36 @@ test('store settings persist publicly, customer metrics are readable by owner, a
     assert.equal(download.status, 200);
     assert.match(download.headers.get('content-type'), /image\/webp/);
     assert.ok((await download.arrayBuffer()).byteLength > 0);
+    for (const resource of ['categories', 'product-types']) {
+      const body = {
+        name: 'Uploaded ' + resource + suffix,
+        description: 'Uploaded classification',
+        photo: uploaded,
+      };
+      const createdPhoto = await request('/manage/' + resource, {
+        method: 'POST',
+        body,
+        session: admin,
+      });
+      assert.equal(createdPhoto.status, 201);
+      try {
+        const changed = await request('/manage/' + resource + '/' + createdPhoto.data.id, {
+          method: 'PUT',
+          body: { ...body, description: 'Updated classification' },
+          session: admin,
+        });
+        assert.equal(changed.status, 200);
+        const publicRows = (await request('/' + resource)).data;
+        const saved = publicRows.find((row) => row.id === createdPhoto.data.id);
+        assert.equal(saved.photo, uploaded);
+        assert.equal(saved.description, 'Updated classification');
+      } finally {
+        await request('/manage/' + resource + '/' + createdPhoto.data.id, {
+          method: 'DELETE',
+          session: admin,
+        });
+      }
+    }
     const report = await request('/reports?from=2026-01-01&to=2030-01-01', { session });
     assert.ok(report.data.trend.length > 0);
     assert.equal(
@@ -727,6 +963,7 @@ test('favorites are idempotent, persisted per visitor, and visible in catalog an
   const dashboard = (await request('/dashboard', { session: admin })).data;
   assert.equal(dashboard.popular[0].id, id);
   assert.equal(Number(dashboard.popular.find((p) => p.id === id).sold_count), 3);
+  assert.equal(Number(dashboard.popular.find((p) => p.id === id).completed_order_count), 1);
   assert.equal(
     (await request('/products?sort=popular')).data.find((p) => p.id === id).favorite_count,
     1,

@@ -9,6 +9,17 @@ import {
   CalendarDays,
   ArrowUpRight,
   Database,
+  Search,
+  RefreshCw,
+  Package,
+  ShoppingBag,
+  Tags,
+  BarChart3,
+  ChevronLeft,
+  ChevronRight,
+  Eye,
+  X,
+  LockKeyhole as ExportLock,
 } from 'lucide-react';
 import { api, money, date, today } from './api';
 
@@ -343,30 +354,131 @@ export function DeliveryAgenda({ data, go }) {
   );
 }
 
+const dataNames = {
+  products: ['Produk', Package, 'Katalog dan harga produk'],
+  categories: ['Occasion', Tags, 'Kategori momen pelanggan'],
+  product_types: ['Jenis produk', Flower2, 'Pengelompokan jenis produk'],
+  orders: ['Pesanan', ShoppingBag, 'Nama pemesan dan jadwal pengiriman'],
+  sales: ['Penjualan', BarChart3, 'Transaksi yang sudah selesai'],
+  order_items: ['Detail pesanan', Package, 'Produk di dalam setiap pesanan'],
+  recommendations: ['Relasi occasion', Tags, 'Hubungan produk dengan occasion'],
+  store_settings: ['Profil toko', Flower2, 'Informasi publik toko Anda'],
+};
+const columnNames = {
+  id: 'ID',
+  name: 'Nama',
+  price: 'Harga',
+  flower_type: 'Jenis bunga',
+  product_type_id: 'ID jenis',
+  size: 'Ukuran',
+  description: 'Deskripsi',
+  photo: 'Foto',
+  active: 'Status',
+  category_id: 'ID occasion',
+  product_id: 'ID produk',
+  note: 'Catatan',
+  customer_name: 'Atas nama',
+  phone_number: 'Nomor telepon',
+  order_date: 'Tanggal pesanan',
+  delivery_date: 'Pengiriman',
+  request: 'Permintaan',
+  status: 'Status',
+  total: 'Total',
+  order_id: 'ID pesanan',
+  product_name: 'Nama produk',
+  quantity: 'Jumlah',
+  subtotal: 'Subtotal',
+  sale_date: 'Tanggal penjualan',
+  total_sale: 'Penjualan',
+  address: 'Alamat',
+  map_url: 'Google Maps',
+  latitude: 'Latitude',
+  longitude: 'Longitude',
+  whatsapp: 'WhatsApp',
+  instagram: 'Instagram',
+  tiktok: 'TikTok',
+  shopee: 'Shopee',
+  tokopedia: 'Tokopedia',
+  logo: 'Logo',
+  about_story: 'Cerita toko',
+  about_service: 'Layanan',
+  care_tips: 'Perawatan bunga',
+  updated_at: 'Diperbarui',
+  code: 'Kode',
+};
+const moneyColumns = new Set(['price', 'subtotal', 'total', 'total_sale']);
+const businessColumns = {
+  products: ['name', 'price', 'flower_type', 'active'],
+  categories: ['name', 'photo', 'description'],
+  product_types: ['name', 'photo', 'code'],
+  orders: ['id', 'customer_name', 'phone_number', 'status', 'total'],
+  sales: ['order_id', 'sale_date', 'total_sale'],
+  order_items: ['order_id', 'product_name', 'quantity', 'subtotal'],
+  recommendations: ['category_id', 'product_id', 'note'],
+  store_settings: ['name', 'address', 'whatsapp'],
+};
+function businessValue(key, value) {
+  if (value === null || value === '') return '-';
+  if (moneyColumns.has(key)) return money(value);
+  if (key === 'active') return value ? 'Aktif' : 'Diarsipkan';
+  if (key === 'status')
+    return (
+      {
+        pending: 'Belum selesai',
+        processing: 'Diproses',
+        completed: 'Selesai',
+        cancelled: 'Dibatalkan',
+      }[value] || value
+    );
+  if (key.endsWith('_date') || key === 'updated_at') return date(value);
+  return String(value);
+}
 export function DataStudio({ notify }) {
   const [tables, setTables] = useState({}),
     [table, setTable] = useState('products'),
     [offset, setOffset] = useState(0),
-    [rows, setRows] = useState([]),
+    [q, setQ] = useState(''),
+    [result, setResult] = useState({ rows: [], columns: [], total: 0, offset: 0 }),
+    [loading, setLoading] = useState(true),
+    [error, setError] = useState(''),
+    [reload, setReload] = useState(0),
+    [selected, setSelected] = useState(null),
     [busy, setBusy] = useState(false),
     [password, setPassword] = useState('');
   useEffect(() => {
     api('/data')
       .then((r) => setTables(r.tables))
       .catch((e) => notify(e.message, true));
-  }, [notify]);
+  }, [reload, notify]);
   useEffect(() => {
+    const controller = new AbortController();
     let active = true;
-    setRows([]);
-    api('/data/' + table + '?offset=' + offset)
-      .then((r) => {
-        if (active) setRows(r.rows);
-      })
-      .catch((e) => notify(e.message, true));
+    setLoading(true);
+    setSelected(null);
+    const timer = setTimeout(() => {
+      api(
+        '/data/' + table + '?' + new URLSearchParams({ offset: String(offset), limit: '10', q }),
+        { signal: controller.signal },
+      )
+        .then((r) => {
+          if (active) {
+            setResult(r);
+            setError('');
+          }
+        })
+        .catch((e) => {
+          if (active && e.name !== 'AbortError') setError(e.message);
+        })
+        .finally(() => {
+          if (active) setLoading(false);
+        });
+    }, 180);
     return () => {
       active = false;
+      clearTimeout(timer);
+      controller.abort();
     };
-  }, [table, offset, notify]);
+  }, [table, offset, q, reload]);
   async function download(e) {
     e.preventDefault();
     setBusy(true);
@@ -376,107 +488,283 @@ export function DataStudio({ notify }) {
         body: JSON.stringify({ password }),
       });
       const url = URL.createObjectURL(
-          new Blob([JSON.stringify(value, null, 2)], { type: 'application/json' }),
-        ),
-        a = document.createElement('a');
+        new Blob([JSON.stringify(value, null, 2)], { type: 'application/json' }),
+      );
+      const a = document.createElement('a');
       a.href = url;
       a.download = 'bien-vendre-data-' + today() + '.json';
+      document.body.append(a);
       a.click();
+      a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
       setPassword('');
-      notify('Data bisnis berhasil diekspor. Simpan file secara pribadi.');
+      notify('Data bisnis berhasil diekspor.');
     } catch (e) {
       notify(e.message, true);
     } finally {
       setBusy(false);
     }
   }
+  const visibleColumns = businessColumns[table].filter((k) => result.columns.includes(k));
+  const meta = dataNames[table],
+    page = Math.floor(result.offset / 10) + 1,
+    pages = Math.max(1, Math.ceil(result.total / 10));
+  const pageNumbers = [...new Set([1, page - 1, page, page + 1, pages])]
+    .filter((p) => p >= 1 && p <= pages)
+    .sort((a, b) => a - b);
   return (
-    <>
-      <section className="agenda-banner">
-        <Database size={30} />
+    <div className="business-workspace" aria-busy={loading}>
+      <div className="owner-command-bar">
         <div>
-          <span className="eyebrow">YOUR BUSINESS, YOUR DATA</span>
-          <h2>Data bisnis dalam jangkauan.</h2>
-          <p>Lihat tabel tanpa menginstal aplikasi database tambahan.</p>
+          <Database size={24} />
+          <div>
+            <h1>Data bisnis</h1>
+            <p>Jelajahi, cari, dan ekspor data toko dalam satu tempat.</p>
+          </div>
         </div>
-      </section>
-      <div className="data-tabs">
-        {Object.entries(tables).map(([name, count]) => (
-          <button
-            key={name}
-            className={name === table ? 'active' : ''}
-            onClick={() => {
-              setTable(name);
-              setOffset(0);
-            }}
-          >
-            {name}
-            <strong>{count}</strong>
-          </button>
-        ))}
-      </div>
-      <section className="panel table-wrap">
-        <table>
-          <thead>
-            <tr>
-              {Object.keys(rows[0] || { data: '' }).map((k) => (
-                <th key={k}>{k}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r, i) => (
-              <tr key={i}>
-                {Object.values(r).map((v, j) => (
-                  <td className="data-value" key={j}>
-                    {v === null ? '—' : String(v)}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {!rows.length && <div className="empty">Belum ada data.</div>}
-      </section>
-      <div className="toolbar data-pagination">
-        <button className="btn outline" disabled={!offset} onClick={() => setOffset((o) => o - 50)}>
-          Sebelumnya
-        </button>
-        <span>
-          Baris {tables[table] ? offset + 1 : 0}–{Math.min(offset + 50, tables[table] || 0)}
-        </span>
-        <button
-          className="btn outline"
-          disabled={offset + 50 >= (tables[table] || 0)}
-          onClick={() => setOffset((o) => o + 50)}
-        >
-          Berikutnya
+        <button className="btn outline" onClick={() => setReload((v) => v + 1)} disabled={loading}>
+          <RefreshCw size={16} className={loading ? 'spin' : ''} />
+          Muat ulang
         </button>
       </div>
-      <form className="panel export-panel" onSubmit={download}>
-        <div>
-          <h2>Ekspor data bisnis</h2>
+      <div className="business-stat-grid">
+        {['products', 'orders', 'sales', 'categories'].map((key, i) => {
+          const [label, Icon] = dataNames[key];
+          return (
+            <article className={'reports-stat-card report-tone-' + i} key={key}>
+              <span className="reports-stat-icon">
+                <Icon size={20} />
+              </span>
+              <span>{label}</span>
+              <strong>{tables[key] ?? '-'}</strong>
+              <small>{key === 'sales' ? 'Transaksi tercatat' : 'Seluruh data tersimpan'}</small>
+            </article>
+          );
+        })}
+      </div>
+      <div className="business-layout">
+        <aside className="owner-surface business-nav">
+          <h2>
+            <Database size={17} />
+            Jelajahi data
+          </h2>
+          {Object.entries(dataNames).map(([key, [label, Icon]]) => (
+            <button
+              key={key}
+              aria-pressed={table === key}
+              onClick={() => {
+                setTable(key);
+                setOffset(0);
+                setQ('');
+              }}
+            >
+              <Icon size={18} />
+              <span>{label}</span>
+              <strong>{tables[key] ?? 0}</strong>
+            </button>
+          ))}
           <p>
-            JSON berisi katalog, pesanan, dan penjualan. Akun, hash password, sesi, dan token tidak
-            disertakan. File ini bukan backup database lengkap.
+            <ShieldCheck size={15} />
+            Data di sini hanya dapat dilihat. Perubahan dilakukan dari halaman pengelolaan terkait.
           </p>
-        </div>
-        <label>
-          Konfirmasi password owner
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            autoComplete="current-password"
-          />
-        </label>
-        <button className="btn primary" disabled={busy}>
-          <Download size={17} />
-          {busy ? 'Memproses…' : 'Unduh JSON'}
-        </button>
-      </form>
-    </>
+        </aside>
+        <section className="owner-surface business-data-panel">
+          <div className="business-table-heading">
+            <div>
+              <h2>
+                {meta[0]}
+                <span>{result.total}</span>
+              </h2>
+              <p>{meta[2]}</p>
+            </div>
+            <label className="search-box">
+              <Search size={16} />
+              <input
+                aria-label="Cari data bisnis"
+                placeholder={'Cari di ' + meta[0].toLowerCase() + '...'}
+                maxLength={120}
+                value={q}
+                onChange={(e) => {
+                  setQ(e.target.value);
+                  setOffset(0);
+                }}
+              />
+            </label>
+          </div>
+          {error ? (
+            <div className="empty" role="alert">
+              {error}
+              <button className="btn outline" onClick={() => setReload((v) => v + 1)}>
+                Coba lagi
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="business-table-scroll">
+                <table className="business-data-table">
+                  <thead>
+                    <tr>
+                      <th>No.</th>
+                      {visibleColumns.map((k) => (
+                        <th key={k}>{columnNames[k] || k}</th>
+                      ))}
+                      <th>Detail</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {result.rows.map((row, i) => (
+                      <tr key={row.id ?? i}>
+                        <td>{result.offset + i + 1}</td>
+                        {visibleColumns.map((k) => (
+                          <td key={k} title={businessValue(k, row[k])}>
+                            {k === 'photo' || k === 'logo' ? (
+                              row[k] ? (
+                                <img src={row[k]} alt="" loading="lazy" />
+                              ) : (
+                                '-'
+                              )
+                            ) : (
+                              <span
+                                className={
+                                  k === 'status' || k === 'active'
+                                    ? 'business-status status-' + String(row[k])
+                                    : ''
+                                }
+                              >
+                                {businessValue(k, row[k])}
+                              </span>
+                            )}
+                          </td>
+                        ))}
+                        <td>
+                          <button
+                            className="icon-btn"
+                            aria-label={'Detail data ' + row.id}
+                            onClick={() => setSelected(row)}
+                          >
+                            <Eye size={16} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {!result.rows.length && (
+                <div className="empty">
+                  <Search size={27} />
+                  {loading
+                    ? 'Memuat data...'
+                    : q
+                      ? 'Tidak ada data sesuai pencarian.'
+                      : 'Belum ada data.'}
+                </div>
+              )}
+            </>
+          )}
+          <div className="business-pagination">
+            <span>
+              {result.total ? result.offset + 1 : 0}-{Math.min(result.offset + 10, result.total)}{' '}
+              dari {result.total} data
+            </span>
+            <nav aria-label="Halaman data bisnis">
+              <button
+                aria-label="Halaman sebelumnya"
+                disabled={loading || page === 1}
+                onClick={() => setOffset((page - 2) * 10)}
+              >
+                <ChevronLeft size={15} />
+              </button>
+              {pageNumbers.map((p, i) => (
+                <React.Fragment key={p}>
+                  {i > 0 && p - pageNumbers[i - 1] > 1 && <span>...</span>}
+                  <button
+                    aria-label={'Halaman ' + p}
+                    aria-current={p === page ? 'page' : undefined}
+                    disabled={loading}
+                    onClick={() => setOffset((p - 1) * 10)}
+                  >
+                    {p}
+                  </button>
+                </React.Fragment>
+              ))}
+              <button
+                aria-label="Halaman berikutnya"
+                disabled={loading || page === pages}
+                onClick={() => setOffset(page * 10)}
+              >
+                <ChevronRight size={15} />
+              </button>
+            </nav>
+          </div>
+        </section>
+      </div>
+      {selected && (
+        <section className="owner-surface business-record-detail" aria-label="Detail data terpilih">
+          <div className="owner-panel-title">
+            <Eye />
+            <div>
+              <h2>
+                Detail {meta[0].toLowerCase()} #{selected.id}
+              </h2>
+              <p>Informasi lengkap dari baris yang dipilih.</p>
+            </div>
+            <button
+              className="icon-btn"
+              aria-label="Tutup detail data"
+              onClick={() => setSelected(null)}
+            >
+              <X size={18} />
+            </button>
+          </div>
+          <dl>
+            {Object.entries(selected).map(([k, v]) => (
+              <div key={k}>
+                <dt>{columnNames[k] || k}</dt>
+                <dd>{businessValue(k, v)}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      )}
+      <details className="owner-surface business-export">
+        <summary>
+          <span>
+            <Download size={21} />
+            <span>
+              <strong>Ekspor seluruh data bisnis</strong>
+              <small>Unduh arsip JSON katalog, pesanan, penjualan, dan profil toko.</small>
+            </span>
+          </span>
+          <ChevronRight size={18} />
+        </summary>
+        <form onSubmit={download}>
+          <div>
+            <h3>
+              <ExportLock size={17} />
+              Konfirmasi owner
+            </h3>
+            <p>
+              Ekspor berisi semua tabel bisnis, termasuk kontak pemesan. Akun, password, sesi, dan
+              token tidak disertakan. File ini bukan backup database lengkap.
+            </p>
+          </div>
+          <label>
+            Konfirmasi password owner
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              autoComplete="current-password"
+            />
+          </label>
+          <button className="btn primary" disabled={busy}>
+            <Download size={16} />
+            {busy ? 'Memproses...' : 'Unduh JSON'}
+          </button>
+        </form>
+      </details>
+    </div>
   );
 }

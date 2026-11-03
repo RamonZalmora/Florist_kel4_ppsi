@@ -1,157 +1,100 @@
 import { storeInfo } from '../store.js';
 import { Router } from 'express';
-import PDFDocument from 'pdfkit';
 import { db } from '../db/pool.js';
 import { authenticate, authorize } from '../auth.js';
-import { period } from '../validation.js';
+import { salesReport } from '../reports/sales-data.js';
+import { salesPdf, salesExcel } from '../reports/export-sales.js';
 export const reports = Router();
 reports.use(authenticate, authorize('admin', 'owner'));
-async function sales(from, to) {
-  return (
-    await db.query(
-      'SELECT s.*,o.customer_name,o.phone_number FROM sales s JOIN orders o ON o.id=s.order_id WHERE sale_date BETWEEN $1 AND $2 ORDER BY sale_date DESC,s.id DESC',
-      [from, to],
-    )
-  ).rows;
-}
+reports.get('/workspace', async (req, res) => {
+  res.json(await salesReport(req.query));
+});
 reports.get('/', async (req, res) => {
-  const { from, to } = period(req.query),
-    rows = await sales(from, to);
-  res.json({
-    from,
-    to,
-    rows,
-    trend: Object.values(
-      rows.reduce((out, r) => {
-        const day = new Date(r.sale_date).toISOString().slice(0, 10),
-          key = (new Date(to) - new Date(from)) / 86400000 > 62 ? day.slice(0, 7) : day;
-        out[key] ||= { day: key, total: 0 };
-        out[key].total += Number(r.total_sale);
-        return out;
-      }, {}),
-    ).sort((a, b) => a.day.localeCompare(b.day)),
-    count: rows.length,
-    total: rows.reduce((sum, r) => sum + Number(r.total_sale), 0),
-  });
+  res.json(await salesReport(req.query, { paginate: false, defaultPeriod: 'custom' }));
 });
 reports.get('/pdf', async (req, res) => {
-  const { from, to } = period(req.query),
-    rows = await sales(from, to);
-  const money = (v) => 'Rp ' + Number(v).toLocaleString('id-ID');
+  const report = await salesReport(req.query, { paginate: false, defaultPeriod: 'custom' });
+  const store = await storeInfo();
   res.set({
     'Content-Type': 'application/pdf',
-    'Content-Disposition': `attachment; filename="bien-vendre-${from}-${to}.pdf"`,
+    'Content-Disposition': `attachment; filename="bien-vendre-${report.from}-${report.to}.pdf"`,
   });
-  const store = await storeInfo();
-  const doc = new PDFDocument({ size: 'A4', margin: 44, bufferPages: true });
-  doc.pipe(res);
-  const left = 44,
-    width = 507;
-  function title() {
-    doc
-      .fillColor('#254d3c')
-      .font('Helvetica-Bold')
-      .fontSize(24)
-      .text(store.name, left, 42, { width });
-    doc.font('Helvetica').fontSize(10).fillColor('#6b7e6a').text('LAPORAN PENJUALAN', left, 75);
-    doc.text(`Periode ${from} - ${to}`, left, 93);
-    doc.text(
-      `Dicetak ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })} WIB`,
-      left,
-      109,
-    );
-  }
-  function header(y) {
-    doc.rect(left, y, width, 28).fill('#254d3c');
-    doc.fillColor('white').font('Helvetica-Bold').fontSize(9);
-    for (const [label, x, w] of [
-      ['Pesanan', 50, 72],
-      ['Tanggal', 125, 80],
-      ['Pelanggan', 208, 185],
-      ['Total (Rp)', 397, 147],
-    ])
-      doc.text(label, x, y + 9, { width: w, align: x === 397 ? 'right' : 'left' });
-    return y + 28;
-  }
-  title();
-  let y = header(141),
-    index = 0;
-  for (const row of rows) {
-    doc.font('Helvetica').fontSize(9);
-    const nameHeight = doc.heightOfString(row.customer_name, { width: 181 });
-    const height = Math.max(34, nameHeight + 18);
-    if (y + height > 735) {
-      doc.addPage();
-      doc
-        .fillColor('#254d3c')
-        .font('Helvetica-Bold')
-        .fontSize(13)
-        .text(store.name + ' - Lanjutan', left, 40);
-      y = header(70);
-    }
-    if (index++ % 2 === 0) doc.rect(left, y, width, height).fill('#f1f4ed');
-    doc
-      .fillColor('#263e33')
-      .font('Helvetica')
-      .fontSize(9)
-      .text('BV-' + String(row.order_id).padStart(4, '0'), 50, y + 9, { width: 72 })
-      .text(new Date(row.sale_date).toISOString().slice(0, 10), 125, y + 9, { width: 80 })
-      .text(row.customer_name, 208, y + 9, { width: 181 })
-      .text(money(row.total_sale), 397, y + 9, { width: 147, align: 'right' });
-    y += height;
-  }
-  if (!rows.length) {
-    doc
-      .fillColor('#63705e')
-      .fontSize(11)
-      .text('Tidak ada penjualan pada periode ini.', left, y + 18);
-    y += 55;
-  }
-  if (y + 85 > 735) {
-    doc.addPage();
-    y = 55;
-  }
-  doc
-    .moveTo(left, y + 12)
-    .lineTo(left + width, y + 12)
-    .strokeColor('#cbd7c1')
-    .stroke();
-  doc
-    .fillColor('#254d3c')
-    .font('Helvetica-Bold')
-    .fontSize(11)
-    .text(`Jumlah transaksi: ${rows.length}`, left, y + 28)
-    .text(
-      'Total penjualan: ' + money(rows.reduce((n, r) => n + Number(r.total_sale), 0)),
-      left,
-      y + 48,
-      { width, align: 'right' },
-    );
-  const range = doc.bufferedPageRange();
-  for (let i = range.start; i < range.start + range.count; i++) {
-    doc.switchToPage(i);
-    doc
-      .font('Helvetica')
-      .fontSize(8)
-      .fillColor('#7d8877')
-      .text('Bien Vendre - Dokumen internal', 44, 770, { lineBreak: false })
-      .text(`${i + 1} / ${range.count}`, 480, 770, { width: 71, align: 'right', lineBreak: false });
-  }
-  doc.end();
+  salesPdf(report, store, res);
+});
+reports.get('/excel', async (req, res) => {
+  const report = await salesReport(req.query, { paginate: false, defaultPeriod: 'custom' });
+  const buffer = await salesExcel(report, await storeInfo());
+  res.set({
+    'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'Content-Disposition': `attachment; filename="bien-vendre-${report.from}-${report.to}.xlsx"`,
+  });
+  res.send(buffer);
 });
 export const dashboard = Router();
 dashboard.use(authenticate);
 dashboard.get('/', async (req, res) => {
-  const [summary, trend, popular] = await Promise.all([
-    db.query(
-      `SELECT (SELECT COALESCE(sum(total_sale),0) FROM sales WHERE date_trunc('month',sale_date)=date_trunc('month',(now() AT TIME ZONE 'Asia/Jakarta')::date)) AS revenue,(SELECT count(*)::int FROM orders) AS total_orders,(SELECT count(*)::int FROM orders WHERE status IN ('pending','processing')) AS pending_orders,(SELECT count(DISTINCT phone_number)::int FROM orders) AS customers,(SELECT count(*)::int FROM products WHERE active=true) AS products,(SELECT count(*)::int FROM orders WHERE status='completed') AS completed_orders,(SELECT count(*)::int FROM orders WHERE request LIKE 'DATA SIMULASI%') AS demo_orders`,
-    ),
-    db.query(
-      `SELECT to_char(d.day,'YYYY-MM-DD') AS day,COALESCE(sum(s.total_sale),0) AS total FROM generate_series((now() AT TIME ZONE 'Asia/Jakarta')::date-6,(now() AT TIME ZONE 'Asia/Jakarta')::date,'1 day'::interval) d(day) LEFT JOIN sales s ON s.sale_date=d.day::date GROUP BY d.day ORDER BY d.day`,
-    ),
-    db.query(
-      `SELECT p.id,p.name,p.photo,p.active,p.product_type_id,sum(oi.quantity)::int AS sold_count,COALESCE((SELECT json_agg(json_build_object('id',c.id,'name',c.name)) FROM recommendations r JOIN categories c ON c.id=r.category_id WHERE r.product_id=p.id),'[]') AS categories FROM products p JOIN order_items oi ON oi.product_id=p.id JOIN orders o ON o.id=oi.order_id AND o.status='completed' JOIN sales s ON s.order_id=o.id GROUP BY p.id ORDER BY sold_count DESC,p.id DESC`,
-    ),
-  ]);
-  res.json({ summary: summary.rows[0], trend: trend.rows, popular: popular.rows });
+  const [summary, trend, popular, occasionSales, completedOrderSales, productTypeSales] =
+    await Promise.all([
+      db.query(
+        `SELECT (SELECT COALESCE(sum(total_sale),0) FROM sales WHERE date_trunc('month',sale_date)=date_trunc('month',(now() AT TIME ZONE 'Asia/Jakarta')::date)) AS revenue,(SELECT count(*)::int FROM orders) AS total_orders,(SELECT count(*)::int FROM orders WHERE status IN ('pending','processing')) AS pending_orders,(SELECT count(DISTINCT phone_number)::int FROM orders) AS customers,(SELECT count(*)::int FROM products WHERE active=true) AS products,(SELECT count(*)::int FROM orders WHERE status='completed') AS completed_orders,(SELECT count(*)::int FROM orders WHERE request LIKE 'DATA SIMULASI%') AS demo_orders`,
+      ),
+      db.query(
+        `SELECT to_char(d.day,'YYYY-MM-DD') AS day,COALESCE(sum(s.total_sale),0) AS total FROM generate_series((now() AT TIME ZONE 'Asia/Jakarta')::date-29,(now() AT TIME ZONE 'Asia/Jakarta')::date,'1 day'::interval) d(day) LEFT JOIN sales s ON s.sale_date=d.day::date GROUP BY d.day ORDER BY d.day`,
+      ),
+      db.query(
+        `SELECT p.id,p.name,p.photo,p.active,p.product_type_id,sum(oi.quantity)::int AS sold_count,count(DISTINCT o.id)::int AS completed_order_count,COALESCE((SELECT json_agg(json_build_object('id',c.id,'name',c.name)) FROM recommendations r JOIN categories c ON c.id=r.category_id WHERE r.product_id=p.id),'[]') AS categories FROM products p JOIN order_items oi ON oi.product_id=p.id JOIN orders o ON o.id=oi.order_id AND o.status='completed' JOIN sales s ON s.order_id=o.id GROUP BY p.id ORDER BY sold_count DESC,p.id DESC`,
+      ),
+      db.query(
+        `SELECT c.id,c.name,
+       COALESCE((SELECT count(DISTINCT o.id) FROM recommendations r
+         JOIN order_items oi ON oi.product_id=r.product_id
+         JOIN orders o ON o.id=oi.order_id AND o.status='completed'
+         JOIN sales s ON s.order_id=o.id
+         WHERE r.category_id=c.id),0) AS total_orders,
+       COALESCE(json_agg(json_build_object('day',daily.day,'orders',daily.orders) ORDER BY daily.day) FILTER (WHERE daily.day IS NOT NULL),'[]') AS sales
+       FROM categories c
+       LEFT JOIN (
+         SELECT r.category_id,to_char(s.sale_date,'YYYY-MM-DD') AS day,count(DISTINCT o.id)::int AS orders
+         FROM recommendations r
+         JOIN order_items oi ON oi.product_id=r.product_id
+         JOIN orders o ON o.id=oi.order_id AND o.status='completed'
+         JOIN sales s ON s.order_id=o.id
+         WHERE s.sale_date BETWEEN (now() AT TIME ZONE 'Asia/Jakarta')::date-29 AND (now() AT TIME ZONE 'Asia/Jakarta')::date
+         GROUP BY r.category_id,s.sale_date
+       ) daily ON daily.category_id=c.id
+       GROUP BY c.id ORDER BY c.id`,
+      ),
+      db.query(
+        `SELECT count(o.id) AS all_time,
+       count(o.id) FILTER (WHERE s.sale_date BETWEEN (now() AT TIME ZONE 'Asia/Jakarta')::date-29 AND (now() AT TIME ZONE 'Asia/Jakarta')::date) AS last_30_days
+       FROM orders o JOIN sales s ON s.order_id=o.id WHERE o.status='completed'`,
+      ),
+      db.query(
+        `WITH daily AS (
+         SELECT p.product_type_id AS type_id,s.sale_date,count(DISTINCT o.id)::int AS orders
+         FROM products p
+         JOIN order_items oi ON oi.product_id=p.id
+         JOIN orders o ON o.id=oi.order_id AND o.status='completed'
+         JOIN sales s ON s.order_id=o.id
+         GROUP BY p.product_type_id,s.sale_date
+       ), types AS (
+         SELECT id,name FROM product_types
+         UNION ALL SELECT NULL::bigint,'Belum ditentukan' WHERE EXISTS(SELECT 1 FROM daily WHERE type_id IS NULL)
+       )
+       SELECT t.id,t.name,COALESCE(sum(d.orders),0) AS total_orders,
+       COALESCE(json_agg(json_build_object('day',to_char(d.sale_date,'YYYY-MM-DD'),'orders',d.orders) ORDER BY d.sale_date)
+         FILTER (WHERE d.sale_date BETWEEN (now() AT TIME ZONE 'Asia/Jakarta')::date-29 AND (now() AT TIME ZONE 'Asia/Jakarta')::date),'[]') AS sales
+       FROM types t LEFT JOIN daily d ON d.type_id IS NOT DISTINCT FROM t.id
+       GROUP BY t.id,t.name ORDER BY t.id NULLS LAST`,
+      ),
+    ]);
+  res.json({
+    summary: summary.rows[0],
+    trend: trend.rows.slice(-7),
+    trend30: trend.rows,
+    popular: popular.rows,
+    occasionSales: occasionSales.rows,
+    completedOrderSales: completedOrderSales.rows[0],
+    productTypeSales: productTypeSales.rows,
+  });
 });

@@ -11,7 +11,7 @@ const { migrate } = await import('../server/db/migrate.js');
 const { installRealCatalog } = await import('../server/db/real-catalog.js');
 const { installCatalogBatchTwo } = await import('../server/db/catalog-batch-two.js');
 const { seedDemoOrders, clearDemoOrders } = await import('../server/db/demo-orders.js');
-test('30 labelled demo orders preserve totals, completed-only sales and idempotent setup', async () => {
+test('30 sample orders have clean names, preserve totals and remain identifiable for cleanup', async () => {
   try {
     await migrate();
     await transaction(installRealCatalog);
@@ -29,7 +29,7 @@ test('30 labelled demo orders preserve totals, completed-only sales and idempote
     assert.equal(
       (
         await db.query(
-          "SELECT count(*)::int AS n FROM orders WHERE customer_name LIKE '[DEMO]%' AND phone_number LIKE '08000000%'",
+          "SELECT count(*)::int AS n FROM orders WHERE customer_name NOT LIKE '[DEMO]%' AND request LIKE 'DATA SIMULASI%' AND phone_number LIKE '08000000%'",
         )
       ).rows[0].n,
       30,
@@ -52,6 +52,22 @@ test('30 labelled demo orders preserve totals, completed-only sales and idempote
     );
     await transaction(seedDemoOrders);
     assert.equal((await db.query('SELECT count(*)::int AS n FROM orders')).rows[0].n, 30);
+    const previousSales = (
+      await db.query('SELECT order_id,total_sale,sale_date FROM sales ORDER BY id')
+    ).rows;
+    await db.query("UPDATE orders SET customer_name='[DEMO] '||customer_name");
+    await db.query("DELETE FROM schema_migrations WHERE version='018'");
+    await migrate();
+    assert.equal(
+      (await db.query("SELECT count(*)::int AS n FROM orders WHERE customer_name LIKE '[DEMO]%'"))
+        .rows[0].n,
+      0,
+    );
+    assert.deepEqual(
+      (await db.query('SELECT order_id,total_sale,sale_date FROM sales ORDER BY id')).rows,
+      previousSales,
+    );
+    await migrate();
     await db.query(
       "INSERT INTO orders(customer_name,phone_number,order_date,delivery_date,total,created_by) SELECT 'Actual customer','081234567891',order_date,delivery_date,0,created_by FROM orders LIMIT 1",
     );

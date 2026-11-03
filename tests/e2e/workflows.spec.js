@@ -145,7 +145,7 @@ test('admin dashboard and order creation work with server persistence', async ({
   await page.getByRole('button', { name: 'Catat pesanan' }).click();
   const customerName = 'E2E ' + testInfo.project.name + ' ' + randomBytes(4).toString('hex');
   testInfo.annotations.push({ type: 'test-customer', description: customerName });
-  await page.getByLabel('Nama pelanggan').fill(customerName);
+  await page.getByLabel('Pesanan atas nama siapa').fill(customerName);
   await page.getByLabel('Nomor telepon').fill('081234567899');
   const select = page.getByRole('combobox', { name: 'Produk 1' });
   const productId = await select
@@ -179,7 +179,7 @@ test('owner has read-only orders and can download filtered PDF', async ({ page }
   await page.getByLabel('Dari tanggal').fill('2026-01-01');
   await page.getByLabel('Sampai tanggal').fill('2027-01-01');
   await page.getByRole('button', { name: 'Tampilkan', exact: true }).click();
-  await expect(page.locator('.report-summary')).toContainText('2027');
+  await expect(page.locator('.reports-active-period')).toContainText('2027');
   const downloadPromise = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Unduh PDF' }).click();
   const download = await downloadPromise;

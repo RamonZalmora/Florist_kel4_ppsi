@@ -63,7 +63,7 @@ catalog.get('/products', async (req, res) => {
     recommended: 'p.id',
     price_asc: 'p.price ASC,p.id',
     price_desc: 'p.price DESC,p.id',
-    popular: 'favorite_count DESC,p.updated_at DESC,p.id DESC',
+    popular: 'sold_count DESC,p.updated_at DESC,p.id DESC',
     newest: 'p.updated_at DESC,p.id DESC',
   }[sort];
   res.json(

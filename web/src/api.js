@@ -45,3 +45,15 @@ export const today = () =>
     day: '2-digit',
   }).format(new Date());
 export const orderCode = (id) => 'BV-' + String(id).padStart(4, '0');
+export function whatsappUrl(phone) {
+  const value = String(phone || '').trim();
+  let digits = value.replace(/\D/g, '');
+  if (value.startsWith('+')) {
+    // Explicit international numbers already include their country code.
+  } else if (digits.startsWith('00')) digits = digits.slice(2);
+  else if (digits.startsWith('0')) digits = '62' + digits.slice(1);
+  else if (!digits.startsWith('62')) digits = '62' + digits;
+  return digits.length >= 8 && digits.length <= 15 && /^[1-9]\d+$/.test(digits)
+    ? 'https://wa.me/' + digits
+    : '';
+}

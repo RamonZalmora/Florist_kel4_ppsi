@@ -1,4 +1,5 @@
 import { assignProductTypes } from './product-types.js';
+import { installClassificationArtwork } from './classification-artwork.js';
 import bcrypt from 'bcryptjs';
 import { seedDemoOrders } from './demo-orders.js';
 import { db, transaction } from './pool.js';
@@ -28,6 +29,7 @@ try {
     await installCatalogBatchTwo(client);
     await installOccasionCatalog(client);
     await assignProductTypes(client);
+    await installClassificationArtwork(client);
     if (process.env.SEED_DEMO !== 'false' && process.env.NODE_ENV !== 'production')
       await seedDemoOrders(client);
   });

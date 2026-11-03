@@ -1,0 +1,107 @@
+{
+  "generator": "Built-in image_gen",
+  "assets": [
+    {
+      "name": "Wedding",
+      "kind": "occasion",
+      "file": "web/public/assets/classifications/occasion-wedding-v1.webp",
+      "prompt": "Use case: stylized-concept. Create ONE square premium 3D miniature icon for Bien Vendre florist dashboard category Wedding. Subject: two interlocked wedding rings leaning against a small ivory-and-powder-blue rose bouquet with silk navy ribbon. Soft clay and satin materials, tasteful realistic 3D render, rounded forms, subtle contact shadow on very pale icy-blue background. Centered object, generous 18% padding, isometric three-quarter view, soft studio lighting, navy blue, ice blue, ivory with restrained gold accents. No lettering, no text, no logos, no borders. A single icon, not a sheet. Intended to be saved as category-wedding-v1.png and displayed at 120px."
+    },
+    {
+      "name": "Wisuda",
+      "kind": "occasion",
+      "file": "web/public/assets/classifications/occasion-wisuda-v1.webp",
+      "prompt": "Use case: stylized-concept. Generate ONE square premium 3D miniature icon for Bien Vendre florist's Wisuda category. Subject: a navy graduation cap with a gold tassel, a rolled ivory diploma and a small powder-blue flower bouquet. Centered single still-life composition with generous 18% padding, isometric three-quarter view. Soft clay, porcelain and satin materials, professional 3D product render, subtle contact shadow, very pale icy-blue studio background, soft lighting. Coordinated palette of navy, ice blue, ivory, restrained pastel and gold accents. No text, no logos, no borders, not a sprite sheet. Crisp at 120px."
+    },
+    {
+      "name": "Hadiah",
+      "kind": "occasion",
+      "file": "web/public/assets/classifications/occasion-hadiah-v1.webp",
+      "prompt": "Use case: stylized-concept. Generate ONE square premium 3D miniature icon for Bien Vendre florist's Hadiah category. Subject: an elegant icy-blue gift box with a satin navy bow, a small pink rose and a tiny golden gift tag without text. Centered single still-life composition with generous 18% padding, isometric three-quarter view. Soft clay, porcelain and satin materials, professional 3D product render, subtle contact shadow, very pale icy-blue studio background, soft lighting. Coordinated palette of navy, ice blue, ivory, restrained pastel and gold accents. No text, no logos, no borders, not a sprite sheet. Crisp at 120px."
+    },
+    {
+      "name": "Suvenir",
+      "kind": "occasion",
+      "file": "web/public/assets/classifications/occasion-suvenir-v1.webp",
+      "prompt": "Use case: stylized-concept. Generate ONE square premium 3D miniature icon for Bien Vendre florist's Suvenir category. Subject: two miniature blue and ivory favor boxes tied with delicate satin ribbon, one tiny dried floral sprig. Centered single still-life composition with generous 18% padding, isometric three-quarter view. Soft clay, porcelain and satin materials, professional 3D product render, subtle contact shadow, very pale icy-blue studio background, soft lighting. Coordinated palette of navy, ice blue, ivory, restrained pastel and gold accents. No text, no logos, no borders, not a sprite sheet. Crisp at 120px."
+    },
+    {
+      "name": "Dekorasi",
+      "kind": "occasion",
+      "file": "web/public/assets/classifications/occasion-dekorasi-v1.webp",
+      "prompt": "Use case: stylized-concept. Generate ONE square premium 3D miniature icon for Bien Vendre florist's Dekorasi category. Subject: a miniature sculptural white ceramic vase holding blue hydrangea, ivory roses and two eucalyptus leaves. Centered single still-life composition with generous 18% padding, isometric three-quarter view. Soft clay, porcelain and satin materials, professional 3D product render, subtle contact shadow, very pale icy-blue studio background, soft lighting. Coordinated palette of navy, ice blue, ivory, restrained pastel and gold accents. No text, no logos, no borders, not a sprite sheet. Crisp at 120px."
+    },
+    {
+      "name": "Ulang Tahun",
+      "kind": "occasion",
+      "file": "web/public/assets/classifications/occasion-ulang-tahun-v1.webp",
+      "prompt": "Use case: stylized-concept. Generate ONE square premium 3D miniature icon for Bien Vendre florist's Ulang Tahun occasion. Subject: a small ivory birthday cake with three navy and gold candles and powder-blue flower decorations, no lettering. Centered single still-life composition, generous 18% padding, isometric three-quarter view. Soft clay, porcelain and satin materials, professional detailed 3D render, subtle contact shadow on very pale icy-blue studio background. Coordinated navy, ice blue, ivory and restrained pastel accents, soft lighting. No text, no logos, no borders. Single asset, not a sheet. Crisp at 120px."
+    },
+    {
+      "name": "Hari Guru",
+      "kind": "occasion",
+      "file": "web/public/assets/classifications/occasion-hari-guru-v1.webp",
+      "prompt": "Use case: stylized-concept. Generate ONE square premium 3D miniature icon for Bien Vendre florist's Hari Guru occasion. Subject: a miniature closed navy book with an ivory ribbon bookmark and small pastel-blue flower bouquet as a teacher appreciation gift. Centered single still-life composition, generous 18% padding, isometric three-quarter view. Soft clay, porcelain and satin materials, professional detailed 3D render, subtle contact shadow on very pale icy-blue studio background. Coordinated navy, ice blue, ivory and restrained pastel accents, soft lighting. No text, no logos, no borders. Single asset, not a sheet. Crisp at 120px."
+    },
+    {
+      "name": "Bunga",
+      "kind": "type",
+      "file": "web/public/assets/classifications/type-bunga-v1.webp",
+      "prompt": "Use case: stylized-concept. Generate ONE square premium 3D miniature icon for Bien Vendre florist's Bunga product type. Subject: a lush miniature hand-tied bouquet of fresh blue and ivory roses wrapped in icy-blue paper with a navy satin bow. Centered single still-life composition, generous 18% padding, isometric three-quarter view. Soft clay, porcelain and satin materials, professional detailed 3D render, subtle contact shadow on very pale icy-blue studio background. Coordinated navy, ice blue, ivory and restrained pastel accents, soft lighting. No text, no logos, no borders. Single asset, not a sheet. Crisp at 120px."
+    },
+    {
+      "name": "Bunga kering",
+      "kind": "type",
+      "file": "web/public/assets/classifications/type-bunga-kering-v1.webp",
+      "prompt": "Use case: stylized-concept. Generate ONE square premium 3D miniature icon for Bien Vendre florist's Bunga kering product type. Subject: a compact hand-tied bouquet of ivory preserved roses, dried pale beige pampas and blue-tinted dried eucalyptus wrapped in navy paper. Centered single still-life composition, generous 18% padding, isometric three-quarter view. Soft clay, porcelain and satin materials, professional detailed 3D render, subtle contact shadow on very pale icy-blue studio background. Coordinated navy, ice blue, ivory and restrained pastel accents, soft lighting. No text, no logos, no borders. Single asset, not a sheet. Crisp at 120px."
+    },
+    {
+      "name": "Snack",
+      "kind": "type",
+      "file": "web/public/assets/classifications/type-snack-v1.webp",
+      "prompt": "Use case: stylized-concept. Generate ONE square premium 3D miniature icon for Bien Vendre florist's Snack product type. Subject: an elegant small snack bouquet containing unbranded pastel blue biscuit packets and ivory chocolate bars in blue florist wrapping. Centered single still-life composition, generous 18% padding, isometric three-quarter view. Soft clay, porcelain and satin materials, professional detailed 3D render, subtle contact shadow on very pale icy-blue studio background. Coordinated navy, ice blue, ivory and restrained pastel accents, soft lighting. No text, no logos, no borders. Single asset, not a sheet. Crisp at 120px."
+    },
+    {
+      "name": "Uang",
+      "kind": "type",
+      "file": "web/public/assets/classifications/type-uang-v1.webp",
+      "prompt": "Use case: stylized-concept. Generate ONE square premium 3D miniature icon for Bien Vendre florist's Uang product type. Subject: a florist money bouquet made of rolled stylized blue blank banknotes and ivory roses, no currency markings or numbers. Centered single still-life composition, generous 18% padding, isometric three-quarter view. Soft clay, porcelain and satin materials, professional detailed 3D render, subtle contact shadow on very pale icy-blue studio background. Coordinated navy, ice blue, ivory and restrained pastel accents, soft lighting. No text, no logos, no borders. Single asset, not a sheet. Crisp at 120px."
+    },
+    {
+      "name": "Akrilik",
+      "kind": "type",
+      "file": "web/public/assets/classifications/type-akrilik-v1.webp",
+      "prompt": "Use case: stylized-concept. Generate ONE square premium 3D miniature icon for Bien Vendre florist's Akrilik product type. Subject: a freestanding clear arched acrylic flower keepsake with a small preserved ivory rose and navy pedestal, no text. Centered single still-life composition, generous 18% padding, isometric three-quarter view. Soft clay, porcelain and satin materials, professional detailed 3D render, subtle contact shadow on very pale icy-blue studio background. Coordinated navy, ice blue, ivory and restrained pastel accents, soft lighting. No text, no logos, no borders. Single asset, not a sheet. Crisp at 120px."
+    },
+    {
+      "name": "Frame & mahar",
+      "kind": "type",
+      "file": "web/public/assets/classifications/type-frame-mahar-v1.webp",
+      "prompt": "Use case: stylized-concept. Generate ONE square premium 3D miniature icon for Bien Vendre florist's Frame & mahar product type. Subject: a square ivory shadowbox frame with a delicate blue dried-flower arrangement and two small gold rings, no lettering. Centered single still-life composition, generous 18% padding, isometric three-quarter view. Soft clay, porcelain and satin materials, professional detailed 3D render, subtle contact shadow on very pale icy-blue studio background. Coordinated navy, ice blue, ivory and restrained pastel accents, soft lighting. No text, no logos, no borders. Single asset, not a sheet. Crisp at 120px."
+    },
+    {
+      "name": "Boneka",
+      "kind": "type",
+      "file": "web/public/assets/classifications/type-boneka-v1.webp",
+      "prompt": "Use case: stylized-concept. Generate ONE square premium 3D miniature icon for Bien Vendre florist's Boneka product type. Subject: an adorable small ivory teddy bear holding a blue rose, wrapped as a florist gift in navy and powder-blue paper. Centered single still-life composition, generous 18% padding, isometric three-quarter view. Soft clay, porcelain and satin materials, professional detailed 3D render, subtle contact shadow on very pale icy-blue studio background. Coordinated navy, ice blue, ivory and restrained pastel accents, soft lighting. No text, no logos, no borders. Single asset, not a sheet. Crisp at 120px."
+    },
+    {
+      "name": "Foto",
+      "kind": "type",
+      "file": "web/public/assets/classifications/type-foto-v1.webp",
+      "prompt": "Use case: stylized-concept. Generate ONE square premium 3D miniature icon for Bien Vendre florist's Foto product type. Subject: a small ivory tabletop photo frame with a stylized blank blue landscape insert, next to two blue and white flowers, no text or people. Centered single still-life composition, generous 18% padding, isometric three-quarter view. Soft clay, porcelain and satin materials, professional detailed 3D render, subtle contact shadow on very pale icy-blue studio background. Coordinated navy, ice blue, ivory and restrained pastel accents, soft lighting. No text, no logos, no borders. Single asset, not a sheet. Crisp at 120px."
+    },
+    {
+      "name": "Vas",
+      "kind": "type",
+      "file": "web/public/assets/classifications/type-vas-v1.webp",
+      "prompt": "Use case: stylized-concept. Generate ONE square premium 3D miniature icon for Bien Vendre florist's Vas product type. Subject: a sculptural powder-blue ceramic vase holding two ivory roses and delicate eucalyptus leaves. Centered single still-life composition, generous 18% padding, isometric three-quarter view. Soft clay, porcelain and satin materials, professional detailed 3D render, subtle contact shadow on very pale icy-blue studio background. Coordinated navy, ice blue, ivory and restrained pastel accents, soft lighting. No text, no logos, no borders. Single asset, not a sheet. Crisp at 120px."
+    },
+    {
+      "name": "Klobot",
+      "kind": "type",
+      "file": "web/public/assets/classifications/type-klobot-v1.webp",
+      "prompt": "Use case: stylized-concept. Generate ONE square premium 3D miniature icon for Bien Vendre florist's Klobot product type. Subject: a compact handcrafted bouquet of pale ivory dried corn-husk flowers with blue satin ribbon and navy florist wrapping. Centered single still-life composition, generous 18% padding, isometric three-quarter view. Soft clay, porcelain and satin materials, professional detailed 3D render, subtle contact shadow on very pale icy-blue studio background. Coordinated navy, ice blue, ivory and restrained pastel accents, soft lighting. No text, no logos, no borders. Single asset, not a sheet. Crisp at 120px."
+    }
+  ]
+}

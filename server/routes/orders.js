@@ -2,8 +2,10 @@ import { Router } from 'express';
 import { db, transaction } from '../db/pool.js';
 import { authenticate, authorize } from '../auth.js';
 import { idSchema, orderSchema, statusSchema, fail } from '../validation.js';
+import { orderWorkspace } from './order-workspace.js';
 export const orders = Router();
 orders.use(authenticate);
+orders.get('/workspace', orderWorkspace);
 orders.get('/', async (req, res) => {
   res.json(
     (

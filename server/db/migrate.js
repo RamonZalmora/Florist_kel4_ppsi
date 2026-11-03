@@ -1,4 +1,5 @@
 import { createProductTypes } from './product-types.js';
+import { installClassificationArtwork } from './classification-artwork.js';
 import { readFile } from 'node:fs/promises';
 import { basename } from 'node:path';
 import { db, transaction, databaseDriver } from './pool.js';
@@ -134,6 +135,34 @@ export async function migrate() {
     ) {
       await createProductTypes(client);
       await client.query('INSERT INTO schema_migrations(version) VALUES($1)', ['015']);
+    }
+    if (
+      !(await client.query('SELECT version FROM schema_migrations WHERE version=$1', ['016']))
+        .rowCount
+    ) {
+      await installClassificationArtwork(client);
+      await client.query('INSERT INTO schema_migrations(version) VALUES($1)', ['016']);
+    }
+    if (
+      !(await client.query('SELECT version FROM schema_migrations WHERE version=$1', ['017']))
+        .rowCount
+    ) {
+      await client.query(
+        `ALTER TABLE store_settings ADD COLUMN latitude double precision CHECK(latitude BETWEEN -90 AND 90), ADD COLUMN longitude double precision CHECK(longitude BETWEEN -180 AND 180), ADD CONSTRAINT store_coordinate_pair CHECK((latitude IS NULL) = (longitude IS NULL))`,
+      );
+      await client.query(
+        "UPDATE store_settings SET latitude=0.4734722222,longitude=101.3748055556 WHERE map_url='https://maps.app.goo.gl/cZhMm6Z3326uHWz77'",
+      );
+      await client.query('INSERT INTO schema_migrations(version) VALUES($1)', ['017']);
+    }
+    if (
+      !(await client.query('SELECT version FROM schema_migrations WHERE version=$1', ['018']))
+        .rowCount
+    ) {
+      await client.query(
+        "UPDATE orders SET customer_name=ltrim(substr(customer_name,7)) WHERE left(upper(customer_name),6)='[DEMO]' AND length(trim(substr(customer_name,7)))>0",
+      );
+      await client.query('INSERT INTO schema_migrations(version) VALUES($1)', ['018']);
     }
   });
 }

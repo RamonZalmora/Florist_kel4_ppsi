@@ -1,5 +1,7 @@
 import { SalesLineChart } from './SalesLineChart';
-import { PhotoField, StoreEditor, SalesTrend } from './RetailFeatures';
+import { hasCoordinates, storeMapLink, storeMapEmbed } from './store-location';
+import { OrderStatusChart } from './OrderStatusChart';
+import { PhotoField, StoreEditor } from './RetailFeatures';
 import { RecoveryScreen, AccountSecurity, DataStudio } from './StudioFeatures';
 import React, { useState, useEffect, useCallback } from 'react';
 import { createRoot } from 'react-dom/client';
@@ -21,6 +23,7 @@ import {
   X,
   Menu,
   Download,
+  FileSpreadsheet,
   Check,
   ChevronRight,
   Leaf,
@@ -42,7 +45,7 @@ import {
   Instagram,
   MessageCircle,
 } from 'lucide-react';
-import { api, setCsrf, money, date, today, orderCode } from './api';
+import { api, setCsrf, money, date, today, orderCode, whatsappUrl } from './api';
 import './styles.css';
 const statuses = {
   pending: 'Belum selesai',
@@ -342,6 +345,13 @@ function WhatsAppIcon() {
     </svg>
   );
 }
+function TikTokIcon() {
+  return (
+    <svg width="25" height="25" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 1 1-2-2.75V9.4a6.33 6.33 0 1 0 5.45 6.27V8.68A8.16 8.16 0 0 0 20.5 10V6.57a4.85 4.85 0 0 1-.91.12Z" />
+    </svg>
+  );
+}
 function MarketplaceIcon({ name }) {
   if (name === 'Shopee')
     return (
@@ -373,6 +383,10 @@ function MarketplaceIcon({ name }) {
   );
 }
 function getSocialChannels(store, whatsapp) {
+  const tiktok =
+    /^https:\/\/(?:www\.)?tiktok\.com\/@[a-zA-Z0-9_.]+\/?(?:\?[^\s#]*)?(?:#[^\s]*)?$/.test(
+      store.tiktok || '',
+    );
   let instagram = false;
   try {
     const u = new URL(store.instagram);
@@ -428,6 +442,7 @@ function getSocialChannels(store, whatsapp) {
       href: instagram ? store.instagram : '',
       className: 'ig',
     },
+    { name: 'TikTok', icon: <TikTokIcon />, href: tiktok ? store.tiktok : '', className: 'tiktok' },
   ];
 }
 function SocialLinks({ store, whatsapp }) {
@@ -487,14 +502,16 @@ function FloatingSocial({ store, whatsapp }) {
   );
 }
 function AboutPage({ store, whatsapp, onExplore }) {
+  const mapEmbed = storeMapEmbed(store),
+    mapLink = storeMapLink(store);
   return (
     <div className="about-page">
       <section className="about-intro">
         <div className="about-intro-copy">
           <img
             className="about-brand-seal"
-            src="/assets/bien-logo-generated.webp"
-            alt="Logo Bien Vendre"
+            src={store.logo || '/assets/bien-logo-generated.webp'}
+            alt={'Logo ' + store.name}
           />
           <span className="eyebrow">THE STORY OF {store.name || 'BIEN VENDRE'}</span>
           <h1>
@@ -579,11 +596,11 @@ function AboutPage({ store, whatsapp, onExplore }) {
           </p>
         </div>
         <div className="location-destination">
-          {store.map_url === 'https://maps.app.goo.gl/cZhMm6Z3326uHWz77' ? (
+          {mapEmbed ? (
             <iframe
               className="location-map"
               title="Peta lokasi Bien Vendre"
-              src="https://maps.google.com/maps?q=0.4734722222,101.3748055556&z=16&output=embed"
+              src={mapEmbed}
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
             />
@@ -597,12 +614,14 @@ function AboutPage({ store, whatsapp, onExplore }) {
           <div className="location-destination-info">
             <span className="eyebrow">GOOGLE MAPS</span>
             <h3>Titik lokasi toko</h3>
-            {store.map_url === 'https://maps.app.goo.gl/cZhMm6Z3326uHWz77' && (
-              <p className="location-coordinates">0°28′24.5″N · 101°22′29.3″E</p>
+            {hasCoordinates(store) && (
+              <p className="location-coordinates">
+                {Number(store.latitude).toFixed(6)}, {Number(store.longitude).toFixed(6)}
+              </p>
             )}
             <p>Buka lokasi untuk melihat alamat, rute, dan petunjuk arah.</p>
-            {store.map_url ? (
-              <a className="btn primary" href={store.map_url} target="_blank" rel="noreferrer">
+            {mapLink ? (
+              <a className="btn primary" href={mapLink} target="_blank" rel="noreferrer">
                 Buka Google Maps <ArrowUpRight size={17} />
               </a>
             ) : (
@@ -645,40 +664,7 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
       new URLSearchParams(location.search).get('view') === 'collection',
     ),
     [catalogPage, setCatalogPage] = useState(1),
-    [filtersOpen, setFiltersOpen] = useState(() => window.matchMedia('(min-width: 721px)').matches),
-    [favorites, setFavorites] = useState([]);
-  const [visitor] = useState(() => {
-    let id = localStorage.getItem('bv_visitor');
-    if (!id) {
-      id = crypto.randomUUID();
-      localStorage.setItem('bv_visitor', id);
-    }
-    return id;
-  });
-  useEffect(() => {
-    api('/favorites/' + visitor)
-      .then(setFavorites)
-      .catch(() => {});
-  }, [visitor]);
-  async function toggleFavorite(p) {
-    try {
-      const favorite = !favorites.includes(String(p.id));
-      const result = await api('/favorites/' + p.id, {
-        method: 'PUT',
-        body: JSON.stringify({ visitor, favorite }),
-      });
-      setFavorites((current) =>
-        favorite ? [...current, String(p.id)] : current.filter((id) => id !== String(p.id)),
-      );
-      setProducts((current) =>
-        current.map((item) =>
-          item.id === p.id ? { ...item, favorite_count: result.count } : item,
-        ),
-      );
-    } catch (e) {
-      notify(e.message, true);
-    }
-  }
+    [filtersOpen, setFiltersOpen] = useState(() => window.matchMedia('(min-width: 721px)').matches);
   const [products, setProducts] = useState([]),
     [categories, setCategories] = useState([]),
     [availableTypes, setAvailableTypes] = useState([]),
@@ -812,7 +798,6 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
           (a, b) =>
             Number(b.sold_count || 0) - Number(a.sold_count || 0) ||
             Number(preferred.test(b.name)) - Number(preferred.test(a.name)) ||
-            Number(b.favorite_count || 0) - Number(a.favorite_count || 0) ||
             Number(b.id) - Number(a.id),
         )
         .slice(0, 3);
@@ -841,16 +826,23 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
   function renderProduct(p, i, ranked = false) {
     return (
       <article
-        className={'product-card' + (ranked === true ? ' ranked-product rank-' + (i + 1) : '')}
+        className={
+          'product-card retail-product-card' +
+          (ranked === true ? ' ranked-product rank-' + (i + 1) : '')
+        }
         key={p.id}
       >
         <div
           className={'product-picture tone-' + (i % 3)}
           onClick={() => showProduct(p.id)}
           role="button"
+          aria-label={'Lihat detail ' + p.name}
           tabIndex={0}
           onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') showProduct(p.id);
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              showProduct(p.id);
+            }
           }}
         >
           <Photo src={p.photo} alt={p.name} />
@@ -861,22 +853,11 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
         <div className="product-card-info">
           <div>
             <h3>{p.name}</h3>
+            <strong className="product-price">{money(p.price)}</strong>
             <p>{p.flower_type}</p>
           </div>
           <ArrowUpRight size={20} />
         </div>
-        <strong className="product-price">{money(p.price)}</strong>
-        <button
-          className={'favorite-btn ' + (favorites.includes(String(p.id)) ? 'selected' : '')}
-          aria-label={
-            (favorites.includes(String(p.id)) ? 'Hapus favorit ' : 'Tambahkan favorit ') + p.name
-          }
-          aria-pressed={favorites.includes(String(p.id))}
-          onClick={() => toggleFavorite(p)}
-        >
-          <Heart size={17} fill={favorites.includes(String(p.id)) ? 'currentColor' : 'none'} />{' '}
-          {p.favorite_count || 0} favorit
-        </button>
         {consult(p) ? (
           <a
             className="product-order"
@@ -1174,7 +1155,7 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
                           Urutkan
                           <select value={sort} onChange={(e) => setSort(e.target.value)}>
                             <option value="newest">Terbaru diperbarui</option>
-                            <option value="popular">Paling banyak favorit</option>
+                            <option value="popular">Produk terlaris</option>
                           </select>
                         </label>
                         <button
@@ -1376,8 +1357,8 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
                 <span>{store.address}</span>
               </p>
             )}
-            {store.map_url && (
-              <a href={store.map_url} target="_blank" rel="noreferrer">
+            {storeMapLink(store) && (
+              <a href={storeMapLink(store)} target="_blank" rel="noreferrer">
                 Lihat lokasi di Google Maps <ArrowUpRight size={14} />
               </a>
             )}
@@ -1458,14 +1439,12 @@ const navAdmin = [
   ['categories', 'Kategori', Tags],
   ['orders', 'Pesanan', ShoppingBag],
   ['reports', 'Riwayat & laporan', ChartNoAxesCombined],
-  ['customers', 'Pelanggan', Users],
 ];
 const navOwner = [
   ['dashboard', 'Dashboard', LayoutDashboard],
   ['orders', 'Daftar pesanan', ShoppingBag],
   ['reports', 'Riwayat & laporan', ChartNoAxesCombined],
   ['data', 'Data bisnis', Package],
-  ['customers', 'Pelanggan', Users],
 ];
 function Workspace({ user, view, setView, logout, notify }) {
   const [mobile, setMobile] = useState(false),
@@ -1474,7 +1453,9 @@ function Workspace({ user, view, setView, logout, notify }) {
     [error, setError] = useState(''),
     [loading, setLoading] = useState(true),
     [query, setQuery] = useState(''),
-    [productCategory, setProductCategory] = useState('');
+    [productCategory, setProductCategory] = useState(''),
+    [classificationKind, setClassificationKind] = useState('occasion'),
+    [classificationSearch, setClassificationSearch] = useState('');
   const refresh = useCallback(() => setVersion((v) => v + 1), []);
   useEffect(() => {
     let active = true;
@@ -1509,9 +1490,44 @@ function Workspace({ user, view, setView, logout, notify }) {
   }
   const navigation = user.role === 'admin' ? navAdmin : navOwner,
     title = navigation.find((n) => n[0] === view)?.[1] || 'Pengaturan';
-  const shared = { data, query, notify, refresh, user, go, productCategory, setProductCategory };
+  const sidebarItems = [
+    ...navigation,
+    ['settings', 'Pengaturan', Settings],
+    ['catalog', 'Lihat katalog', ExternalLink],
+  ];
+  const activeMenuIndex = sidebarItems.findIndex(([id]) => id === view);
+  const shared = {
+    data,
+    query,
+    setQuery,
+    notify,
+    refresh,
+    user,
+    go,
+    productCategory,
+    setProductCategory,
+    classificationKind,
+    classificationSearch,
+  };
   return (
-    <div className="workspace">
+    <div
+      className={
+        'workspace' +
+        (view === 'dashboard'
+          ? ' workspace-dashboard'
+          : view === 'categories'
+            ? ' workspace-classifications'
+            : view === 'products'
+              ? ' workspace-products'
+              : view === 'orders'
+                ? ' workspace-orders'
+                : view === 'reports'
+                  ? ' workspace-reports'
+                  : view === 'settings' || view === 'data'
+                    ? ' workspace-owner'
+                    : '')
+      }
+    >
       <aside className={'sidebar ' + (mobile ? 'open' : '')}>
         <a className="brand" href="/catalog">
           <img className="workspace-logo" src="/assets/bien-mark.svg" alt="" />
@@ -1520,31 +1536,27 @@ function Workspace({ user, view, setView, logout, notify }) {
           </div>
         </a>
         <div className="sidebar-label">RUANG KERJA</div>
-        <nav>
-          {navigation.map(([id, label, Icon]) => (
-            <button key={id} className={view === id ? 'active' : ''} onClick={() => go(id)}>
+        <nav
+          className="sidebar-navigation"
+          aria-label="Menu ruang kerja"
+          style={{ '--nav-index': Math.max(0, activeMenuIndex) }}
+        >
+          <span className="sidebar-active-surface" aria-hidden="true" />
+          {sidebarItems.map(([id, label, Icon]) => (
+            <button
+              key={id}
+              className={view === id ? 'active' : ''}
+              aria-current={view === id ? 'page' : undefined}
+              onClick={() => go(id)}
+            >
               <Icon size={18} />
-              {label}
+              <span>{label}</span>
             </button>
           ))}
         </nav>
-        <div className="sidebar-label">LAINNYA</div>
-        <nav>
-          <button onClick={() => go('settings')} className={view === 'settings' ? 'active' : ''}>
-            <Settings size={18} /> Pengaturan
-          </button>
-          <button onClick={() => go('catalog')}>
-            <ExternalLink size={18} /> Lihat katalog
-          </button>
-        </nav>
         <div className="sidebar-floral">
-          <Leaf />
-          <span>
-            Grow beautifully.
-            <br />
-            <em>One bloom at a time.</em>
-          </span>
-          <Flower2 size={36} />
+          <Flower2 size={22} />
+          <span>Grow beautifully.</span>
         </div>
         <div className="user-panel">
           <span className="avatar">{user.name[0]}</span>
@@ -1567,45 +1579,90 @@ function Workspace({ user, view, setView, logout, notify }) {
           >
             <Menu />
           </button>
-          <div className="breadcrumb">
-            Ruang kerja <ChevronRight size={14} /> <strong>{title}</strong>
-          </div>
-          <div className="topbar-right">
-            <span className="today">
-              <CalendarDays size={15} />
-              {new Date().toLocaleDateString('id-ID', {
-                timeZone: 'Asia/Jakarta',
-                weekday: 'short',
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric',
-              })}
-            </span>
-            <button
-              className="icon-btn"
-              onClick={refresh}
-              aria-label="Muat ulang data"
-              title="Muat ulang data"
-            >
-              <RefreshCw size={17} className={loading ? 'spin' : ''} />
-            </button>
-            <span className="avatar small">{user.name[0]}</span>
-          </div>
+          {view === 'categories' ? (
+            <ClassificationHeader
+              data={data}
+              kind={classificationKind}
+              setKind={setClassificationKind}
+              search={classificationSearch}
+              setSearch={setClassificationSearch}
+            />
+          ) : (
+            <>
+              {view === 'dashboard' ? (
+                <div className="dashboard-store-status">
+                  <span className="dashboard-store-mark">
+                    <Flower2 size={23} />
+                  </span>
+                  <div>
+                    <strong>
+                      Bien Vendre <span>STUDIO</span>
+                    </strong>
+                    <small>
+                      <span className="online-dot" /> Ruang kerja{' '}
+                      {user.role === 'admin' ? 'admin' : 'owner'}
+                    </small>
+                  </div>
+                  <button onClick={() => go('orders')} className="dashboard-order-shortcut">
+                    <ShoppingBag size={14} /> {data ? data.dashboard.summary.pending_orders : '…'}{' '}
+                    belum selesai <ArrowUpRight size={12} />
+                  </button>
+                </div>
+              ) : (
+                <div className="breadcrumb">
+                  Ruang kerja <ChevronRight size={14} /> <strong>{title}</strong>
+                </div>
+              )}
+              <div className="topbar-right">
+                <span className="today">
+                  <CalendarDays size={15} />
+                  {new Date().toLocaleDateString('id-ID', {
+                    timeZone: 'Asia/Jakarta',
+                    weekday: 'short',
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric',
+                  })}
+                </span>
+                <button
+                  className="icon-btn"
+                  onClick={refresh}
+                  aria-label="Muat ulang data"
+                  title="Muat ulang data"
+                >
+                  <RefreshCw size={17} className={loading ? 'spin' : ''} />
+                </button>
+                <span className="avatar small">{user.name[0]}</span>
+                {view === 'dashboard' && (
+                  <div className="dashboard-top-user">
+                    <strong>{user.name}</strong>
+                    <small>{user.role === 'admin' ? 'Admin toko' : 'Owner'}</small>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
         </header>
         <main className="workspace-content">
-          {view !== 'dashboard' && view !== 'settings' && view !== 'reports' && (
-            <div className="workspace-search-strip">
-              <label className="search-box">
-                <Search size={17} />
-                <input
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Cari data…"
-                  aria-label="Cari data"
-                />
-              </label>
-            </div>
-          )}
+          {view !== 'dashboard' &&
+            view !== 'categories' &&
+            view !== 'products' &&
+            view !== 'orders' &&
+            view !== 'settings' &&
+            view !== 'reports' &&
+            view !== 'data' && (
+              <div className="workspace-search-strip">
+                <label className="search-box">
+                  <Search size={17} />
+                  <input
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="Cari data…"
+                    aria-label="Cari data"
+                  />
+                </label>
+              </div>
+            )}
           {error ? (
             <Empty text={error}>
               <button className="btn outline" onClick={refresh}>
@@ -1623,8 +1680,7 @@ function Workspace({ user, view, setView, logout, notify }) {
                 {view === 'products' && <Products {...shared} />}{' '}
                 {view === 'categories' && <Categories {...shared} />}{' '}
                 {view === 'orders' && <Orders {...shared} />}{' '}
-                {view === 'customers' && <Customers {...shared} />}{' '}
-                {view === 'reports' && <Reports notify={notify} />}{' '}
+                {view === 'reports' && <Reports data={data} notify={notify} />}{' '}
                 {view === 'data' && <DataStudio notify={notify} />}
                 {view === 'settings' && <StoreSettings user={user} notify={notify} />}
               </>
@@ -1642,211 +1698,445 @@ function Workspace({ user, view, setView, logout, notify }) {
   );
 }
 function Dashboard({ data, user, go }) {
-  const [salesCategory, setSalesCategory] = useState('');
-  const { summary, trend } = data.dashboard;
-  const popular = data.dashboard.popular
-    .filter(
-      (p) =>
-        !salesCategory ||
-        (salesCategory.startsWith('type:')
-          ? String(p.product_type_id) === salesCategory.slice(5)
-          : p.categories.some((c) => String(c.id) === salesCategory)),
-    )
-    .slice(0, 4);
-  const total = trend.reduce((n, t) => n + Number(t.total), 0),
-    favoriteTotal = popular.reduce((n, item) => n + Number(item.sold_count), 0),
-    favoriteColors = ['#22d3ee', '#3b82f6', '#7c9cf5', '#b1c7f4'];
-  let favoriteCursor = 0;
-  const favoriteSegments = popular.map((item, i) => {
-    const start = favoriteCursor;
-    favoriteCursor += favoriteTotal ? (Number(item.sold_count) / favoriteTotal) * 100 : 0;
-    return `${favoriteColors[i % favoriteColors.length]} ${start}% ${favoriteCursor}%`;
-  });
+  const [salesDays, setSalesDays] = useState(7);
+  const [categoryPeriod, setCategoryPeriod] = useState('all');
+  const [sellerGroup, setSellerGroup] = useState('category');
+  const { summary, trend: weekTrend, popular } = data.dashboard;
+  const trend = (data.dashboard.trend30 || weekTrend).slice(-salesDays);
+  const best = popular.slice(0, 4);
+  const periodTotal = trend.reduce((sum, day) => sum + Number(day.total), 0);
+  const occasionColors = [
+    '#3164bc',
+    '#20a89b',
+    '#9970cb',
+    '#e6a04d',
+    '#dc7999',
+    '#4f9fc4',
+    '#8b9e4e',
+    '#b77559',
+  ];
+  const occasions = (
+    (sellerGroup === 'category' ? data.dashboard.occasionSales : data.dashboard.productTypeSales) ||
+    []
+  )
+    .map((occasion, index) => ({
+      ...occasion,
+      color: occasionColors[index] || `hsl(${Math.round((index * 137.508 + 215) % 360)} 48% 55%)`,
+      quantity:
+        categoryPeriod === 'all'
+          ? Number(occasion.total_orders || 0)
+          : occasion.sales.reduce((sum, day) => sum + Number(day.orders), 0),
+    }))
+    .sort((a, b) => b.quantity - a.quantity || a.name.localeCompare(b.name, 'id'));
+  const peak = trend.reduce(
+    (highest, day) => (Number(day.total) > Number(highest?.total || 0) ? day : highest),
+    null,
+  );
+  const completedOrdersInPeriod =
+    categoryPeriod === 'all'
+      ? Number(data.dashboard.completedOrderSales?.all_time ?? summary.completed_orders)
+      : Number(data.dashboard.completedOrderSales?.last_30_days || 0);
+  const categoryPercent = (quantity) =>
+    completedOrdersInPeriod ? (quantity / completedOrdersInPeriod) * 100 : 0;
+  const percentLabel = (quantity) =>
+    new Intl.NumberFormat('id-ID', { maximumFractionDigits: 1 }).format(categoryPercent(quantity)) +
+    '%';
+  const statDetails = [
+    [money(weekTrend.reduce((sum, day) => sum + Number(day.total), 0)), 'dalam 7 hari'],
+    [summary.pending_orders, 'belum selesai'],
+    user.role === 'admin'
+      ? [data.productTypes.length, 'jenis produk tersedia']
+      : [summary.completed_orders, 'pesanan selesai'],
+    [summary.completed_orders, 'pesanan selesai'],
+  ];
   const stats = [
-    [
-      'Penjualan bulan ini',
-      money(summary.revenue),
-      ChartNoAxesCombined,
-      'Transaksi pesanan selesai',
-      'sage',
-    ],
-    ['Total pesanan', summary.total_orders, ShoppingBag, 'Pesanan tercatat', 'peach'],
-    ['Pelanggan', summary.customers, Users, 'Berdasarkan nomor telepon', 'lavender'],
-    ['Produk aktif', summary.products, Package, 'Tersedia di katalog', 'gold'],
+    ['Penjualan bulan ini', money(summary.revenue), ChartNoAxesCombined, 'Dari pesanan selesai'],
+    ['Total pesanan', summary.total_orders, ShoppingBag, 'Seluruh pesanan tercatat'],
+    user.role === 'admin'
+      ? ['Occasion & jenis produk', data.categories.length, Tags, 'Occasion tersedia di katalog']
+      : ['Pelanggan', summary.customers, Users, 'Berdasarkan nomor telepon'],
+    ['Produk aktif', summary.products, Package, 'Tersedia di katalog'],
+  ];
+  const recent = data.orders.filter((order) => order.status !== 'cancelled').slice(0, 4);
+  const miniSeries = [
+    weekTrend.map((day) => Number(day.total)),
+    weekTrend.map(
+      (day) =>
+        data.orders.filter((order) => String(order.order_date).slice(0, 10) === day.day).length,
+    ),
+    user.role === 'admin'
+      ? null
+      : weekTrend.map(
+          (day) =>
+            new Set(
+              data.orders
+                .filter((order) => String(order.order_date).slice(0, 10) === day.day)
+                .map((order) => order.phone_number),
+            ).size,
+        ),
   ];
   return (
-    <>
-      <section className="dashboard-command" aria-label="Ringkasan operasional">
-        <div className="command-brand">
-          <img src="/assets/dashboard-emblem.webp" alt="" />
-          <div>
-            <span className="eyebrow">BIEN VENDRE / {user.role.toUpperCase()}</span>
-            <strong>{user.name}</strong>
-            <small>
-              <span className="online-dot" /> Ringkasan operasional toko
-            </small>
-          </div>
-        </div>
-        <div className="command-pulse">
-          <ShoppingBag size={18} />
-          <span>
-            <strong>{summary.pending_orders}</strong> belum selesai
-          </span>
-          <span className="command-divider" />
-          <Check size={18} />
-          <span>
-            <strong>{summary.completed_orders}</strong> selesai
-          </span>
-        </div>
-        <div className="command-actions">
-          <button className="btn outline" onClick={() => go('orders')}>
-            <ShoppingBag size={16} />
-            Pesanan
-          </button>
-          <button className="btn primary" onClick={() => go('reports')}>
-            <ChartNoAxesCombined size={16} />
-            Laporan
-          </button>
-        </div>
-      </section>
-      {Number(summary.demo_orders) > 0 && (
-        <div className="dashboard-demo">
-          <Sparkles size={15} />
-          {summary.demo_orders} pesanan simulasi berlabel [DEMO] ikut mengisi grafik dan laporan.
-        </div>
-      )}
-      <div className="stat-grid">
-        {stats.map(([label, value, Icon, hint, tone]) => (
-          <article className="stat-card" key={label}>
-            <div className={'stat-icon ' + tone}>
-              <Icon size={22} />
-            </div>
-            <div>
+    <div className="sales-dashboard">
+      <div className="sales-stats">
+        {stats.map(([label, value, Icon, hint], index) => {
+          const values = miniSeries[index];
+          const points = values
+            ?.map((value, i) => `${i * 15},${48 - (value / Math.max(1, ...values)) * 36}`)
+            .join(' ');
+          return (
+            <article className={'sales-stat sales-stat-' + index} key={label}>
+              <div className="sales-stat-icon">
+                <Icon size={18} />
+              </div>
               <span>{label}</span>
               <strong>{value}</strong>
               <small>{hint}</small>
-            </div>
-          </article>
-        ))}
+              {values?.length ? (
+                <svg
+                  className="sales-mini-chart"
+                  viewBox="0 0 90 54"
+                  role="img"
+                  aria-label={'Tren 7 hari: ' + label + '. ' + values.join(', ')}
+                >
+                  <defs>
+                    <linearGradient id={'mini-fill-' + index} x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="currentColor" stopOpacity=".35" />
+                      <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
+                    </linearGradient>
+                  </defs>
+                  <polygon points={`0,54 ${points} 90,54`} fill={`url(#mini-fill-${index})`} />
+                  <polyline
+                    points={points}
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              ) : (
+                <Flower2 className="sales-stat-flower" size={58} aria-hidden="true" />
+              )}
+              <div className="sales-stat-detail">
+                <span className="sales-stat-detail-dot" />
+                <b>{statDetails[index][0]}</b>
+                <span>{statDetails[index][1]}</span>
+              </div>
+            </article>
+          );
+        })}
       </div>
-      <div className="dashboard-grid">
-        <section className="panel chart-panel">
-          <div className="panel-heading">
+      <div className="sales-overview-grid">
+        <section className="sales-panel sales-chart">
+          <div className="sales-panel-heading">
             <div>
-              <h2>Ringkasan penjualan</h2>
-              <p>Performa toko dalam 7 hari terakhir</p>
+              <h2>
+                <ChartNoAxesCombined size={17} /> Ringkasan penjualan
+              </h2>
+              <p>Penjualan selesai dalam {salesDays} hari terakhir</p>
             </div>
-            <span className="period-chip">
-              <CalendarDays size={14} /> 7 hari terakhir
-            </span>
+            <div className="sales-chart-actions">
+              <div className="sales-range-control" role="group" aria-label="Periode penjualan">
+                {[7, 30].map((days) => (
+                  <button
+                    key={days}
+                    aria-pressed={salesDays === days}
+                    onClick={() => setSalesDays(days)}
+                  >
+                    {days} hari
+                  </button>
+                ))}
+              </div>
+              <button className="sales-period" onClick={() => go('reports')}>
+                <CalendarDays size={14} /> Lihat laporan <ArrowUpRight size={12} />
+              </button>
+            </div>
           </div>
-          <div className="chart-summary">
-            <strong>{money(total)}</strong>
-            <span>Total penjualan selesai</span>
+          <div className="sales-chart-body">
+            <div className="sales-period-summary">
+              <div className="sales-summary-primary">
+                <span className="sales-summary-label">Total penjualan {salesDays} hari</span>
+                <strong className="sales-summary-total">{money(periodTotal)}</strong>
+                <small>
+                  {trend.length > 0 && `${date(trend[0].day)} – ${date(trend.at(-1).day)}`}
+                </small>
+              </div>
+              <div className="sales-summary-average">
+                <span>Rata-rata per hari</span>
+                <strong>{money(trend.length ? periodTotal / trend.length : 0)}</strong>
+              </div>
+              <div className="sales-summary-peak">
+                <span>
+                  <Sparkles size={14} /> Penjualan tertinggi
+                </span>
+                <strong>{money(peak?.total || 0)}</strong>
+                <small>{peak ? date(peak.day) : 'Belum ada penjualan selesai'}</small>
+              </div>
+            </div>
+            <div className="sales-chart-plot">
+              <span className="sales-chart-key">
+                <i /> Penjualan harian · {salesDays} hari
+              </span>
+              <SalesLineChart
+                compact
+                trend={trend}
+                label={`Penjualan ${salesDays} hari terakhir`}
+              />
+            </div>
           </div>
-          <SalesLineChart trend={trend} label="Penjualan tujuh hari terakhir" />
         </section>
-        <section className="panel recent-orders">
-          <div className="panel-heading">
+        <section className="sales-panel sales-breakdown">
+          <div className="sales-panel-heading">
             <div>
-              <h2>Pesanan terbaru</h2>
-              <p>Rangkaian yang sedang menunggu cerita</p>
+              <h2>
+                <Flower2 size={17} />{' '}
+                {sellerGroup === 'category' ? 'Kategori terlaris' : 'Jenis produk terlaris'}
+              </h2>
+              <p>
+                {sellerGroup === 'category'
+                  ? 'Kategori pada pesanan yang sudah selesai'
+                  : 'Jenis produk pada pesanan yang sudah selesai'}
+              </p>
             </div>
-            <button className="text-btn" onClick={() => go('orders')}>
-              Lihat semua <ArrowUpRight size={16} />
+            <div className="sales-breakdown-selects">
+              <select
+                className="sales-occasion-period"
+                aria-label="Kelompok produk terlaris"
+                value={sellerGroup}
+                onChange={(event) => setSellerGroup(event.target.value)}
+              >
+                <option value="category">Kategori</option>
+                <option value="type">Jenis bunga / produk</option>
+              </select>
+              <select
+                className="sales-occasion-period"
+                aria-label="Periode kategori terlaris"
+                value={categoryPeriod}
+                onChange={(event) => setCategoryPeriod(event.target.value)}
+              >
+                <option value="all">Semua waktu</option>
+                <option value="30">30 hari terakhir</option>
+              </select>
+            </div>
+          </div>
+          <div className="sales-breakdown-content">
+            <div
+              className="sales-donut sales-category-rings"
+              role="img"
+              aria-label={
+                completedOrdersInPeriod
+                  ? occasions
+                      .map(
+                        (occasion) =>
+                          `${occasion.name}: ${occasion.quantity} pesanan, ${percentLabel(occasion.quantity)}`,
+                      )
+                      .join(', ')
+                  : 'Belum ada penjualan produk dengan kategori pada periode ini'
+              }
+            >
+              <svg viewBox="0 0 200 200" aria-hidden="true">
+                {occasions.map((occasion, index) => {
+                  const spacing = Math.min(10, 48 / Math.max(1, occasions.length - 1));
+                  const radius = 90 - index * spacing;
+                  const strokeWidth = Math.min(7, spacing * 0.72);
+                  const percent = categoryPercent(occasion.quantity);
+                  return (
+                    <g key={occasion.id} transform="rotate(-90 100 100)">
+                      <circle
+                        cx="100"
+                        cy="100"
+                        r={radius}
+                        fill="none"
+                        stroke={occasion.color}
+                        strokeOpacity=".13"
+                        strokeWidth={strokeWidth}
+                      />
+                      <circle
+                        cx="100"
+                        cy="100"
+                        r={radius}
+                        fill="none"
+                        stroke={occasion.color}
+                        strokeWidth={strokeWidth}
+                        pathLength="100"
+                        strokeDasharray={`${percent} ${100 - percent}`}
+                        strokeLinecap={percent ? 'round' : 'butt'}
+                      />
+                    </g>
+                  );
+                })}
+              </svg>
+              <div>
+                <strong>{completedOrdersInPeriod}</strong>
+                <small>pesanan selesai</small>
+              </div>
+            </div>
+            <div className="sales-legend">
+              {occasions.length ? (
+                occasions.map((occasion) => (
+                  <div
+                    key={occasion.id ?? 'unassigned'}
+                    data-occasion-id={occasion.id ?? 'unassigned'}
+                  >
+                    <i style={{ background: occasion.color }} />
+                    <span>
+                      {occasion.name}
+                      <small>{occasion.quantity} pesanan</small>
+                    </span>
+                    <strong>{percentLabel(occasion.quantity)}</strong>
+                  </div>
+                ))
+              ) : (
+                <p>
+                  Belum ada {sellerGroup === 'category' ? 'kategori' : 'jenis produk'} yang
+                  ditambahkan.
+                </p>
+              )}
+            </div>
+          </div>
+          <div className="sales-breakdown-footer">
+            <ShoppingBag size={16} />
+            <span>Total pesanan selesai</span>
+            <strong>{completedOrdersInPeriod} pesanan</strong>
+          </div>
+          <p className="sales-occasion-note">
+            Persentase dari {completedOrdersInPeriod} pesanan selesai. Tiap{' '}
+            {sellerGroup === 'category' ? 'kategori' : 'jenis produk'} dihitung sekali per pesanan.
+            Satu pesanan dapat memuat beberapa{' '}
+            {sellerGroup === 'category' ? 'kategori' : 'jenis produk'}, sehingga total persentase
+            dapat melebihi 100%.
+          </p>
+        </section>
+      </div>
+      <div className="sales-detail-grid">
+        <section className="sales-panel sales-products-panel">
+          <div className="sales-panel-heading">
+            <div>
+              <h2>
+                <ShoppingBag size={16} /> Produk paling dibeli
+              </h2>
+              <p>Jumlah dari pesanan selesai</p>
+            </div>
+            <button
+              className="text-btn"
+              onClick={() => go(user.role === 'admin' ? 'products' : 'catalog')}
+            >
+              Lihat semua <ArrowUpRight size={14} />
             </button>
           </div>
-          <OrderTable
-            orders={data.orders.filter((o) => o.status !== 'cancelled').slice(0, 5)}
-            user={user}
-            compact
-          />
+          <div className="sales-list">
+            {best.length ? (
+              best.map((p) => (
+                <div className="sales-product-row" key={p.id}>
+                  <Photo src={p.photo} alt={p.name} />
+                  <span>
+                    <strong>{p.name}</strong>
+                    <small>
+                      {p.categories
+                        ?.map((category) => category.name)
+                        .slice(0, 2)
+                        .join(' · ') || (!p.active ? 'Produk arsip' : 'Koleksi Bien Vendre')}
+                    </small>
+                  </span>
+                  <b>{p.sold_count} terjual</b>
+                </div>
+              ))
+            ) : (
+              <p className="sales-empty">Belum ada produk terjual.</p>
+            )}
+          </div>
         </section>
-        <section className="panel popular-products">
-          <div className="panel-heading">
+        <section className="sales-panel sales-recent-panel">
+          <div className="sales-panel-heading">
             <div>
-              <h2>Produk paling dibeli</h2>
-              <p>Jumlah barang dari pesanan selesai</p>
+              <h2>
+                <ShoppingBasket size={16} /> Pesanan terbaru
+              </h2>
+              <p>Aktivitas pesanan toko</p>
+            </div>
+            <button className="text-btn" onClick={() => go('orders')}>
+              Lihat semua <ArrowUpRight size={14} />
+            </button>
+          </div>
+          <div className="sales-list">
+            {recent.length ? (
+              recent.map((o) => (
+                <div className="sales-order-row" key={o.id}>
+                  <span className="sales-avatar">
+                    {(o.customer_name || '?').charAt(0).toUpperCase()}
+                  </span>
+                  <span>
+                    <strong>{o.customer_name}</strong>
+                    <small>
+                      {orderCode(o.id)} · {date(o.order_date)}
+                    </small>
+                  </span>
+                  <div>
+                    <b>{money(o.total)}</b>
+                    <small className={'sales-status ' + (o.status === 'completed' ? 'done' : '')}>
+                      {o.status === 'completed' ? 'Selesai' : 'Belum selesai'}
+                    </small>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="sales-empty">Belum ada pesanan.</p>
+            )}
+          </div>
+        </section>
+        <section className="sales-panel sales-order-summary">
+          <div className="sales-panel-heading">
+            <div>
+              <h2>
+                <Package size={16} /> Status pesanan
+              </h2>
+              <p>Ringkasan aktivitas toko</p>
             </div>
             <ShoppingBag size={18} />
           </div>
-          <label className="bestseller-filter">
-            Kategori produk
-            <select
-              aria-label="Kategori produk terlaris"
-              value={salesCategory}
-              onChange={(e) => setSalesCategory(e.target.value)}
-            >
-              <option value="">Semua kategori</option>
-              <optgroup label="Occasion">
-                {data.categories.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </optgroup>
-              <optgroup label="Jenis produk">
-                {data.productTypes.map((t) => (
-                  <option key={t.id} value={'type:' + t.id}>
-                    {t.name}
-                  </option>
-                ))}
-              </optgroup>
-            </select>
-          </label>
-          <div className="favorite-insight">
-            <div
-              className="favorite-ring"
-              role="img"
-              aria-label={
-                favoriteTotal
-                  ? `Total ${favoriteTotal} barang terjual pada empat produk teratas`
-                  : 'Belum ada penjualan selesai untuk kategori ini'
-              }
-              style={{
-                background: favoriteTotal
-                  ? `conic-gradient(${favoriteSegments.join(',')})`
-                  : '#dfe8f5',
-              }}
-            >
-              <div>
-                <strong>{favoriteTotal}</strong>
-                <small>TERJUAL</small>
-              </div>
+          <div className="sales-completion">
+            <div className="sales-completion-symbol">
+              <Package size={28} />
+              <span>
+                <Check size={13} />
+              </span>
             </div>
-            <div className="favorite-insight-copy">
-              <strong>Terlaris di toko</strong>
-              <span>Empat produk dengan jumlah pembelian tertinggi</span>
+            <div>
+              <strong>
+                {Math.round(
+                  (Number(summary.completed_orders) /
+                    Math.max(
+                      1,
+                      Number(summary.completed_orders) + Number(summary.pending_orders),
+                    )) *
+                    100,
+                )}
+                %
+              </strong>
+              <small>pesanan selesai</small>
             </div>
           </div>
-          {!popular.length && (
-            <p className="bestseller-empty">Belum ada produk terjual pada kategori ini.</p>
-          )}
-          {popular.map((p, i) => (
-            <div className="popular-row" key={p.id}>
-              <Photo src={p.photo} alt={p.name} />
-              <div>
-                <strong>{p.name}</strong>
-                <small>
-                  {p.sold_count} terjual{!p.active ? ' · Arsip' : ''}
-                </small>
-              </div>
-              <span style={{ color: favoriteColors[i % favoriteColors.length] }}>0{i + 1}</span>
-            </div>
-          ))}
-          <button
-            className="text-btn full"
-            onClick={() => go(user.role === 'admin' ? 'products' : 'catalog')}
-          >
-            Jelajahi koleksi <ArrowRight size={16} />
+          <div className="sales-completion-track">
+            <span
+              style={{
+                width: `${(Number(summary.completed_orders) / Math.max(1, Number(summary.completed_orders) + Number(summary.pending_orders))) * 100}%`,
+              }}
+            />
+          </div>
+          <div className="sales-status-count">
+            <span>Belum selesai</span>
+            <strong>{summary.pending_orders}</strong>
+          </div>
+          <div className="sales-status-count">
+            <span>Selesai</span>
+            <strong>{summary.completed_orders}</strong>
+          </div>
+          <button className="text-btn" onClick={() => go('orders')}>
+            Kelola pesanan <ArrowRight size={15} />
           </button>
         </section>
       </div>
-      <div className="demo-notice">
-        <Image size={15} />
-        <span>Pastikan harga, ukuran, dan ketersediaan produk sesuai informasi toko.</span>
-      </div>
-    </>
+    </div>
   );
 }
 function FormActions({ busy, onClose }) {
@@ -1882,33 +2172,62 @@ function useMutation(notify, refresh) {
   }
   return { busy, error, mutate, setError };
 }
-function Products({ data, query, notify, refresh, productCategory, setProductCategory }) {
+function Products({ data, query, setQuery, notify, refresh, productCategory, setProductCategory }) {
   const [uploading, setUploading] = useState(false);
   const [edit, setEdit] = useState(null),
     [remove, setRemove] = useState(null),
+    [typeFilter, setTypeFilter] = useState(
+      productCategory.startsWith('type:') ? productCategory.slice(5) : '',
+    ),
+    [page, setPage] = useState(1),
     { busy, error, mutate, setError } = useMutation(notify, refresh);
-  const products = data.products.filter((p) => {
-    const links = data.recommendations.filter((r) => String(r.product_id) === String(p.id));
+  const occasionFilter = productCategory.startsWith('type:') ? '' : productCategory;
+  const linksFor = (id) =>
+    data.recommendations.filter((link) => String(link.product_id) === String(id));
+  const products = data.products.filter((product) => {
+    const links = linksFor(product.id);
     return (
-      (p.name + ' ' + p.flower_type).toLowerCase().includes(query.toLowerCase()) &&
-      (!productCategory ||
-        (productCategory === 'none'
+      (product.name + ' ' + product.flower_type).toLowerCase().includes(query.toLowerCase()) &&
+      (!occasionFilter ||
+        (occasionFilter === 'none'
           ? !links.length
-          : links.some((r) => String(r.category_id) === productCategory)))
+          : links.some((link) => String(link.category_id) === occasionFilter))) &&
+      (!typeFilter ||
+        (typeFilter === 'none'
+          ? !product.product_type_id
+          : String(product.product_type_id) === typeFilter))
     );
   });
-  function open(p) {
-    setError('');
-    setEdit(p);
+  const pageSize = 7;
+  const pageCount = Math.max(1, Math.ceil(products.length / pageSize));
+  const currentPage = Math.min(page, pageCount);
+  const visibleProducts = products.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const topSellers = [...data.dashboard.popular]
+    .sort(
+      (a, b) =>
+        Number(b.completed_order_count) - Number(a.completed_order_count) ||
+        Number(b.sold_count) - Number(a.sold_count),
+    )
+    .slice(0, 5);
+  function resetFilters() {
+    setProductCategory('');
+    setTypeFilter('');
+    setQuery('');
+    setPage(1);
   }
-  function submit(e) {
-    e.preventDefault();
-    const f = new FormData(e.target),
-      body = Object.fromEntries(f);
+  function open(product) {
+    setError('');
+    setEdit(product);
+  }
+  function submit(event) {
+    event.preventDefault();
+    if (uploading) return;
+    const form = new FormData(event.target),
+      body = Object.fromEntries(form);
     body.price = Number(body.price);
-    body.active = f.get('active') === 'on';
-    body.product_type_id = f.get('product_type_id') ? Number(f.get('product_type_id')) : null;
-    body.category_ids = f.getAll('category_ids').map(Number);
+    body.active = form.get('active') === 'on';
+    body.product_type_id = form.get('product_type_id') ? Number(form.get('product_type_id')) : null;
+    body.category_ids = form.getAll('category_ids').map(Number);
     mutate(
       '/manage/products' + (edit.id ? '/' + edit.id : ''),
       edit.id ? 'PUT' : 'POST',
@@ -1918,199 +2237,377 @@ function Products({ data, query, notify, refresh, productCategory, setProductCat
   }
   return (
     <>
-      <div className="toolbar">
-        <span>{products.length} produk dalam koleksi</span>
-        <button className="btn primary" onClick={() => open({ active: true, photo: asset })}>
-          <Plus size={17} /> Tambah produk
-        </button>
-      </div>
-      <div className="occasion-product-tabs" aria-label="Daftar produk per occasion">
-        <button className={!productCategory ? 'active' : ''} onClick={() => setProductCategory('')}>
-          Semua produk
-        </button>
-        {data.categories.map((c) => (
-          <button
-            key={c.id}
-            className={productCategory === String(c.id) ? 'active' : ''}
-            onClick={() => setProductCategory(String(c.id))}
-          >
-            {c.name}
+      <div className="product-workspace">
+        <div className="product-overview-heading">
+          <h2>
+            <ChartNoAxesCombined size={18} /> Top seller <span>5 produk teratas</span>
+          </h2>
+          <button className="btn primary" onClick={() => open({ active: true, photo: asset })}>
+            <Plus size={17} /> Tambah produk
           </button>
-        ))}
-        <button
-          className={productCategory === 'none' ? 'active' : ''}
-          onClick={() => setProductCategory('none')}
-        >
-          Tanpa occasion
-        </button>
-      </div>
-      <div className="panel table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Produk</th>
-              <th>Jenis & ukuran</th>
-              <th>Harga</th>
-              <th>Favorit</th>
-              <th>Status</th>
-              <th>Aksi</th>
-            </tr>
-          </thead>
-          <tbody>
-            {products.map((p) => (
-              <tr key={p.id}>
-                <td>
-                  <div className="table-product">
-                    <Photo src={p.photo} alt={p.name} />
-                    <div>
-                      <strong>{p.name}</strong>
-                      <small>PRD-{String(p.id).padStart(3, '0')}</small>
-                      <small>
-                        {data.recommendations
-                          .filter((r) => String(r.product_id) === String(p.id))
-                          .map((r) => r.category_name)
-                          .join(' · ') || 'Belum ada occasion'}
-                      </small>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <strong>
-                    {data.productTypes.find((t) => String(t.id) === String(p.product_type_id))
-                      ?.name || 'Belum dipilih'}
-                  </strong>
-                  <small className="cell-sub">
-                    {p.flower_type} · {p.size}
-                  </small>
-                </td>
-                <td className="nowrap">{money(p.price)}</td>
-                <td>
-                  <Heart size={14} /> {p.favorite_count || 0}
-                </td>
-                <td>
-                  <span className={'badge ' + (p.active ? 'completed' : 'cancelled')}>
-                    <i />
-                    {p.active ? 'Aktif' : 'Nonaktif'}
-                  </span>
-                </td>
-                <td>
-                  <div className="row-actions">
-                    <button
-                      className="icon-btn"
-                      aria-label={'Edit ' + p.name}
-                      onClick={() => open(p)}
-                    >
-                      <Pencil size={16} />
-                    </button>
-                    <button
-                      className="icon-btn danger"
-                      aria-label={'Hapus ' + p.name}
-                      onClick={() => setRemove(p)}
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {!products.length && <Empty text="Produk belum tersedia." />}
-      </div>
-      {edit && (
-        <Modal title={edit.id ? 'Edit produk' : 'Tambah produk'} onClose={() => setEdit(null)}>
-          <form className="editor-form" onSubmit={submit}>
-            <h3 className="form-section-title">01 / Informasi produk</h3>
-            <label>
-              Nama produk
-              <input name="name" defaultValue={edit.name} required maxLength={120} />
-            </label>
-            <div className="form-grid">
-              <label>
-                Harga (Rp)
+        </div>
+        <section className="product-top-sellers" aria-label="Lima produk terlaris">
+          {topSellers.length ? (
+            topSellers.map((product, index) => (
+              <article
+                className={'product-seller-card seller-tone-' + index}
+                key={product.id}
+                data-product-id={product.id}
+              >
+                <span className="product-seller-rank">0{index + 1}</span>
+                <Photo src={product.photo} alt={product.name} />
+                <div>
+                  <strong title={product.name}>{product.name}</strong>
+                  <span>{product.completed_order_count} pesanan selesai</span>
+                </div>
+              </article>
+            ))
+          ) : (
+            <div className="product-seller-empty">
+              <ShoppingBag size={20} />
+              <span>Produk terlaris akan muncul setelah pesanan diselesaikan.</span>
+            </div>
+          )}
+        </section>
+        <div className="product-management-layout">
+          <section className="product-table-panel">
+            <div className="product-table-heading">
+              <h2>
+                Koleksi produk <span>{products.length}</span>
+              </h2>
+              <label className="search-box product-table-search">
+                <Search size={16} />
                 <input
-                  type="number"
-                  name="price"
-                  min="1"
-                  max="1000000000"
-                  step="0.01"
-                  defaultValue={edit.price}
-                  required
-                />
-              </label>
-              <label>
-                Ukuran
-                <input
-                  name="size"
-                  defaultValue={edit.size}
-                  placeholder="Medium · 12 tangkai"
-                  required
-                  maxLength={80}
+                  value={query}
+                  onChange={(event) => {
+                    setQuery(event.target.value);
+                    setPage(1);
+                  }}
+                  placeholder="Cari nama produk"
+                  aria-label="Cari produk"
                 />
               </label>
             </div>
-            <h3 className="form-section-title">02 / Jenis & bahan</h3>
+            {typeFilter && (
+              <div className="product-type-context">
+                <Package size={14} />
+                <span>
+                  Jenis:{' '}
+                  <strong>
+                    {typeFilter === 'none'
+                      ? 'Belum ditentukan'
+                      : data.productTypes.find((type) => String(type.id) === typeFilter)?.name}
+                  </strong>
+                </span>
+                <button
+                  className="text-btn"
+                  onClick={() => {
+                    setTypeFilter('');
+                    if (productCategory.startsWith('type:')) setProductCategory('');
+                    setPage(1);
+                  }}
+                  aria-label="Hapus filter jenis"
+                >
+                  <X size={13} />
+                </button>
+              </div>
+            )}
+            <div className="product-table-scroll">
+              <table className="catalog-management-table" aria-label="Daftar produk">
+                <thead>
+                  <tr>
+                    <th>Produk</th>
+                    <th>Harga & jenis</th>
+                    <th>Status</th>
+                    <th>Aksi</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {visibleProducts.map((product) => {
+                    const links = linksFor(product.id);
+                    const type = data.productTypes.find(
+                      (entry) => String(entry.id) === String(product.product_type_id),
+                    );
+                    return (
+                      <tr key={product.id} data-product-id={product.id}>
+                        <td>
+                          <div className="catalog-product-cell">
+                            <Photo src={product.photo} alt={product.name} />
+                            <div className="catalog-product-copy">
+                              <strong>{product.name}</strong>
+                              <small>PRD-{String(product.id).padStart(3, '0')}</small>
+                              <div className="catalog-product-occasions">
+                                {links.slice(0, 2).map((link) => (
+                                  <span key={link.id}>
+                                    {link.category_name ||
+                                      data.categories.find(
+                                        (entry) => String(entry.id) === String(link.category_id),
+                                      )?.name}
+                                  </span>
+                                ))}
+                                {links.length > 2 && (
+                                  <span title={links.map((link) => link.category_name).join(', ')}>
+                                    +{links.length - 2}
+                                  </span>
+                                )}
+                                {!links.length && <small>Tanpa occasion</small>}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td>
+                          <strong className="catalog-product-price">{money(product.price)}</strong>
+                          <small className="catalog-product-type">
+                            {type?.name || 'Belum ditentukan'} / {product.size}
+                          </small>
+                        </td>
+                        <td>
+                          <span
+                            className={
+                              'catalog-product-status ' + (product.active ? 'is-active' : '')
+                            }
+                          >
+                            <i />
+                            {product.active ? 'Aktif' : 'Nonaktif'}
+                          </span>
+                        </td>
+                        <td>
+                          <div className="row-actions">
+                            <button
+                              className="icon-btn"
+                              aria-label={'Edit ' + product.name}
+                              onClick={() => open(product)}
+                            >
+                              <Pencil size={15} />
+                            </button>
+                            <button
+                              className="icon-btn danger"
+                              aria-label={'Hapus ' + product.name}
+                              onClick={() => setRemove(product)}
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            {!products.length && (
+              <Empty text="Tidak ada produk yang cocok.">
+                <button className="btn outline" onClick={resetFilters}>
+                  Reset filter
+                </button>
+              </Empty>
+            )}
+            <div className="product-pagination">
+              <span>
+                {products.length ? (currentPage - 1) * pageSize + 1 : 0}-
+                {Math.min(currentPage * pageSize, products.length)} dari {products.length} produk
+              </span>
+              <div>
+                <button
+                  className="icon-btn"
+                  aria-label="Halaman sebelumnya"
+                  disabled={currentPage === 1}
+                  onClick={() => setPage(currentPage - 1)}
+                >
+                  <ArrowLeft size={15} />
+                </button>
+                <strong>
+                  {currentPage} / {pageCount}
+                </strong>
+                <button
+                  className="icon-btn"
+                  aria-label="Halaman berikutnya"
+                  disabled={currentPage === pageCount}
+                  onClick={() => setPage(currentPage + 1)}
+                >
+                  <ArrowRight size={15} />
+                </button>
+              </div>
+            </div>
+          </section>
+          <aside className="product-filter-panel" aria-label="Filter produk">
+            <div className="product-filter-heading">
+              <h2>
+                <Settings size={17} /> Filter koleksi
+              </h2>
+              <button className="text-btn" onClick={resetFilters}>
+                Reset
+              </button>
+            </div>
             <label>
-              Jenis produk
+              Occasion
               <select
-                name="product_type_id"
-                aria-label="Jenis produk"
-                required
-                defaultValue={edit.product_type_id || data.productTypes[0]?.id || ''}
+                aria-label="Filter occasion"
+                value={occasionFilter}
+                onChange={(event) => {
+                  setProductCategory(event.target.value);
+                  setPage(1);
+                }}
               >
-                <option value="">Pilih jenis produk</option>
-                {data.productTypes.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.name}
+                <option value="">Semua occasion</option>
+                {data.categories.map((entry) => (
+                  <option key={entry.id} value={entry.id}>
+                    {entry.name}
                   </option>
                 ))}
+                <option value="none">Tanpa occasion</option>
               </select>
             </label>
             <label>
-              Bahan / rincian produk
-              <input name="flower_type" defaultValue={edit.flower_type} required maxLength={150} />
+              Jenis produk
+              <select
+                aria-label="Filter jenis produk"
+                value={typeFilter}
+                onChange={(event) => {
+                  setTypeFilter(event.target.value);
+                  if (productCategory.startsWith('type:')) setProductCategory('');
+                  setPage(1);
+                }}
+              >
+                <option value="">Semua jenis</option>
+                {data.productTypes.map((entry) => (
+                  <option key={entry.id} value={entry.id}>
+                    {entry.name}
+                  </option>
+                ))}
+                <option value="none">Belum ditentukan</option>
+              </select>
             </label>
-            <label>
-              Deskripsi
-              <textarea
-                name="description"
-                defaultValue={edit.description}
-                required
-                maxLength={5000}
-                rows={4}
-              />
-            </label>
-            <h3 className="form-section-title">03 / Occasion produk</h3>
-            <fieldset className="product-occasions">
-              <legend>Occasion / kategori</legend>
-              <p>Pilih satu atau beberapa momen yang cocok untuk produk ini.</p>
-              {data.categories.length ? (
-                <div className="occasion-options">
-                  {data.categories.map((c) => (
-                    <label key={c.id}>
-                      <input
-                        type="checkbox"
-                        name="category_ids"
-                        value={c.id}
-                        defaultChecked={data.recommendations.some(
-                          (r) =>
-                            String(r.product_id) === String(edit.id) &&
-                            String(r.category_id) === String(c.id),
-                        )}
-                      />
-                      <span>{c.name}</span>
-                    </label>
-                  ))}
+            <div className="product-filter-summary">
+              <div>
+                <span>Aktif</span>
+                <strong>{products.filter((product) => product.active).length}</strong>
+              </div>
+              <div>
+                <span>Nonaktif</span>
+                <strong>{products.filter((product) => !product.active).length}</strong>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </div>
+      {edit && (
+        <Modal wide title={edit.id ? 'Edit produk' : 'Tambah produk'} onClose={() => setEdit(null)}>
+          <form className="editor-form modern-catalog-editor product-editor" onSubmit={submit}>
+            <div className="catalog-editor-intro">
+              <span className="dimensional-icon">
+                <ShoppingBag size={22} />
+              </span>
+              <div>
+                <strong>
+                  {edit.id ? 'Sempurnakan detail koleksi' : 'Tambahkan cerita baru ke koleksi'}
+                </strong>
+                <p>Lengkapi detail, pilih occasion, dan unggah foto produk.</p>
+              </div>
+            </div>
+            <div className="catalog-editor-layout">
+              <div className="catalog-editor-main">
+                <h3 className="form-section-title">01 / Informasi produk</h3>
+                <label>
+                  Nama produk
+                  <input name="name" defaultValue={edit.name} required maxLength={120} />
+                </label>
+                <div className="form-grid">
+                  <label>
+                    Harga (Rp)
+                    <input
+                      type="number"
+                      name="price"
+                      min="1"
+                      max="1000000000"
+                      step="0.01"
+                      defaultValue={edit.price}
+                      required
+                    />
+                  </label>
+                  <label>
+                    Ukuran
+                    <input
+                      name="size"
+                      defaultValue={edit.size}
+                      placeholder="Medium · 12 tangkai"
+                      required
+                      maxLength={80}
+                    />
+                  </label>
                 </div>
-              ) : (
-                <p>Belum ada occasion. Tambahkan kategori di menu Kategori.</p>
-              )}
-            </fieldset>
-            <h3 className="form-section-title">04 / Foto & publikasi</h3>
-            <PhotoField initialValue={edit.photo} onBusyChange={setUploading} />
-            <label className="checkbox">
-              <input type="checkbox" name="active" defaultChecked={edit.active} /> Aktif di katalog
-            </label>
+                <h3 className="form-section-title">02 / Jenis & bahan</h3>
+                <label>
+                  Jenis produk
+                  <select
+                    name="product_type_id"
+                    aria-label="Jenis produk"
+                    required
+                    defaultValue={edit.product_type_id || data.productTypes[0]?.id || ''}
+                  >
+                    <option value="">Pilih jenis produk</option>
+                    {data.productTypes.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Bahan / rincian produk
+                  <input
+                    name="flower_type"
+                    defaultValue={edit.flower_type}
+                    required
+                    maxLength={150}
+                  />
+                </label>
+                <label>
+                  Deskripsi
+                  <textarea
+                    name="description"
+                    defaultValue={edit.description}
+                    required
+                    maxLength={5000}
+                    rows={4}
+                  />
+                </label>
+                <h3 className="form-section-title">03 / Occasion produk</h3>
+                <fieldset className="product-occasions">
+                  <legend>Occasion / kategori</legend>
+                  <p>Pilih satu atau beberapa momen yang cocok untuk produk ini.</p>
+                  {data.categories.length ? (
+                    <div className="occasion-options">
+                      {data.categories.map((c) => (
+                        <label key={c.id}>
+                          <input
+                            type="checkbox"
+                            name="category_ids"
+                            value={c.id}
+                            defaultChecked={data.recommendations.some(
+                              (r) =>
+                                String(r.product_id) === String(edit.id) &&
+                                String(r.category_id) === String(c.id),
+                            )}
+                          />
+                          <span>{c.name}</span>
+                        </label>
+                      ))}
+                    </div>
+                  ) : (
+                    <p>Belum ada occasion. Tambahkan kategori di menu Kategori.</p>
+                  )}
+                </fieldset>
+              </div>
+              <aside className="catalog-editor-media">
+                <h3 className="form-section-title">04 / Foto & publikasi</h3>
+                <PhotoField initialValue={edit.photo} onBusyChange={setUploading} />
+                <label className="checkbox">
+                  <input type="checkbox" name="active" defaultChecked={edit.active} /> Aktif di
+                  katalog
+                </label>
+              </aside>
+            </div>
             {error && <p className="form-error">{error}</p>}
             <FormActions busy={busy || uploading} onClose={() => setEdit(null)} />
           </form>
@@ -2147,11 +2644,70 @@ function Products({ data, query, notify, refresh, productCategory, setProductCat
     </>
   );
 }
+function ClassificationHeader({ data, kind, setKind, search, setSearch }) {
+  const tabs = [
+    ['occasion', 'Occasion', Flower2, data?.categories.length || 0],
+    ['type', 'Jenis produk', Package, data?.productTypes.length || 0],
+  ];
+  return (
+    <div className="classification-command">
+      <div
+        className="classification-switcher"
+        role="tablist"
+        aria-label="Kelompok kategori"
+        style={{ '--classification-tab': kind === 'type' ? 1 : 0 }}
+      >
+        <span className="classification-tab-surface" aria-hidden="true" />
+        {tabs.map(([id, label, Icon, count], index) => (
+          <button
+            key={id}
+            id={'classification-tab-' + id}
+            type="button"
+            role="tab"
+            aria-selected={kind === id}
+            aria-controls={'classification-panel-' + id}
+            tabIndex={kind === id ? 0 : -1}
+            onClick={() => {
+              setKind(id);
+              setSearch('');
+            }}
+            onKeyDown={(event) => {
+              if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) {
+                event.preventDefault();
+                const next = event.key === 'Home' ? 0 : event.key === 'End' ? 1 : 1 - index;
+                setKind(tabs[next][0]);
+                setSearch('');
+                document.getElementById('classification-tab-' + tabs[next][0])?.focus();
+              }
+            }}
+          >
+            <Icon size={19} />
+            <span>{label}</span>
+            <small>{count}</small>
+          </button>
+        ))}
+      </div>
+      <label className="search-box classification-search">
+        <Search size={17} />
+        <input
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          placeholder={kind === 'type' ? 'Cari jenis produk…' : 'Cari occasion…'}
+          aria-label="Cari kategori"
+        />
+      </label>
+    </div>
+  );
+}
 function Categories(props) {
   return (
-    <div className="classification-sections">
-      <ClassificationSection {...props} kind="occasion" />
-      <ClassificationSection {...props} kind="type" />
+    <div className="classification-workspace">
+      <ClassificationSection
+        key={props.classificationKind}
+        {...props}
+        query={props.classificationSearch}
+        kind={props.classificationKind}
+      />
     </div>
   );
 }
@@ -2161,83 +2717,120 @@ function ClassificationSection({ data, query, notify, refresh, go, setProductCat
     c.name.toLowerCase().includes(query.toLowerCase()),
   );
   const [edit, setEdit] = useState(null),
-    [remove, setRemove] = useState(null);
+    [remove, setRemove] = useState(null),
+    [uploading, setUploading] = useState(false);
   const { busy, error, mutate, setError } = useMutation(notify, refresh);
   const path = '/manage/' + (isType ? 'product-types' : 'categories');
-  function submit(e) {
-    e.preventDefault();
+  const defaultPhoto =
+    '/assets/classifications/' + (isType ? 'type-bunga' : 'occasion-hadiah') + '-v1.webp';
+  function submit(event) {
+    event.preventDefault();
+    if (uploading) return;
     mutate(
       path + (edit.id ? '/' + edit.id : ''),
       edit.id ? 'PUT' : 'POST',
-      Object.fromEntries(new FormData(e.target)),
+      Object.fromEntries(new FormData(event.target)),
       () => setEdit(null),
+      (isType ? 'Jenis produk' : 'Occasion') + ' berhasil disimpan.',
     );
   }
   return (
-    <section className="classification-section">
-      <div className="toolbar">
+    <section
+      className="classification-section"
+      role="tabpanel"
+      id={'classification-panel-' + kind}
+      aria-labelledby={'classification-tab-' + kind}
+    >
+      <div className="classification-section-heading">
         <div className="classification-title">
           <span className="dimensional-icon">
-            {isType ? <Package size={22} /> : <Flower2 size={22} />}
+            {isType ? <Package size={23} /> : <Flower2 size={23} />}
           </span>
           <div>
             <h2>{isType ? 'Jenis produk' : 'Occasion'}</h2>
-            <small>
-              {entries.length} {isType ? 'jenis' : 'momen'} ·{' '}
-              {isType ? 'Snack, uang, boneka, dan lainnya' : 'Wedding, wisuda, hadiah, dan lainnya'}
-            </small>
+            <p>
+              {isType
+                ? 'Kelompokkan koleksi menurut jenis dan karakter produknya.'
+                : 'Rangkai koleksi untuk setiap momen istimewa pelanggan.'}
+            </p>
           </div>
         </div>
         <button
           className="btn primary"
           onClick={() => {
             setError('');
-            setEdit({ photo: asset });
+            setEdit({ photo: defaultPhoto });
           }}
         >
-          <Plus size={16} />
+          <Plus size={17} />
           {isType ? 'Tambah jenis' : 'Tambah occasion'}
         </button>
       </div>
+      <div className="classification-collection-meta">
+        <span>
+          <span className="online-dot" />
+          {entries.length} {isType ? 'jenis produk' : 'occasion'}
+        </span>
+        <span>Terhubung langsung dengan katalog toko</span>
+      </div>
       <div className="classification-grid">
-        {entries.map((c) => {
-          const items = data.products
-            .filter((p) =>
-              isType
+        {entries.map((c, index) => {
+          const items = data.products.filter(
+            (p) =>
+              p.active &&
+              (isType
                 ? String(p.product_type_id) === String(c.id)
                 : data.recommendations.some(
                     (r) =>
                       String(r.category_id) === String(c.id) &&
                       String(r.product_id) === String(p.id),
-                  ),
-            )
-            .filter((p) => p.active);
+                  )),
+          );
           return (
-            <article className="classification-card" key={c.id}>
+            <article
+              className={'classification-card classification-tone-' + (index % 4)}
+              key={c.id}
+            >
+              <div className="classification-card-top">
+                <span className="classification-kind">{isType ? 'JENIS PRODUK' : 'OCCASION'}</span>
+                <span className="classification-product-count">
+                  <Package size={12} />
+                  {items.length} produk
+                </span>
+              </div>
               <div className="classification-cover">
-                <Photo src={c.photo} alt="" />
-                <span>{c.product_count} produk aktif</span>
+                <Photo src={c.photo || defaultPhoto} alt={'Ikon ' + c.name} loading="eager" />
               </div>
               <div className="classification-card-body">
                 <h3>{c.name}</h3>
-                {c.description && <p>{c.description}</p>}
+                <p>
+                  {c.description ||
+                    (isType
+                      ? 'Temukan koleksi pilihan untuk jenis produk ini.'
+                      : 'Pilihan rangkaian untuk momen yang berkesan.')}
+                </p>
                 <div className="classification-preview">
                   {items.slice(0, 3).map((p) => (
                     <Photo key={p.id} src={p.photo} alt={p.name} />
                   ))}
+                  <span>
+                    {items.length
+                      ? items.length > 3
+                        ? '+' + (items.length - 3) + ' koleksi lainnya'
+                        : 'Koleksi tersedia'
+                      : 'Siap untuk koleksi baru'}
+                  </span>
                 </div>
                 <div className="classification-actions">
-                  {!isType && (
-                    <button
-                      className="text-btn"
-                      onClick={() => {
-                        setProductCategory(String(c.id));
-                        go('products');
-                      }}
-                    >
-                      Lihat produk <ArrowUpRight size={14} />
-                    </button>
-                  )}
+                  <button
+                    className="classification-view-btn"
+                    onClick={() => {
+                      setProductCategory(isType ? 'type:' + c.id : String(c.id));
+                      go('products');
+                    }}
+                  >
+                    Lihat produk <ArrowUpRight size={14} />
+                  </button>
                   <button
                     className="icon-btn"
                     aria-label={'Edit ' + c.name}
@@ -2251,7 +2844,10 @@ function ClassificationSection({ data, query, notify, refresh, go, setProductCat
                   <button
                     className="icon-btn danger"
                     aria-label={'Hapus ' + c.name}
-                    onClick={() => setRemove(c)}
+                    onClick={() => {
+                      setError('');
+                      setRemove(c);
+                    }}
                   >
                     <Trash2 size={15} />
                   </button>
@@ -2262,35 +2858,93 @@ function ClassificationSection({ data, query, notify, refresh, go, setProductCat
         })}
       </div>
       {!entries.length && (
-        <Empty text={isType ? 'Belum ada jenis produk.' : 'Belum ada occasion.'} />
+        <Empty
+          text={
+            query
+              ? 'Tidak ada kategori yang cocok dengan pencarian.'
+              : isType
+                ? 'Belum ada jenis produk.'
+                : 'Belum ada occasion.'
+          }
+        />
       )}
       {edit && (
         <Modal
+          wide
           title={(edit.id ? 'Edit ' : 'Tambah ') + (isType ? 'jenis produk' : 'occasion')}
           onClose={() => setEdit(null)}
         >
-          <form className="editor-form" onSubmit={submit}>
-            <label>
-              {isType ? 'Nama jenis' : 'Nama occasion'}
-              <input name="name" defaultValue={edit.name} required maxLength={100} />
-            </label>
-            <label>
-              Deskripsi
-              <textarea name="description" defaultValue={edit.description} maxLength={1000} />
-            </label>
-            <label>
-              URL foto
-              <input name="photo" defaultValue={edit.photo} required />
-            </label>
-            {error && <p className="form-error">{error}</p>}
-            <FormActions busy={busy} onClose={() => setEdit(null)} />
+          <form className="editor-form modern-catalog-editor" onSubmit={submit}>
+            <div className="catalog-editor-intro">
+              <span className="dimensional-icon">
+                {isType ? <Package size={22} /> : <Flower2 size={22} />}
+              </span>
+              <div>
+                <strong>
+                  {edit.id ? 'Perbarui identitas koleksi' : 'Buat kelompok koleksi baru'}
+                </strong>
+                <p>Nama, deskripsi, dan foto akan tampil pada katalog pelanggan.</p>
+              </div>
+            </div>
+            <div className="catalog-editor-layout">
+              <div className="catalog-editor-main">
+                <h3 className="catalog-form-heading">
+                  Informasi {isType ? 'jenis produk' : 'occasion'}
+                </h3>
+                <label>
+                  {isType ? 'Nama jenis' : 'Nama occasion'}
+                  <input
+                    name="name"
+                    defaultValue={edit.name}
+                    required
+                    maxLength={100}
+                    placeholder={isType ? 'Contoh: Bunga artificial' : 'Contoh: Anniversary'}
+                  />
+                </label>
+                <label>
+                  Deskripsi
+                  <textarea
+                    name="description"
+                    defaultValue={edit.description}
+                    maxLength={1000}
+                    rows={5}
+                    placeholder="Ceritakan karakter koleksi dan momen yang sesuai…"
+                  />
+                </label>
+                <div className="catalog-form-tip">
+                  <Sparkles size={17} />
+                  <p>
+                    Gunakan nama singkat dan foto yang mudah dikenali agar pelanggan lebih cepat
+                    menemukan koleksinya.
+                  </p>
+                </div>
+              </div>
+              <aside className="catalog-editor-media">
+                <h3 className="catalog-form-heading">Foto & ikon koleksi</h3>
+                <PhotoField
+                  initialValue={edit.photo || defaultPhoto}
+                  uploadLabel={isType ? 'Upload foto jenis produk' : 'Upload foto occasion'}
+                  onBusyChange={setUploading}
+                />
+              </aside>
+            </div>
+            {error && (
+              <p className="form-error" role="alert">
+                {error}
+              </p>
+            )}
+            <FormActions busy={busy || uploading} onClose={() => setEdit(null)} />
           </form>
         </Modal>
       )}
       {remove && (
         <Modal title={'Hapus ' + remove.name + '?'} onClose={() => setRemove(null)}>
           <p>Data yang masih digunakan produk perlu dilepas terlebih dahulu.</p>
-          {error && <p className="form-error">{error}</p>}
+          {error && (
+            <p className="form-error" role="alert">
+              {error}
+            </p>
+          )}
           <div className="form-actions">
             <button className="btn outline" onClick={() => setRemove(null)}>
               Batal
@@ -2309,150 +2963,536 @@ function ClassificationSection({ data, query, notify, refresh, go, setProductCat
   );
 }
 
-function OrderTable({ orders, user, compact, onDetail, onEdit, onRemove, onStatus }) {
+function OrderTable({ orders, user, onDetail, onEdit, onRemove, onStatus }) {
+  const day = today();
   return (
-    <div className="table-wrap">
-      <table>
+    <div className="order-table-scroll">
+      <table className="orders-management-table" aria-label="Daftar pesanan">
         <thead>
           <tr>
-            <th>Pesanan</th>
-            <th>Pelanggan</th>
-            <th>{compact ? 'Produk' : 'Pengiriman'}</th>
+            <th>Pesanan & pemesan</th>
+            <th>Produk</th>
+            <th>Pengiriman</th>
             <th>Total</th>
-            {!compact && <th>Status</th>}
-            {!compact && <th>Aksi</th>}
+            <th>Status</th>
+            <th>Aksi</th>
           </tr>
         </thead>
         <tbody>
-          {orders.map((o) => (
-            <tr key={o.id}>
-              <td>
-                <strong>{orderCode(o.id)}</strong>
-                <small className="cell-sub">{date(o.order_date)}</small>
-              </td>
-              <td>
-                <div className="customer-cell">
-                  <span className="avatar tiny">{o.customer_name[0]}</span>
-                  <div>
-                    {o.customer_name}
-                    {!compact && <small className="cell-sub">{o.phone_number}</small>}
-                  </div>
-                </div>
-              </td>
-              <td>
-                {compact ? (
-                  <>
-                    <span>{o.items[0]?.product_name}</span>
-                    {o.items.length > 1 && (
-                      <small className="cell-sub">+{o.items.length - 1} produk lain</small>
-                    )}
-                  </>
-                ) : (
-                  date(o.delivery_date)
-                )}
-              </td>
-              <td className="nowrap">{money(o.total)}</td>
-              {!compact && (
+          {orders.map((order) => {
+            const unfinished = ['pending', 'processing'].includes(order.status);
+            const delivery = String(order.delivery_date).slice(0, 10);
+            const categories = [
+              ...new Map(
+                order.items
+                  .flatMap((item) => item.categories || [])
+                  .map((category) => [String(category.id), category]),
+              ).values(),
+            ];
+            return (
+              <tr key={order.id} data-order-id={order.id}>
                 <td>
-                  <Badge status={o.status} />
+                  <button
+                    className="order-code-link"
+                    onClick={() => onDetail(order)}
+                    aria-label={'Detail ' + orderCode(order.id)}
+                  >
+                    {orderCode(order.id)} <ArrowUpRight size={12} />
+                  </button>
+                  <strong className="order-customer-name">{order.customer_name}</strong>
+                  <div className="order-contact-line">
+                    <span>{order.phone_number}</span>
+                    {whatsappUrl(order.phone_number) && (
+                      <a
+                        className="order-chat-button"
+                        href={whatsappUrl(order.phone_number)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={'Chat WhatsApp ' + orderCode(order.id)}
+                      >
+                        <MessageCircle size={11} /> Chat WA
+                      </a>
+                    )}
+                  </div>
                 </td>
-              )}
-              {!compact && (
+                <td>
+                  <div className="order-product-preview">
+                    <Photo src={order.items[0]?.photo} alt="" />
+                    <div>
+                      <strong title={order.items[0]?.product_name}>
+                        {order.items[0]?.product_name || 'Produk pesanan'}
+                      </strong>
+                      <small>
+                        {order.items.reduce((sum, item) => sum + Number(item.quantity), 0)} unit
+                        {order.items.length > 1 ? ' / ' + order.items.length + ' produk' : ''}
+                      </small>
+                      <div className="order-category-tags">
+                        {categories.slice(0, 2).map((category) => (
+                          <span key={category.id}>{category.name}</span>
+                        ))}
+                        {categories.length > 2 && <span>+{categories.length - 2}</span>}
+                      </div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <strong className="order-delivery-date">{date(order.delivery_date)}</strong>
+                  <small
+                    className={
+                      'order-delivery-label ' +
+                      (unfinished && delivery < day
+                        ? 'overdue'
+                        : unfinished && delivery === day
+                          ? 'today'
+                          : '')
+                    }
+                  >
+                    {unfinished && delivery < day
+                      ? 'Terlambat'
+                      : unfinished && delivery === day
+                        ? 'Kirim hari ini'
+                        : order.status === 'completed'
+                          ? 'Sudah selesai'
+                          : 'Terjadwal'}
+                  </small>
+                </td>
+                <td>
+                  <strong className="order-table-total">{money(order.total)}</strong>
+                </td>
+                <td>
+                  <Badge status={order.status === 'processing' ? 'pending' : order.status} />
+                </td>
                 <td>
                   <div className="row-actions">
-                    <button
-                      className="icon-btn"
-                      onClick={() => onDetail(o)}
-                      aria-label={'Detail ' + orderCode(o.id)}
-                    >
-                      <Eye size={16} />
-                    </button>
-                    {user.role === 'admin' && ['pending', 'processing'].includes(o.status) && (
+                    {user.role === 'admin' && unfinished ? (
                       <>
                         <button
                           className="icon-btn"
-                          onClick={() => onEdit(o)}
-                          aria-label={'Edit ' + orderCode(o.id)}
+                          aria-label={'Edit ' + orderCode(order.id)}
+                          onClick={() => onEdit(order)}
                         >
-                          <Pencil size={16} />
+                          <Pencil size={15} />
                         </button>
                         <button
-                          className="icon-btn"
-                          onClick={() => onStatus(o)}
-                          aria-label={'Status ' + orderCode(o.id)}
+                          className="icon-btn order-complete-btn"
+                          aria-label={'Status ' + orderCode(order.id)}
+                          title="Selesaikan pesanan"
+                          onClick={() => onStatus(order)}
                         >
-                          <ArrowRight size={16} />
+                          <Check size={15} />
                         </button>
-                        {o.status === 'pending' && (
+                        {order.status === 'pending' && (
                           <button
                             className="icon-btn danger"
-                            onClick={() => onRemove(o)}
-                            aria-label={'Hapus ' + orderCode(o.id)}
+                            aria-label={'Hapus ' + orderCode(order.id)}
+                            onClick={() => onRemove(order)}
                           >
-                            <Trash2 size={16} />
+                            <Trash2 size={15} />
                           </button>
                         )}
                       </>
+                    ) : (
+                      <button
+                        className="icon-btn"
+                        aria-label={'Lihat ' + orderCode(order.id)}
+                        onClick={() => onDetail(order)}
+                      >
+                        <Eye size={15} />
+                      </button>
                     )}
                   </div>
                 </td>
-              )}
-            </tr>
-          ))}
+              </tr>
+            );
+          })}
         </tbody>
       </table>
-      {!orders.length && <Empty text="Belum ada pesanan yang sesuai." />}
+      {!orders.length && <Empty text="Tidak ada pesanan yang sesuai dengan filter." />}
     </div>
   );
 }
-function Orders({ data, user, query, notify, refresh }) {
-  const [filter, setFilter] = useState(''),
+function OrderPagination({ page, pages, total, onChange, label = 'pesanan' }) {
+  const pageNumbers =
+    pages <= 7
+      ? Array.from({ length: pages }, (_, index) => index + 1)
+      : [
+          ...new Set([
+            1,
+            ...Array.from({ length: 5 }, (_, index) => page + index - 2).filter(
+              (value) => value > 0 && value <= pages,
+            ),
+            pages,
+          ]),
+        ].sort((a, b) => a - b);
+  return (
+    <nav className="order-pagination" aria-label={'Halaman ' + label}>
+      <span>
+        {total ? (page - 1) * 7 + 1 : 0}-{Math.min(page * 7, total)} dari {total} {label}
+      </span>
+      <div>
+        <button
+          aria-label="Halaman sebelumnya"
+          disabled={page <= 1}
+          onClick={() => onChange(page - 1)}
+        >
+          <ArrowLeft size={14} />
+        </button>
+        {pageNumbers.map((number, index) => (
+          <React.Fragment key={number}>
+            {index > 0 && number - pageNumbers[index - 1] > 1 && <span>...</span>}
+            <button
+              aria-label={'Halaman ' + number}
+              aria-current={number === page ? 'page' : undefined}
+              onClick={() => onChange(number)}
+            >
+              {number}
+            </button>
+          </React.Fragment>
+        ))}
+        <button
+          aria-label="Halaman berikutnya"
+          disabled={page >= pages}
+          onClick={() => onChange(page + 1)}
+        >
+          <ArrowRight size={14} />
+        </button>
+      </div>
+    </nav>
+  );
+}
+function Orders({ data, user, query, setQuery, notify, refresh, go }) {
+  const defaults = {
+    period: 'all',
+    status: 'all',
+    category: '',
+    type: '',
+    due: 'all',
+    sort: 'newest',
+  };
+  const [filters, setFilters] = useState(defaults),
+    [page, setPage] = useState(1),
+    [report, setReport] = useState(null),
+    [loading, setLoading] = useState(true),
+    [loadError, setLoadError] = useState(''),
+    [retry, setRetry] = useState(0),
     [edit, setEdit] = useState(null),
     [detail, setDetail] = useState(null),
     [remove, setRemove] = useState(null),
     [status, setStatus] = useState(null),
     { busy, mutate } = useMutation(notify, refresh);
-  const orders = data.orders.filter(
-    (o) =>
-      o.status !== 'cancelled' &&
-      (!filter || o.status === filter) &&
-      (o.customer_name + ' ' + o.phone_number + ' ' + orderCode(o.id))
-        .toLowerCase()
-        .includes(query.toLowerCase()),
-  );
+  useEffect(() => {
+    let active = true;
+    const controller = new AbortController();
+    setLoading(true);
+    const timer = setTimeout(() => {
+      const parameters = new URLSearchParams({
+        period: filters.period,
+        status: filters.status,
+        due: filters.due,
+        sort: filters.sort,
+        page: String(page),
+        q: query,
+      });
+      if (filters.category) parameters.set('category', filters.category);
+      if (filters.type) parameters.set('type', filters.type);
+      api('/orders/workspace?' + parameters, { signal: controller.signal })
+        .then((value) => {
+          if (active) {
+            setReport(value);
+            setLoadError('');
+          }
+        })
+        .catch((error) => {
+          if (active && error.name !== 'AbortError') setLoadError(error.message);
+        })
+        .finally(() => {
+          if (active) setLoading(false);
+        });
+    }, 180);
+    return () => {
+      active = false;
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [filters, query, page, data.orders, retry]);
+  function changeFilter(name, value) {
+    setFilters((previous) => ({ ...previous, [name]: value }));
+    setPage(1);
+  }
+  function resetFilters() {
+    setFilters(defaults);
+    setQuery('');
+    setPage(1);
+  }
+  function priority(due) {
+    setFilters((previous) => ({
+      ...previous,
+      period: 'all',
+      status: 'pending',
+      due: previous.due === due ? 'all' : due,
+    }));
+    setPage(1);
+  }
+  const summary = report?.summary || {
+    total: 0,
+    completed: 0,
+    pending: 0,
+    completed_value: 0,
+    due_today: 0,
+    overdue: 0,
+  };
+  const completion = summary.total ? Math.round((summary.completed / summary.total) * 100) : 0;
+  const cards = [
+    ['Pesanan', summary.total, ShoppingBag, 'all'],
+    ['Selesai', summary.completed, Check, 'completed'],
+    ['Belum selesai', summary.pending, Package, 'pending'],
+    ['Nilai pesanan selesai', money(summary.completed_value), ChartNoAxesCombined, 'completed'],
+  ];
   return (
     <>
-      <div className="toolbar">
-        <div className="filter-tabs">
-          <button className={!filter ? 'active' : ''} onClick={() => setFilter('')}>
-            Semua
-          </button>
-          {Object.entries(statuses).map(([k, v]) => (
-            <button key={k} onClick={() => setFilter(k)} className={filter === k ? 'active' : ''}>
-              {v}
+      <div className="orders-workspace" aria-busy={loading}>
+        <div className="orders-command">
+          <div className="orders-period-switch" role="group" aria-label="Periode pesanan">
+            {[
+              ['all', 'Semua waktu'],
+              ['7', '7 hari terakhir'],
+              ['month', 'Bulan ini'],
+            ].map(([value, label]) => (
+              <button
+                key={value}
+                aria-pressed={filters.period === value}
+                onClick={() => changeFilter('period', value)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <div className="orders-command-actions">
+            <button className="btn outline" onClick={() => go('reports')}>
+              <ChartNoAxesCombined size={15} /> Laporan
+            </button>
+            {user.role === 'admin' && (
+              <button className="btn primary" onClick={() => setEdit({})}>
+                <Plus size={17} /> Catat pesanan
+              </button>
+            )}
+          </div>
+        </div>
+        <div className="order-summary-cards">
+          {cards.map(([label, value, Icon, selected], index) => (
+            <button
+              key={label}
+              className={'order-summary-card order-summary-tone-' + index}
+              data-summary={['total', 'completed', 'pending', 'completed-value'][index]}
+              onClick={() => changeFilter('status', selected)}
+            >
+              <span className="order-summary-icon">
+                <Icon size={19} />
+              </span>
+              <span>{label}</span>
+              <strong>{loading && !report ? '-' : value}</strong>
             </button>
           ))}
         </div>
-        {user.role === 'admin' && (
-          <button className="btn primary" onClick={() => setEdit({})}>
-            <Plus size={17} /> Catat pesanan
+        <div className="order-analytics">
+          <section className="order-trend-panel">
+            <div className="order-panel-heading">
+              <div>
+                <h2>
+                  <ChartNoAxesCombined size={17} /> Aktivitas pesanan
+                </h2>
+                <p>
+                  Berdasarkan tanggal pesanan /{' '}
+                  {filters.period === 'all' ? 'ringkasan bulanan' : 'ringkasan harian'}
+                </p>
+              </div>
+              <div className="order-chart-legend">
+                <span>
+                  <i /> Selesai
+                </span>
+                <span>
+                  <i /> Belum selesai
+                </span>
+              </div>
+            </div>
+            <OrderStatusChart trend={report?.trend || []} monthly={filters.period === 'all'} />
+          </section>
+          <section className="order-completion-panel">
+            <div
+              className="order-completion-donut"
+              role="img"
+              aria-label={`${summary.completed} selesai dari ${summary.total} pesanan`}
+              style={{
+                background: `conic-gradient(#328eaa 0% ${completion}%,#e6b673 ${completion}% 100%)`,
+              }}
+            >
+              <div>
+                <strong>{completion}%</strong>
+                <small>selesai</small>
+              </div>
+            </div>
+            <div>
+              <h2>Status pesanan</h2>
+              <p>
+                <i className="done" />
+                <span>Selesai</span>
+                <strong>{summary.completed}</strong>
+              </p>
+              <p>
+                <i />
+                <span>Belum selesai</span>
+                <strong>{summary.pending}</strong>
+              </p>
+              <small>Mengikuti hasil filter</small>
+            </div>
+          </section>
+        </div>
+        <div className="order-priority-strip">
+          <span>
+            <CalendarDays size={15} /> Prioritas pengiriman
+          </span>
+          <button
+            className={filters.due === 'today' ? 'selected' : ''}
+            onClick={() => priority('today')}
+          >
+            Hari ini <strong>{summary.due_today}</strong>
           </button>
-        )}
+          <button
+            className={'order-overdue-shortcut ' + (filters.due === 'overdue' ? 'selected' : '')}
+            onClick={() => priority('overdue')}
+          >
+            Terlambat <strong>{summary.overdue}</strong>
+          </button>
+          {loading && (
+            <span className="orders-loading">
+              <LoaderCircle size={14} className="spin" /> Memuat
+            </span>
+          )}
+        </div>
+        <div className="orders-management-layout">
+          <section className="orders-table-panel">
+            <div className="orders-table-toolbar">
+              <div className="order-status-switch" role="group" aria-label="Status pesanan">
+                {[
+                  ['all', 'Semua'],
+                  ['pending', 'Belum selesai'],
+                  ['completed', 'Selesai'],
+                ].map(([value, label]) => (
+                  <button
+                    key={value}
+                    aria-pressed={filters.status === value}
+                    onClick={() => changeFilter('status', value)}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <label className="search-box order-table-search">
+                <Search size={16} />
+                <input
+                  value={query}
+                  maxLength={120}
+                  aria-label="Cari pesanan"
+                  placeholder="Nama, nomor, kode atau produk"
+                  onChange={(event) => {
+                    setQuery(event.target.value);
+                    setPage(1);
+                  }}
+                />
+              </label>
+            </div>
+            {loadError ? (
+              <Empty text={loadError}>
+                <button className="btn outline" onClick={() => setRetry((value) => value + 1)}>
+                  Coba lagi
+                </button>
+              </Empty>
+            ) : (
+              <div className={loading ? 'orders-table-loading' : ''}>
+                <OrderTable
+                  orders={report?.orders || []}
+                  user={user}
+                  onDetail={setDetail}
+                  onEdit={setEdit}
+                  onRemove={setRemove}
+                  onStatus={setStatus}
+                />
+                <OrderPagination
+                  page={report?.page || 1}
+                  pages={report?.pages || 1}
+                  total={report?.total || 0}
+                  onChange={setPage}
+                />
+              </div>
+            )}
+          </section>
+          <aside className="order-filter-panel" aria-label="Filter pesanan">
+            <div className="order-filter-heading">
+              <h2>
+                <Settings size={16} /> Filter pesanan
+              </h2>
+              <button className="text-btn" onClick={resetFilters}>
+                Reset
+              </button>
+            </div>
+            <label>
+              Occasion
+              <select
+                aria-label="Filter occasion pesanan"
+                value={filters.category}
+                onChange={(event) => changeFilter('category', event.target.value)}
+              >
+                <option value="">Semua occasion</option>
+                {data.categories.map((category) => (
+                  <option value={category.id} key={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+                <option value="none">Tanpa occasion</option>
+              </select>
+            </label>
+            <label>
+              Jenis produk
+              <select
+                aria-label="Filter jenis pesanan"
+                value={filters.type}
+                onChange={(event) => changeFilter('type', event.target.value)}
+              >
+                <option value="">Semua jenis</option>
+                {data.productTypes.map((type) => (
+                  <option value={type.id} key={type.id}>
+                    {type.name}
+                  </option>
+                ))}
+                <option value="none">Belum ditentukan</option>
+              </select>
+            </label>
+            <label>
+              Jadwal pengiriman
+              <select
+                aria-label="Filter jadwal pesanan"
+                value={filters.due}
+                onChange={(event) => changeFilter('due', event.target.value)}
+              >
+                <option value="all">Semua jadwal</option>
+                <option value="today">Kirim hari ini</option>
+                <option value="overdue">Terlambat</option>
+              </select>
+            </label>
+            <label>
+              Urutkan
+              <select
+                aria-label="Urutan pesanan"
+                value={filters.sort}
+                onChange={(event) => changeFilter('sort', event.target.value)}
+              >
+                <option value="newest">Pesanan terbaru</option>
+                <option value="delivery">Pengiriman terdekat</option>
+              </select>
+            </label>
+          </aside>
+        </div>
       </div>
-      <section className="panel">
-        <OrderTable
-          orders={orders}
-          user={user}
-          onDetail={setDetail}
-          onEdit={setEdit}
-          onRemove={setRemove}
-          onStatus={setStatus}
-        />
-      </section>
-      <p className="hint">
-        Menampilkan maksimal 500 pesanan terbaru. Pesanan selesai tersimpan pada riwayat penjualan
-        owner.
-      </p>
       {edit && (
         <OrderEditor
           order={edit}
@@ -2585,20 +3625,49 @@ function Orders({ data, user, query, notify, refresh }) {
 }
 function OrderEditor({ order, products, onClose, notify, refresh }) {
   const [items, setItems] = useState(
-      order.items?.map((i) => ({ product_id: String(i.product_id), quantity: i.quantity })) || [
-        { product_id: '', quantity: 1 },
-      ],
-    ),
+    order.items?.map((item) => ({
+      product_id: String(item.product_id),
+      quantity: item.quantity,
+    })) || [{ product_id: '', quantity: 1 }],
+  );
+  const [customerName, setCustomerName] = useState(order.customer_name || ''),
+    [phone, setPhone] = useState(order.phone_number || ''),
+    [orderDate, setOrderDate] = useState(order.order_date?.slice(0, 10) || today()),
+    [deliveryDate, setDeliveryDate] = useState(order.delivery_date?.slice(0, 10) || today()),
+    [productSearch, setProductSearch] = useState(''),
     { busy, error, mutate } = useMutation(notify, refresh);
-  function update(i, key, v) {
-    setItems((prev) => prev.map((x, j) => (j === i ? { ...x, [key]: v } : x)));
+  const total =
+    items.reduce(
+      (sum, item) =>
+        sum +
+        Math.round(
+          Number(products.find((product) => String(product.id) === item.product_id)?.price || 0) *
+            100,
+        ) *
+          Number(item.quantity || 0),
+      0,
+    ) / 100;
+  const units = items.reduce(
+    (sum, item) => sum + (item.product_id ? Number(item.quantity || 0) : 0),
+    0,
+  );
+  function update(index, key, value) {
+    setItems((previous) =>
+      previous.map((item, i) => (i === index ? { ...item, [key]: value } : item)),
+    );
   }
-  function submit(e) {
-    e.preventDefault();
-    const body = Object.fromEntries(new FormData(e.target));
-    body.items = items.map((i) => ({
-      product_id: Number(i.product_id),
-      quantity: Number(i.quantity),
+  function quickDate(offset) {
+    if (!orderDate) return;
+    const value = new Date(orderDate + 'T12:00:00Z');
+    value.setUTCDate(value.getUTCDate() + offset);
+    setDeliveryDate(value.toISOString().slice(0, 10));
+  }
+  function submit(event) {
+    event.preventDefault();
+    const body = Object.fromEntries(new FormData(event.target));
+    body.items = items.map((item) => ({
+      product_id: Number(item.product_id),
+      quantity: Number(item.quantity),
     }));
     mutate(
       '/orders' + (order.id ? '/' + order.id : ''),
@@ -2608,406 +3677,883 @@ function OrderEditor({ order, products, onClose, notify, refresh }) {
       'Pesanan berhasil dicatat.',
     );
   }
-  const total = items.reduce(
-    (n, i) =>
-      n +
-      Number(products.find((p) => String(p.id) === i.product_id)?.price || 0) *
-        Number(i.quantity || 0),
-    0,
-  );
   return (
     <Modal
+      wide
       title={order.id ? 'Edit ' + orderCode(order.id) : 'Catat pesanan baru'}
       onClose={onClose}
-      wide
     >
-      <form className="editor-form" onSubmit={submit}>
-        <div className="form-grid">
-          <label>
-            Nama pelanggan
-            <input
-              name="customer_name"
-              required
-              maxLength={120}
-              defaultValue={order.customer_name}
-            />
-          </label>
-          <label>
-            Nomor telepon
-            <input
-              name="phone_number"
-              type="tel"
-              required
-              maxLength={24}
-              defaultValue={order.phone_number}
-              placeholder="08xxxxxxxxxx"
-            />
-          </label>
-          <label>
-            Tanggal pesanan
-            <input
-              name="order_date"
-              type="date"
-              required
-              defaultValue={order.order_date?.slice(0, 10) || today()}
-            />
-          </label>
-          <label>
-            Tanggal pengiriman
-            <input
-              name="delivery_date"
-              type="date"
-              required
-              defaultValue={order.delivery_date?.slice(0, 10) || today()}
-            />
-          </label>
-        </div>
-        <div className="items-heading">
-          <strong>Produk pesanan</strong>
-          <button
-            type="button"
-            className="text-btn"
-            disabled={items.length >= 30}
-            onClick={() => setItems([...items, { product_id: '', quantity: 1 }])}
-          >
-            <Plus size={16} /> Tambah item
-          </button>
-        </div>
-        {items.map((item, i) => (
-          <div className="order-item-editor" key={i}>
-            <label>
-              Produk {i + 1}
-              <select
-                aria-label={'Produk ' + (i + 1)}
-                required
-                value={item.product_id}
-                onChange={(e) => update(i, 'product_id', e.target.value)}
-              >
-                <option value="" disabled>
-                  Pilih produk
-                </option>
-                {products.map((p) => (
-                  <option value={p.id} key={p.id}>
-                    {p.name} · {money(p.price)}
-                    {!p.active ? ' (arsip)' : ''}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Jumlah
-              <input
-                aria-label={'Jumlah ' + (i + 1)}
-                type="number"
-                min={1}
-                max={100}
-                required
-                value={item.quantity}
-                onChange={(e) => update(i, 'quantity', e.target.value)}
-              />
-            </label>
-            <button
-              type="button"
-              className="icon-btn danger"
-              disabled={items.length === 1}
-              aria-label={'Hapus item ' + (i + 1)}
-              onClick={() => setItems(items.filter((_, j) => j !== i))}
-            >
-              <Trash2 size={17} />
-            </button>
+      <form className="editor-form modern-catalog-editor modern-order-editor" onSubmit={submit}>
+        <div className="catalog-editor-intro">
+          <span className="dimensional-icon">
+            <ShoppingBag size={22} />
+          </span>
+          <div>
+            <strong>
+              {order.id ? 'Perbarui rincian pesanan' : 'Catat pesanan dengan lebih mudah'}
+            </strong>
+            <p>Isi nama pemesan, pilih produk, lalu tentukan jadwal pengiriman.</p>
           </div>
-        ))}
-        <div className="order-total">
-          <span>Estimasi total</span>
-          <strong>{money(total)}</strong>
         </div>
-        <p className="hint">Harga final dihitung server dari harga produk saat penyimpanan.</p>
-        <label>
-          Permintaan / kartu ucapan
-          <textarea name="request" rows={3} maxLength={3000} defaultValue={order.request} />
-        </label>
-        {error && <p className="form-error">{error}</p>}
-        <FormActions busy={busy} onClose={onClose} />
+        <div className="order-editor-layout">
+          <div className="order-editor-main">
+            <section className="order-editor-section">
+              <h3>
+                <span>01</span> Pemesan
+              </h3>
+              <div className="form-grid">
+                <label>
+                  Pesanan atas nama siapa
+                  <input
+                    name="customer_name"
+                    required
+                    maxLength={120}
+                    value={customerName}
+                    onChange={(event) => setCustomerName(event.target.value)}
+                    placeholder="Nama lengkap"
+                  />
+                </label>
+                <label>
+                  Nomor telepon
+                  <input
+                    name="phone_number"
+                    type="tel"
+                    aria-describedby="order-phone-hint"
+                    required
+                    maxLength={24}
+                    value={phone}
+                    onChange={(event) => setPhone(event.target.value)}
+                    placeholder="08xxxxxxxxxx"
+                  />
+                </label>
+              </div>
+              <p className="order-phone-hint" id="order-phone-hint">
+                Gunakan nomor WhatsApp aktif agar pemesan mudah dihubungi.
+              </p>
+            </section>
+            <section className="order-editor-section">
+              <h3>
+                <span>02</span> Jadwal pesanan
+              </h3>
+              <div className="form-grid">
+                <label>
+                  Tanggal pesanan
+                  <input
+                    name="order_date"
+                    type="date"
+                    required
+                    value={orderDate}
+                    onChange={(event) => {
+                      setOrderDate(event.target.value);
+                      if (deliveryDate < event.target.value) setDeliveryDate(event.target.value);
+                    }}
+                  />
+                </label>
+                <label>
+                  Tanggal pengiriman
+                  <input
+                    name="delivery_date"
+                    type="date"
+                    required
+                    min={orderDate}
+                    value={deliveryDate}
+                    onChange={(event) => setDeliveryDate(event.target.value)}
+                  />
+                </label>
+              </div>
+              <div className="order-quick-dates">
+                <span>Pengiriman cepat</span>
+                {[
+                  [0, 'Hari yang sama'],
+                  [1, '+1 hari'],
+                  [3, '+3 hari'],
+                ].map(([offset, label]) => (
+                  <button key={offset} type="button" onClick={() => quickDate(offset)}>
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </section>
+            <section className="order-editor-section">
+              <div className="order-items-header">
+                <h3>
+                  <span>03</span> Produk pesanan
+                </h3>
+                <button
+                  type="button"
+                  className="text-btn"
+                  disabled={items.length >= 30 || items.length >= products.length}
+                  onClick={() =>
+                    setItems((previous) => [...previous, { product_id: '', quantity: 1 }])
+                  }
+                >
+                  <Plus size={15} /> Tambah item
+                </button>
+              </div>
+              <label className="search-box order-product-search">
+                <Search size={15} />
+                <input
+                  aria-label="Cari produk pesanan"
+                  placeholder="Cari nama produk sebelum memilih"
+                  value={productSearch}
+                  onChange={(event) => setProductSearch(event.target.value)}
+                />
+              </label>
+              <div className="order-editor-items">
+                {items.map((item, index) => {
+                  const product = products.find((value) => String(value.id) === item.product_id);
+                  return (
+                    <div className="order-entry-item" key={index}>
+                      <div className="order-entry-product">
+                        <span className="order-item-number">{index + 1}</span>
+                        {product ? (
+                          <Photo src={product.photo} alt="" />
+                        ) : (
+                          <span className="order-item-placeholder">
+                            <Package size={20} />
+                          </span>
+                        )}
+                        <label>
+                          Produk {index + 1}
+                          <select
+                            required
+                            aria-label={'Produk ' + (index + 1)}
+                            value={item.product_id}
+                            onChange={(event) => update(index, 'product_id', event.target.value)}
+                          >
+                            <option value="" disabled>
+                              Pilih produk
+                            </option>
+                            {products
+                              .filter(
+                                (value) =>
+                                  String(value.id) === item.product_id ||
+                                  (value.name + ' ' + value.flower_type)
+                                    .toLowerCase()
+                                    .includes(productSearch.toLowerCase()),
+                              )
+                              .map((value) => (
+                                <option
+                                  value={value.id}
+                                  key={value.id}
+                                  disabled={items.some(
+                                    (other, j) =>
+                                      j !== index && other.product_id === String(value.id),
+                                  )}
+                                >
+                                  {value.name} - {money(value.price)}
+                                  {!value.active ? ' (arsip)' : ''}
+                                </option>
+                              ))}
+                          </select>
+                        </label>
+                        <button
+                          type="button"
+                          className="icon-btn danger"
+                          disabled={items.length === 1}
+                          aria-label={'Hapus item ' + (index + 1)}
+                          onClick={() =>
+                            setItems((previous) => previous.filter((_, i) => i !== index))
+                          }
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+                      <div className="order-entry-bottom">
+                        <div className="order-quantity-control">
+                          <span>Jumlah</span>
+                          <button
+                            type="button"
+                            disabled={Number(item.quantity) <= 1}
+                            aria-label={'Kurangi jumlah ' + (index + 1)}
+                            onClick={() =>
+                              update(index, 'quantity', Math.max(1, Number(item.quantity) - 1))
+                            }
+                          >
+                            -
+                          </button>
+                          <input
+                            type="number"
+                            min={1}
+                            max={100}
+                            required
+                            aria-label={'Jumlah ' + (index + 1)}
+                            value={item.quantity}
+                            onChange={(event) => update(index, 'quantity', event.target.value)}
+                          />
+                          <button
+                            type="button"
+                            disabled={Number(item.quantity) >= 100}
+                            aria-label={'Tambah jumlah ' + (index + 1)}
+                            onClick={() =>
+                              update(index, 'quantity', Math.min(100, Number(item.quantity) + 1))
+                            }
+                          >
+                            +
+                          </button>
+                        </div>
+                        <div className="order-item-subtotal">
+                          <span>Subtotal</span>
+                          <strong>
+                            {money(
+                              (Math.round(Number(product?.price || 0) * 100) *
+                                Number(item.quantity || 0)) /
+                                100,
+                            )}
+                          </strong>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              {!products.length && (
+                <p className="form-error">Tambahkan produk aktif ke katalog terlebih dahulu.</p>
+              )}
+            </section>
+            <section className="order-editor-section">
+              <h3>
+                <span>04</span> Catatan pelanggan
+              </h3>
+              <label>
+                Permintaan / kartu ucapan
+                <textarea
+                  name="request"
+                  rows={3}
+                  maxLength={3000}
+                  defaultValue={order.request}
+                  placeholder="Warna rangkaian, isi kartu ucapan, atau permintaan khusus"
+                />
+              </label>
+            </section>
+          </div>
+          <aside className="order-editor-summary">
+            <h3>
+              <ShoppingBasket size={18} /> Ringkasan pesanan
+            </h3>
+            <div className="order-summary-customer">
+              <span className="avatar">{customerName.charAt(0).toUpperCase() || '?'}</span>
+              <div>
+                <strong>{customerName || 'Nama pemesan'}</strong>
+                <small>{phone || 'Nomor telepon belum diisi'}</small>
+              </div>
+            </div>
+            <div className="order-summary-schedule">
+              <span>
+                <CalendarDays size={14} /> Pengiriman
+              </span>
+              <strong>{deliveryDate ? date(deliveryDate) : '-'}</strong>
+            </div>
+            <div className="order-summary-selected">
+              {items
+                .filter((item) => item.product_id)
+                .map((item) => {
+                  const product = products.find((value) => String(value.id) === item.product_id);
+                  return (
+                    <div key={item.product_id}>
+                      <span>{product?.name}</span>
+                      <strong>{item.quantity}x</strong>
+                    </div>
+                  );
+                })}
+            </div>
+            <div className="order-summary-units">
+              <span>Jumlah unit</span>
+              <strong>{units}</strong>
+            </div>
+            <div className="order-total">
+              <span>Estimasi total</span>
+              <strong>{money(total)}</strong>
+            </div>
+            <p className="order-summary-help">
+              <ShieldCheck size={15} /> Pesanan disimpan sebagai belum selesai. Selesaikan setelah
+              transaksi ditangani.
+            </p>
+          </aside>
+        </div>
+        {error && (
+          <p className="form-error" role="alert">
+            {error}
+          </p>
+        )}
+        <FormActions busy={busy || !products.length} onClose={onClose} />
       </form>
     </Modal>
   );
 }
-function Customers({ query, notify }) {
-  const [payload, setPayload] = useState(null);
-  useEffect(() => {
-    api('/customers')
-      .then(setPayload)
-      .catch((e) => notify(e.message, true));
-  }, [notify]);
-  if (!payload) return <Empty text="Memuat pelanggan…" />;
-  const customers = payload.rows.filter((c) =>
-    (c.name + ' ' + c.phone).toLowerCase().includes(query.toLowerCase()),
-  );
-  const cards = [
-    ['Total pelanggan', payload.summary.customers],
-    ['Pelanggan berulang', payload.summary.repeat_customers],
-    ['Pembelian selesai', money(payload.summary.revenue)],
-    ['Pesanan aktif', payload.summary.active_orders],
-  ];
-  return (
-    <>
-      <div className="stat-grid">
-        {cards.map(([label, value]) => (
-          <article className="stat-card" key={label}>
-            <div>
-              <span>{label}</span>
-              <strong>{value}</strong>
-            </div>
-          </article>
-        ))}
-      </div>
-      <div className="toolbar">
-        <span>{customers.length} pelanggan · dirangkum dari pesanan</span>
-      </div>
-      <section className="panel table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Pelanggan</th>
-              <th>Telepon</th>
-              <th>Pesanan</th>
-              <th>Total pembelian selesai</th>
-              <th>Pesanan terakhir</th>
-              <th>Aksi</th>
-            </tr>
-          </thead>
-          <tbody>
-            {customers.map((c) => (
-              <tr key={c.phone}>
-                <td>
-                  <div className="customer-cell">
-                    <span className="avatar">{c.name[0]}</span>
-                    <strong>{c.name}</strong>
-                  </div>
-                </td>
-                <td>{c.phone}</td>
-                <td>{c.orders}</td>
-                <td>{money(c.total)}</td>
-                <td>{date(c.last)}</td>
-                <td>
-                  <a
-                    className="btn outline"
-                    href={'https://wa.me/' + c.phone.replace(/\D/g, '').replace(/^0/, '62')}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    Chat
-                  </a>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {!customers.length && <Empty text="Pelanggan akan tampil setelah pesanan dicatat." />}
-      </section>
-      <p className="hint">
-        Tabel menampilkan maksimal 500 pelanggan terbaru; kartu metrik mencakup seluruh pesanan.
-        Identitas dikelompokkan menurut nomor telepon.
-      </p>
-    </>
-  );
-}
-function Reports({ notify }) {
-  const [from, setFrom] = useState(today().slice(0, 7) + '-01'),
-    [to, setTo] = useState(today()),
+function Reports({ data, notify }) {
+  const defaults = {
+    period: 'all',
+    from: '',
+    to: '',
+    q: '',
+    category: '',
+    type: '',
+    sort: 'recent',
+  };
+  const [filters, setFilters] = useState(defaults),
+    [page, setPage] = useState(1),
     [result, setResult] = useState(null),
-    [loading, setLoading] = useState(false),
-    [downloading, setDownloading] = useState(false),
-    [error, setError] = useState('');
-  async function load(e) {
-    e?.preventDefault();
-    setLoading(true);
-    setError('');
-    try {
-      setResult(await api('/reports?' + new URLSearchParams({ from, to })));
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setLoading(false);
-    }
-  }
+    [from, setFrom] = useState(today().slice(0, 7) + '-01'),
+    [to, setTo] = useState(today()),
+    [loading, setLoading] = useState(true),
+    [loadError, setLoadError] = useState(''),
+    [downloading, setDownloading] = useState(''),
+    [retry, setRetry] = useState(0),
+    [detail, setDetail] = useState(null);
   useEffect(() => {
-    load();
-  }, []);
-  async function download() {
-    setDownloading(true);
+    let active = true;
+    const controller = new AbortController();
+    setLoading(true);
+    const timer = setTimeout(() => {
+      const query = new URLSearchParams({
+        period: filters.period,
+        q: filters.q,
+        sort: filters.sort,
+        page: String(page),
+      });
+      if (filters.period === 'custom') {
+        query.set('from', filters.from);
+        query.set('to', filters.to);
+      }
+      if (filters.category) query.set('category', filters.category);
+      if (filters.type) query.set('type', filters.type);
+      api('/reports/workspace?' + query, { signal: controller.signal })
+        .then((report) => {
+          if (active) {
+            setResult(report);
+            setLoadError('');
+          }
+        })
+        .catch((error) => {
+          if (active && error.name !== 'AbortError') setLoadError(error.message);
+        })
+        .finally(() => {
+          if (active) setLoading(false);
+        });
+    }, 180);
+    return () => {
+      active = false;
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [filters, page, retry]);
+  function changeFilter(name, value) {
+    setFilters((previous) => ({ ...previous, [name]: value }));
+    setPage(1);
+  }
+  function resetFilters() {
+    setFilters(defaults);
+    setFrom(today().slice(0, 7) + '-01');
+    setTo(today());
+    setPage(1);
+  }
+  function customPeriod(event) {
+    event.preventDefault();
+    setFilters((previous) => ({ ...previous, period: 'custom', from, to }));
+    setPage(1);
+  }
+  async function download(kind) {
+    if (!result || loading || loadError) return;
+    setDownloading(kind);
     try {
+      const query = new URLSearchParams({
+        ...result.query,
+        period: 'custom',
+        from: result.from,
+        to: result.to,
+      });
       const response = await fetch(
-        '/api/reports/pdf?' + new URLSearchParams({ from: result.from, to: result.to }),
+        '/api/reports/' + (kind === 'xlsx' ? 'excel' : 'pdf') + '?' + query,
         { credentials: 'same-origin' },
       );
       if (!response.ok) {
-        const body = await response.json();
-        throw new Error(body.error);
+        const error = await response.json();
+        throw new Error(error.error || 'Laporan gagal diunduh.');
       }
-      const url = URL.createObjectURL(await response.blob()),
-        a = document.createElement('a');
-      a.href = url;
-      a.download = `bien-vendre-${result.from}-${result.to}.pdf`;
-      a.click();
+      const url = URL.createObjectURL(await response.blob());
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = `bien-vendre-${result.from}-${result.to}.${kind}`;
+      document.body.append(anchor);
+      anchor.click();
+      anchor.remove();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
-      notify('Laporan PDF berhasil diunduh.');
-    } catch (e) {
-      notify(e.message, true);
+      notify('Laporan ' + (kind === 'xlsx' ? 'Excel' : 'PDF') + ' berhasil diunduh.');
+    } catch (error) {
+      notify(error.message, true);
     } finally {
-      setDownloading(false);
+      setDownloading('');
     }
   }
+  const busiest = result?.trend
+    .filter((day) => Number(day.count) > 0)
+    .slice()
+    .sort((a, b) => Number(b.count) - Number(a.count) || Number(b.total) - Number(a.total))[0];
+  const cards = [
+    ['Total penjualan', money(result?.total || 0), ChartNoAxesCombined, 'Dari pesanan selesai'],
+    ['Transaksi selesai', result?.count || 0, ShoppingBag, 'Pesanan tercatat sebagai penjualan'],
+    [
+      'Rata-rata transaksi',
+      money(result?.average || 0),
+      Sparkles,
+      'Nilai rata-rata setiap pesanan',
+    ],
+    ['Pemesan unik', result?.customers || 0, Users, 'Berdasarkan nomor telepon'],
+  ];
   return (
     <>
-      <form className="panel report-filters" onSubmit={load}>
-        <label>
-          Dari tanggal
-          <input type="date" required value={from} onChange={(e) => setFrom(e.target.value)} />
-        </label>
-        <label>
-          Sampai tanggal
-          <input
-            type="date"
-            required
-            min={from}
-            value={to}
-            onChange={(e) => setTo(e.target.value)}
-          />
-        </label>
-        <button className="btn primary" disabled={loading}>
-          {loading ? <LoaderCircle size={17} className="spin" /> : <Search size={17} />} Tampilkan
-        </button>
-      </form>
-      {error && (
-        <p className="form-error" role="alert">
-          {error}
-        </p>
-      )}
-      {result && (
-        <>
-          <div className="report-summary">
-            <div className="panel">
-              <span>Total penjualan</span>
-              <strong>{money(result.total)}</strong>
+      <div className="reports-workspace" aria-busy={loading}>
+        <div className="reports-command">
+          <div className="reports-period-switch" role="group" aria-label="Periode laporan">
+            {[
+              ['all', 'Semua waktu'],
+              ['7', '7 hari terakhir'],
+              ['month', 'Bulan ini'],
+            ].map(([period, label]) => (
+              <button
+                key={period}
+                aria-pressed={filters.period === period}
+                onClick={() => changeFilter('period', period)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <div className="reports-downloads">
+            <button
+              className="btn report-pdf-button"
+              onClick={() => download('pdf')}
+              disabled={!result || loading || !!downloading || !!loadError}
+            >
+              {downloading === 'pdf' ? (
+                <LoaderCircle size={16} className="spin" />
+              ) : (
+                <Download size={16} />
+              )}{' '}
+              Unduh PDF
+            </button>
+            <button
+              className="btn report-excel-button"
+              onClick={() => download('xlsx')}
+              disabled={!result || loading || !!downloading || !!loadError}
+            >
+              {downloading === 'xlsx' ? (
+                <LoaderCircle size={16} className="spin" />
+              ) : (
+                <FileSpreadsheet size={16} />
+              )}{' '}
+              Unduh Excel
+            </button>
+          </div>
+        </div>
+        <div className="reports-active-period">
+          <span>
+            <CalendarDays size={14} />
+            {result ? `${date(result.from)} - ${date(result.to)}` : 'Memuat periode laporan'}
+          </span>
+          {result?.filterLabel && (
+            <span className="reports-filter-label">{result.filterLabel}</span>
+          )}
+          {loading && <LoaderCircle size={13} className="spin" />}
+        </div>
+        {loadError && (
+          <div className="form-error" role="alert">
+            {loadError}
+            <button className="text-btn" onClick={() => setRetry((value) => value + 1)}>
+              Coba lagi
+            </button>
+          </div>
+        )}
+        <div className="reports-stat-grid">
+          {cards.map(([label, value, Icon, hint], index) => (
+            <article
+              className={'reports-stat-card report-tone-' + index}
+              key={label}
+              data-report-stat={['total', 'count', 'average', 'customers'][index]}
+            >
+              <span className="reports-stat-icon">
+                <Icon size={19} />
+              </span>
+              <span>{label}</span>
+              <strong>{loading && !result ? '-' : value}</strong>
+              <small>{hint}</small>
+            </article>
+          ))}
+        </div>
+        <div className="reports-analytics">
+          <section className="reports-chart-panel">
+            <div className="reports-panel-heading">
+              <div>
+                <h2>
+                  <ChartNoAxesCombined size={17} /> Tren penjualan
+                </h2>
+                <p>
+                  Berdasarkan tanggal penjualan /{' '}
+                  {result?.interval === 'month' ? 'ringkasan bulanan' : 'ringkasan harian'}
+                </p>
+              </div>
+              <span className="reports-chart-key">
+                <i /> Penjualan selesai
+              </span>
+            </div>
+            {result?.count ? (
+              <SalesLineChart
+                compact
+                monthly={result.interval === 'month'}
+                trend={result.trend}
+                label="Tren penjualan laporan"
+              />
+            ) : (
+              <div className="reports-chart-empty">
+                <Flower2 size={25} />
+                <span>{loading ? 'Memuat penjualan' : 'Belum ada penjualan pada filter ini'}</span>
+              </div>
+            )}
+          </section>
+          <section className="reports-highlight-panel">
+            <h2>
+              <Sparkles size={16} /> Highlight periode
+            </h2>
+            <div className="report-largest-sale">
+              <span>Transaksi terbesar</span>
+              <strong>{money(result?.highest?.total_sale || 0)}</strong>
               <small>
-                {date(result.from)} – {date(result.to)}
+                {result?.highest
+                  ? orderCode(result.highest.order_id) + ' / ' + result.highest.customer_name
+                  : 'Belum ada transaksi'}
               </small>
             </div>
-            <div className="panel">
-              <span>Transaksi selesai</span>
-              <strong>{result.count}</strong>
-              <small>Pesanan yang tercatat sebagai penjualan</small>
-            </div>
-          </div>
-          <SalesTrend trend={result.trend} />
-          <section className="panel">
-            <div className="panel-heading">
+            <div className="report-busiest-period">
               <div>
-                <h2>Riwayat penjualan</h2>
-                <p>Hanya pesanan dengan status selesai</p>
+                <span>{result?.interval === 'month' ? 'Bulan teramai' : 'Hari teramai'}</span>
+                <strong>
+                  {busiest
+                    ? new Date(busiest.day + 'T12:00:00+07:00').toLocaleDateString(
+                        'id-ID',
+                        result?.interval === 'month'
+                          ? { month: 'short', year: 'numeric', timeZone: 'Asia/Jakarta' }
+                          : { day: 'numeric', month: 'short', timeZone: 'Asia/Jakarta' },
+                      )
+                    : '-'}
+                </strong>
               </div>
-              <button className="btn outline" onClick={download} disabled={downloading}>
-                <Download size={17} />
-                {downloading ? 'Mengunduh…' : 'Unduh PDF'}
-              </button>
+              <span>{busiest?.count || 0} transaksi</span>
             </div>
-            <div className="table-wrap">
-              <table>
+          </section>
+        </div>
+        <div className="reports-management-layout">
+          <section className="reports-table-panel">
+            <div className="reports-table-toolbar">
+              <h2>
+                Riwayat penjualan <span>{result?.count || 0}</span>
+              </h2>
+              <label className="search-box reports-table-search">
+                <Search size={16} />
+                <input
+                  value={filters.q}
+                  maxLength={120}
+                  onChange={(event) => changeFilter('q', event.target.value)}
+                  placeholder="Nama, kode pesanan atau produk"
+                  aria-label="Cari riwayat penjualan"
+                />
+              </label>
+            </div>
+            <div className={'reports-table-scroll ' + (loading ? 'reports-table-loading' : '')}>
+              <table className="sales-history-table" aria-label="Riwayat penjualan">
                 <thead>
                   <tr>
                     <th>Pesanan</th>
+                    <th>Atas nama</th>
                     <th>Tanggal penjualan</th>
-                    <th>Pelanggan</th>
-                    <th>Telepon</th>
-                    <th>Total</th>
+                    <th>Penjualan</th>
+                    <th>Aksi</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {result.rows.map((r) => (
-                    <tr key={r.id}>
+                  {result?.rows.map((row, index) => (
+                    <tr key={row.id} data-sale-id={row.id}>
                       <td>
-                        <strong>{orderCode(r.order_id)}</strong>
+                        <span className="report-row-number">
+                          {String((result.page - 1) * 7 + index + 1).padStart(2, '0')}
+                        </span>
+                        <button
+                          className="report-sale-code"
+                          aria-label={'Detail penjualan ' + orderCode(row.order_id)}
+                          onClick={() => setDetail(row)}
+                        >
+                          {orderCode(row.order_id)} <ArrowUpRight size={12} />
+                        </button>
+                        <small>{row.items.length} produk pesanan</small>
                       </td>
-                      <td>{date(r.sale_date)}</td>
-                      <td>{r.customer_name}</td>
-                      <td>{r.phone_number}</td>
-                      <td>{money(r.total_sale)}</td>
+                      <td>
+                        <strong className="report-customer-name" title={row.customer_name}>
+                          {row.customer_name}
+                        </strong>
+                        <div className="report-customer-phone">
+                          <span>{row.phone_number}</span>
+                          {whatsappUrl(row.phone_number) && (
+                            <a
+                              className="order-chat-button"
+                              href={whatsappUrl(row.phone_number)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              aria-label={'Chat WhatsApp ' + orderCode(row.order_id)}
+                            >
+                              <MessageCircle size={10} /> Chat WA
+                            </a>
+                          )}
+                        </div>
+                      </td>
+                      <td>
+                        <span className="report-sale-date">{date(row.sale_date)}</span>
+                      </td>
+                      <td>
+                        <strong className="report-sale-amount">{money(row.total_sale)}</strong>
+                        <small className="report-completed-tag">
+                          <Check size={10} /> Selesai
+                        </small>
+                      </td>
+                      <td>
+                        <button
+                          className="icon-btn"
+                          aria-label={'Lihat transaksi ' + orderCode(row.order_id)}
+                          onClick={() => setDetail(row)}
+                        >
+                          <Eye size={15} />
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-              {!result.rows.length && <Empty text="Tidak ada penjualan pada periode ini." />}
+              {!result?.rows.length && !loading && (
+                <Empty text="Tidak ada penjualan yang sesuai dengan filter." />
+              )}
+              {!result && loading && (
+                <div className="reports-first-loading">
+                  <LoaderCircle className="spin" size={22} /> Memuat riwayat penjualan
+                </div>
+              )}
             </div>
+            <OrderPagination
+              page={result?.page || 1}
+              pages={result?.pages || 1}
+              total={result?.count || 0}
+              onChange={setPage}
+              label="transaksi"
+            />
           </section>
-        </>
+          <aside className="reports-filter-panel" aria-label="Filter laporan">
+            <div className="reports-filter-heading">
+              <h2>
+                <Settings size={16} /> Filter laporan
+              </h2>
+              <button className="text-btn" onClick={resetFilters}>
+                Reset
+              </button>
+            </div>
+            <label>
+              Occasion
+              <select
+                aria-label="Filter occasion laporan"
+                value={filters.category}
+                onChange={(event) => changeFilter('category', event.target.value)}
+              >
+                <option value="">Semua occasion</option>
+                {data.categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+                <option value="none">Tanpa occasion</option>
+              </select>
+            </label>
+            <label>
+              Jenis produk
+              <select
+                aria-label="Filter jenis laporan"
+                value={filters.type}
+                onChange={(event) => changeFilter('type', event.target.value)}
+              >
+                <option value="">Semua jenis</option>
+                {data.productTypes.map((type) => (
+                  <option key={type.id} value={type.id}>
+                    {type.name}
+                  </option>
+                ))}
+                <option value="none">Belum ditentukan</option>
+              </select>
+            </label>
+            <label>
+              Urutan
+              <select
+                aria-label="Urutan laporan"
+                value={filters.sort}
+                onChange={(event) => changeFilter('sort', event.target.value)}
+              >
+                <option value="recent">Transaksi terbaru</option>
+                <option value="highest">Penjualan terbesar</option>
+                <option value="lowest">Penjualan terkecil</option>
+              </select>
+            </label>
+            <form className="reports-custom-period" onSubmit={customPeriod}>
+              <h3>
+                <CalendarDays size={14} /> Periode khusus
+              </h3>
+              <label>
+                Dari tanggal
+                <input
+                  type="date"
+                  value={from}
+                  onChange={(event) => setFrom(event.target.value)}
+                  required
+                />
+              </label>
+              <label>
+                Sampai tanggal
+                <input
+                  type="date"
+                  value={to}
+                  min={from}
+                  onChange={(event) => setTo(event.target.value)}
+                  required
+                />
+              </label>
+              <button className="btn primary" disabled={loading}>
+                <Search size={14} /> Tampilkan
+              </button>
+            </form>
+          </aside>
+        </div>
+      </div>
+      {detail && (
+        <Modal
+          wide
+          title={'Transaksi ' + orderCode(detail.order_id)}
+          onClose={() => setDetail(null)}
+        >
+          <div className="order-detail-head">
+            <div>
+              <h3>{detail.customer_name}</h3>
+              <p>{detail.phone_number}</p>
+            </div>
+            <Badge status="completed" />
+          </div>
+          <p className="report-detail-date">
+            <CalendarDays size={15} /> Tanggal penjualan: {date(detail.sale_date)}
+          </p>
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Produk</th>
+                  <th>Jumlah</th>
+                  <th>Harga</th>
+                  <th>Subtotal</th>
+                </tr>
+              </thead>
+              <tbody>
+                {detail.items.map((item) => (
+                  <tr key={item.id}>
+                    <td>
+                      <div className="report-detail-product">
+                        <Photo src={item.photo} alt="" />
+                        <strong>{item.product_name}</strong>
+                      </div>
+                    </td>
+                    <td>{item.quantity}</td>
+                    <td>{money(item.price)}</td>
+                    <td>{money(item.subtotal)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="order-total report-detail-total">
+            <span>Total transaksi</span>
+            <strong>{money(detail.total_sale)}</strong>
+          </div>
+        </Modal>
       )}
     </>
   );
 }
 function StoreSettings({ user, notify }) {
-  const [store, setStore] = useState(null);
+  const [store, setStore] = useState(null),
+    [tab, setTab] = useState(user.role === 'owner' ? 'store' : 'security'),
+    [loadError, setLoadError] = useState(''),
+    [retry, setRetry] = useState(0);
   useEffect(() => {
     api('/store')
-      .then(setStore)
-      .catch((e) => notify(e.message, true));
-  }, [notify]);
+      .then((value) => {
+        setStore(value);
+        setLoadError('');
+      })
+      .catch((e) => setLoadError(e.message));
+  }, [retry]);
   return (
-    <>
-      <AccountSecurity notify={notify} />
-      {store && user.role === 'owner' && (
-        <StoreEditor key={JSON.stringify(store)} store={store} onSaved={setStore} notify={notify} />
-      )}
-      <div className="settings-grid">
-        <section className="panel settings-card">
-          <div className="flower-mark">
-            <Flower2 size={26} />
+    <div className="owner-settings-workspace">
+      <div className="owner-command-bar">
+        <div>
+          <Settings size={23} />
+          <div>
+            <h1>Pengaturan</h1>
+            <p>Kelola profil toko dan akses akun Anda.</p>
           </div>
-          <h2>{store?.name || 'Bien Vendre'}</h2>
-          <p>Florist & Gifts</p>
-          {store && (
-            <dl>
-              <dt>Lokasi</dt>
-              <dd>{store.address}</dd>
-              <dt>WhatsApp</dt>
-              <dd>{store.whatsapp || 'Belum dikonfigurasi'}</dd>
-              <dt>Instagram</dt>
-              <dd>{store.instagram || 'Belum dikonfigurasi'}</dd>
-              <dt>Shopee</dt>
-              <dd>{store.shopee || 'Belum dikonfigurasi'}</dd>
-              <dt>Tokopedia</dt>
-              <dd>{store.tokopedia || 'Belum dikonfigurasi'}</dd>
-            </dl>
-          )}
-          <p className="hint">
-            {user.role === 'owner'
-              ? 'Ubah profil dan kanal digital melalui formulir pengaturan toko.'
-              : 'Profil toko dikelola oleh owner.'}
-          </p>
-        </section>
-        <section className="panel settings-card">
-          <ShieldCheck size={30} />
-          <h2>Akses akun</h2>
-          <dl>
-            <dt>Nama</dt>
-            <dd>{user.name}</dd>
-            <dt>Username</dt>
-            <dd>{user.username}</dd>
-            <dt>Peran</dt>
-            <dd>{user.role === 'admin' ? 'Admin' : 'Owner'}</dd>
-          </dl>
-          <p className="soft-note">
-            {user.role === 'admin'
-              ? 'Anda dapat mengelola produk, kategori, rekomendasi, pesanan, dan melihat laporan penjualan.'
-              : 'Anda dapat melihat pesanan, riwayat penjualan, dan mengunduh laporan PDF.'}
-          </p>
-          <p className="hint">
-            Katalog pelanggan dapat diakses tanpa login. Atur email pemulihan dan password melalui
-            panel keamanan di atas.
-          </p>
-        </section>
+        </div>
+        <a href="/about" target="_blank" rel="noreferrer" className="btn outline">
+          <ExternalLink size={15} />
+          Lihat halaman toko
+        </a>
       </div>
-    </>
+      <div className="owner-main-tabs" role="tablist" aria-label="Pengaturan">
+        {user.role === 'owner' && (
+          <button role="tab" aria-selected={tab === 'store'} onClick={() => setTab('store')}>
+            <Flower2 size={18} />
+            Pengaturan toko
+          </button>
+        )}
+        <button role="tab" aria-selected={tab === 'security'} onClick={() => setTab('security')}>
+          <ShieldCheck size={18} />
+          Keamanan akun
+        </button>
+      </div>
+      {tab === 'store' &&
+        user.role === 'owner' &&
+        (loadError ? (
+          <div className="owner-surface empty" role="alert">
+            {loadError}
+            <button className="btn outline" onClick={() => setRetry((v) => v + 1)}>
+              Coba lagi
+            </button>
+          </div>
+        ) : store ? (
+          <StoreEditor store={store} onSaved={setStore} notify={notify} />
+        ) : (
+          <div className="empty">
+            <LoaderCircle className="spin" />
+            Memuat profil toko...
+          </div>
+        ))}
+      {tab === 'security' && (
+        <div className="owner-security-layout">
+          <AccountSecurity notify={notify} />
+          <aside className="owner-surface owner-account-card">
+            <ShieldCheck size={30} />
+            <h2>Akun Anda</h2>
+            <strong>{user.name}</strong>
+            <dl>
+              <dt>Username</dt>
+              <dd>{user.username}</dd>
+              <dt>Peran</dt>
+              <dd>{user.role === 'owner' ? 'Owner' : 'Admin'}</dd>
+            </dl>
+            <p>Kelola email pemulihan dan password melalui formulir keamanan akun.</p>
+          </aside>
+        </div>
+      )}
+    </div>
   );
 }
 createRoot(document.getElementById('root')).render(<App />);

@@ -1,9 +1,30 @@
 import { SalesLineChart } from './SalesLineChart';
 import React, { useState } from 'react';
-import { Upload, Search, ShieldCheck, Package, LoaderCircle } from 'lucide-react';
+import {
+  Upload,
+  Search,
+  ShieldCheck,
+  Package,
+  LoaderCircle,
+  Flower2,
+  BookOpen,
+  MapPin,
+  Globe,
+  Sparkles,
+  Save,
+  Eye,
+  ArrowUpRight,
+} from 'lucide-react';
+import { storeMapEmbed, storeMapLink } from './store-location';
 import { api, money, date } from './api';
 
-export function PhotoField({ name = 'photo', initialValue = '', onBusyChange = () => {} }) {
+export function PhotoField({
+  name = 'photo',
+  initialValue = '',
+  onBusyChange = () => {},
+  onValueChange = () => {},
+  uploadLabel,
+}) {
   const [url, setUrl] = useState(initialValue),
     [busy, setBusy] = useState(false),
     [error, setError] = useState('');
@@ -19,6 +40,7 @@ export function PhotoField({ name = 'photo', initialValue = '', onBusyChange = (
       form.append('photo', file);
       const result = await api('/uploads', { method: 'POST', body: form });
       setUrl(result.url);
+      onValueChange(result.url);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -29,32 +51,44 @@ export function PhotoField({ name = 'photo', initialValue = '', onBusyChange = (
   }
   return (
     <div className="photo-field">
+      <div className="photo-upload-stage">
+        {url ? (
+          <img className="upload-preview" src={url} alt="Pratinjau foto" />
+        ) : (
+          <div className="photo-upload-placeholder">
+            <Upload size={32} />
+            <strong>Tambahkan foto terbaik</strong>
+            <span>Tampilkan karakter koleksi Anda</span>
+          </div>
+        )}
+        <label className="upload-label">
+          {busy ? <LoaderCircle size={17} className="spin" /> : <Upload size={17} />}
+          {busy ? 'Mengunggah…' : 'Pilih foto dari perangkat'}
+          <input
+            aria-label={
+              uploadLabel || (name === 'logo' ? 'Upload logo toko' : 'Upload foto produk')
+            }
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            disabled={busy}
+            onChange={upload}
+          />
+        </label>
+        <span className="photo-upload-formats">JPG, PNG atau WebP · Maksimal 5 MB</span>
+      </div>
       <label>
         {name === 'logo' ? 'URL logo' : 'URL foto'}
         <input
           name={name}
           value={url}
-          onChange={(e) => setUrl(e.target.value)}
+          onChange={(e) => {
+            setUrl(e.target.value);
+            onValueChange(e.target.value);
+          }}
           required
           placeholder="https://… atau /uploads/…"
         />
       </label>
-      <label className="upload-label">
-        <Upload size={16} />
-        {busy ? 'Mengunggah…' : 'Pilih foto dari perangkat'}
-        <input
-          aria-label={name === 'logo' ? 'Upload logo toko' : 'Upload foto produk'}
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-          disabled={busy}
-          onChange={upload}
-        />
-      </label>
-      <p className="hint">
-        JPEG/PNG/WebP, maksimal 5 MB dan 25 megapiksel. Foto disimpan lokal dan metadata
-        dibersihkan.
-      </p>
-      {url && <img className="upload-preview" src={url} alt="Pratinjau foto" />}
       {error && (
         <p className="form-error" role="alert">
           {error}
@@ -65,132 +99,301 @@ export function PhotoField({ name = 'photo', initialValue = '', onBusyChange = (
 }
 
 export function StoreEditor({ store, onSaved, notify }) {
+  const [draft, setDraft] = useState(store),
+    [section, setSection] = useState('profile');
   const [busy, setBusy] = useState(false),
-    [uploading, setUploading] = useState(false);
+    [uploading, setUploading] = useState(false),
+    [dirty, setDirty] = useState(false),
+    [error, setError] = useState('');
+  const sections = [
+    ['profile', 'Profil toko', Flower2],
+    ['about', 'Tentang Kami', BookOpen],
+    ['location', 'Lokasi toko', MapPin],
+    ['channels', 'Kanal digital', Globe],
+  ];
+  const edit = (name, value) => {
+    setDraft((d) => ({ ...d, [name]: value }));
+    setDirty(true);
+  };
+  function field(name, label, { multiline = false, maxLength = 300, ...props } = {}) {
+    const Input = multiline ? 'textarea' : 'input';
+    return (
+      <label>
+        {label}
+        <Input
+          aria-label={label}
+          name={name}
+          value={draft[name] ?? ''}
+          onChange={(e) => edit(name, e.target.value)}
+          maxLength={maxLength}
+          {...props}
+        />
+      </label>
+    );
+  }
   async function submit(e) {
     e.preventDefault();
+    setError('');
+    const body = { ...draft, logo: new FormData(e.target).get('logo') };
+    for (const key of ['latitude', 'longitude'])
+      body[key] = String(body[key] ?? '').trim() === '' ? null : Number(body[key]);
+    if ((body.latitude === null) !== (body.longitude === null)) {
+      setError('Isi kedua koordinat atau kosongkan keduanya.');
+      setSection('location');
+      return;
+    }
     setBusy(true);
     try {
-      const result = await api('/store', {
-        method: 'PUT',
-        body: JSON.stringify(Object.fromEntries(new FormData(e.target))),
-      });
-      onSaved(result);
-      notify('Pengaturan toko disimpan. Refresh katalog untuk melihat perubahan.');
+      const saved = await api('/store', { method: 'PUT', body: JSON.stringify(body) });
+      setDraft(saved);
+      onSaved(saved);
+      setDirty(false);
+      notify('Pengaturan disimpan. Landing dan Tentang Kami sudah mengikuti data terbaru.');
     } catch (e) {
+      setError(e.message);
       notify(e.message, true);
     } finally {
       setBusy(false);
     }
   }
+  const map = storeMapEmbed(draft),
+    link = storeMapLink(draft);
   return (
-    <form className="panel store-editor editor-form" onSubmit={submit}>
-      <h2>Pengaturan toko</h2>
-      <p className="hint">
-        Profil dan kontak disimpan di database. Perubahan tidak membutuhkan restart.
-      </p>
-      <label>
-        Nama toko
-        <input name="name" required defaultValue={store.name} maxLength={120} />
-      </label>
-      <label>
-        Alamat toko
-        <textarea name="address" defaultValue={store.address} maxLength={500} />
-      </label>
-      <label>
-        Link Google Maps
-        <input
-          type="url"
-          name="map_url"
-          defaultValue={store.map_url}
-          placeholder="https://maps.app.goo.gl/..."
-          maxLength={1000}
-        />
-      </label>
-      <label>
-        Deskripsi toko
-        <textarea name="description" defaultValue={store.description} maxLength={1500} />
-      </label>
-      <label>
-        {' '}
-        Cerita toko di Tentang Kami
-        <textarea
-          name="about_story"
-          defaultValue={store.about_story || ''}
-          maxLength={2000}
-          rows={4}
-          placeholder="Cerita dan karakter toko"
-        />
-      </label>
-      <label>
-        {' '}
-        Layanan di Tentang Kami
-        <textarea
-          name="about_service"
-          defaultValue={store.about_service || ''}
-          maxLength={2000}
-          rows={4}
-          placeholder="Layanan dan cara konsultasi"
-        />
-      </label>
-      <label>
-        {' '}
-        Tips perawatan bunga
-        <textarea
-          name="care_tips"
-          defaultValue={store.care_tips || ''}
-          maxLength={2000}
-          rows={4}
-          placeholder="Panduan perawatan bunga"
-        />
-      </label>
-      <div className="form-grid">
-        <label>
-          WhatsApp konsultasi
-          <input
-            name="whatsapp"
-            defaultValue={store.whatsapp}
-            placeholder="628xxxxxxxxxx"
-            maxLength={20}
-          />
-        </label>
-        <label>
-          Instagram toko
-          <input
-            name="instagram"
-            defaultValue={store.instagram}
-            placeholder="https://www.instagram.com/akun_toko/"
-            maxLength={300}
-          />
-        </label>
-      </div>
-      <div className="form-grid">
-        <label>
-          Shopee toko
-          <input
-            name="shopee"
-            defaultValue={store.shopee || ''}
-            placeholder="https://shopee.co.id/nama_toko"
-            maxLength={300}
-          />
-        </label>
-        <label>
-          Tokopedia toko
-          <input
-            name="tokopedia"
-            defaultValue={store.tokopedia || ''}
-            placeholder="https://www.tokopedia.com/nama_toko"
-            maxLength={300}
-          />
-        </label>
-      </div>
-      <input type="hidden" name="tiktok" value={store.tiktok || ''} />
-      <PhotoField name="logo" initialValue={store.logo} onBusyChange={setUploading} />
-      <button className="btn primary" disabled={busy || uploading}>
-        <ShieldCheck size={17} />
-        {busy ? 'Menyimpan…' : 'Simpan pengaturan toko'}
-      </button>
-    </form>
+    <div className="store-settings-layout">
+      <form
+        className="owner-surface modern-store-editor"
+        onSubmit={submit}
+        onChange={() => setDirty(true)}
+        onInvalidCapture={(e) => {
+          const id = e.target.closest('[role=tabpanel]')?.id;
+          if (id) setSection(id.replace('store-', ''));
+        }}
+      >
+        <div className="owner-section-tabs" role="tablist" aria-label="Bagian pengaturan toko">
+          {sections.map(([id, label, Icon]) => (
+            <button
+              type="button"
+              role="tab"
+              aria-selected={section === id}
+              aria-controls={'store-' + id}
+              id={'tab-' + id}
+              key={id}
+              onClick={() => setSection(id)}
+            >
+              <Icon size={17} />
+              {label}
+            </button>
+          ))}
+        </div>
+        <div className="store-form-body">
+          <section
+            id="store-profile"
+            role="tabpanel"
+            aria-labelledby="tab-profile"
+            hidden={section !== 'profile'}
+          >
+            <div className="owner-panel-title">
+              <Flower2 />
+              <div>
+                <h2>Identitas toko</h2>
+                <p>Nama, deskripsi, dan logo untuk mengenalkan bisnis Anda.</p>
+              </div>
+            </div>
+            {field('name', 'Nama toko', { required: true, maxLength: 120 })}
+            {field('description', 'Deskripsi toko', {
+              multiline: true,
+              maxLength: 1500,
+              rows: 4,
+              placeholder: 'Ceritakan secara singkat keunikan toko Anda.',
+            })}
+            <PhotoField
+              name="logo"
+              initialValue={store.logo}
+              onBusyChange={setUploading}
+              onValueChange={(value) => edit('logo', value)}
+            />
+          </section>
+          <section
+            id="store-about"
+            role="tabpanel"
+            aria-labelledby="tab-about"
+            hidden={section !== 'about'}
+          >
+            <div className="owner-panel-title">
+              <BookOpen />
+              <div>
+                <h2>Cerita di balik rangkaian</h2>
+                <p>Konten ini tampil langsung pada halaman Tentang Kami.</p>
+              </div>
+            </div>
+            {field('about_story', 'Cerita toko di Tentang Kami', {
+              multiline: true,
+              maxLength: 2000,
+              rows: 5,
+              placeholder: 'Awal perjalanan, karakter, dan nilai toko Anda.',
+            })}
+            {field('about_service', 'Layanan di Tentang Kami', {
+              multiline: true,
+              maxLength: 2000,
+              rows: 4,
+              placeholder: 'Layanan, konsultasi, dan pilihan pesanan yang tersedia.',
+            })}
+            {field('care_tips', 'Tips perawatan bunga', {
+              multiline: true,
+              maxLength: 2000,
+              rows: 3,
+            })}
+            <p className="owner-inline-note">
+              <Sparkles size={16} />
+              Kosongkan bagian cerita untuk memakai teks bawaan landing.
+            </p>
+          </section>
+          <section
+            id="store-location"
+            role="tabpanel"
+            aria-labelledby="tab-location"
+            hidden={section !== 'location'}
+          >
+            <div className="owner-panel-title">
+              <MapPin />
+              <div>
+                <h2>Alamat & titik lokasi</h2>
+                <p>Alamat dan peta akan tampil di halaman Tentang Kami.</p>
+              </div>
+            </div>
+            {field('address', 'Alamat toko', {
+              multiline: true,
+              maxLength: 500,
+              rows: 3,
+              placeholder: 'Nama jalan, kecamatan, Pekanbaru, Riau',
+            })}
+            <div className="form-grid">
+              {field('latitude', 'Latitude (lintang)', {
+                type: 'number',
+                step: 'any',
+                min: -90,
+                max: 90,
+                placeholder: '0.4734722222',
+              })}
+              {field('longitude', 'Longitude (bujur)', {
+                type: 'number',
+                step: 'any',
+                min: -180,
+                max: 180,
+                placeholder: '101.3748055556',
+              })}
+            </div>
+            <p className="hint">
+              Di Google Maps, klik kanan pada titik toko lalu salin dua angka koordinat. Angka
+              pertama adalah latitude, kedua longitude.
+            </p>
+            {field('map_url', 'Link Google Maps', {
+              type: 'url',
+              maxLength: 1000,
+              placeholder: 'https://maps.app.goo.gl/...',
+            })}
+            <p className="owner-inline-note">
+              <MapPin size={16} />
+              Jika koordinat diisi, peta dan petunjuk arah menggunakan titik tersebut. Link dipakai
+              saat koordinat dikosongkan.
+            </p>
+            {map && (
+              <iframe
+                className="settings-map-preview"
+                title="Pratinjau titik lokasi toko"
+                src={map}
+                loading="lazy"
+              />
+            )}
+          </section>
+          <section
+            id="store-channels"
+            role="tabpanel"
+            aria-labelledby="tab-channels"
+            hidden={section !== 'channels'}
+          >
+            <div className="owner-panel-title">
+              <Globe />
+              <div>
+                <h2>Tetap terhubung</h2>
+                <p>Kontak konsultasi dan tautan toko pada landing page.</p>
+              </div>
+            </div>
+            {field('whatsapp', 'WhatsApp konsultasi', {
+              maxLength: 20,
+              inputMode: 'numeric',
+              pattern: '[0-9]{8,20}|',
+              placeholder: '628xxxxxxxxxx',
+            })}
+            <p className="hint">Gunakan kode negara 62, tanpa tanda + atau spasi.</p>
+            {field('instagram', 'Instagram toko', {
+              type: 'url',
+              placeholder: 'https://www.instagram.com/akun_toko/',
+            })}
+            {field('tiktok', 'TikTok toko', {
+              type: 'url',
+              placeholder: 'https://www.tiktok.com/@akun_toko',
+            })}
+            {field('shopee', 'Shopee toko', {
+              type: 'url',
+              placeholder: 'https://shopee.co.id/nama_toko',
+            })}
+            {field('tokopedia', 'Tokopedia toko', {
+              type: 'url',
+              placeholder: 'https://www.tokopedia.com/nama_toko',
+            })}
+          </section>
+        </div>
+        <div className="store-save-bar">
+          <span className={dirty ? 'has-changes' : ''}>
+            <span className="online-dot" />
+            {dirty ? 'Ada perubahan belum disimpan' : 'Profil toko tersimpan'}
+          </span>
+          {error && (
+            <p className="form-error" role="alert">
+              {error}
+            </p>
+          )}
+          <button className="btn primary" disabled={busy || uploading}>
+            <Save size={16} />
+            {busy ? 'Menyimpan...' : 'Simpan pengaturan toko'}
+          </button>
+        </div>
+      </form>
+      <aside className="store-preview-column">
+        <section className="store-profile-preview owner-surface">
+          <span className="owner-preview-tag">
+            <Eye size={14} />
+            Pratinjau profil
+          </span>
+          <img src={draft.logo || '/assets/bien-mark.svg'} alt="Logo toko" />
+          <h2>{draft.name || 'Nama toko'}</h2>
+          <p>{draft.description || 'Deskripsi singkat toko Anda.'}</p>
+          <div className="store-preview-address">
+            <MapPin size={18} />
+            <span>{draft.address || 'Alamat belum diisi'}</span>
+          </div>
+          {link && (
+            <a className="btn outline" href={link} target="_blank" rel="noreferrer">
+              Lihat titik lokasi
+              <ArrowUpRight size={15} />
+            </a>
+          )}
+        </section>
+        <section className="owner-surface store-sync-note">
+          <Globe size={24} />
+          <h3>Terhubung ke landing</h3>
+          <p>
+            Setelah disimpan, profil, cerita, kontak, dan lokasi terbaru tampil saat halaman publik
+            dibuka atau dimuat ulang.
+          </p>
+          <a href="/about" target="_blank" rel="noreferrer">
+            Lihat Tentang Kami
+            <ArrowUpRight size={15} />
+          </a>
+        </section>
+      </aside>
+    </div>
   );
 }
 
