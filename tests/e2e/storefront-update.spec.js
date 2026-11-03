@@ -10,7 +10,7 @@ test('home groups products by occasion and catalog supports paging and sorting',
   await page.getByRole('link', { name: 'Koleksi bunga', exact: true }).click();
   const collapsedFilters = page.locator('.catalog-filter-panel:not([open]) > summary');
   if (await collapsedFilters.isVisible()) await collapsedFilters.click();
-  await expect(page.locator('.product-card')).toHaveCount(9);
+  await expect(page.locator('.product-card')).toHaveCount(8);
   await expect(page.getByLabel('Urutkan')).toHaveValue('newest');
   const first = await page.locator('.product-card h3').first().textContent();
   await page.getByRole('button', { name: '2', exact: true }).click();

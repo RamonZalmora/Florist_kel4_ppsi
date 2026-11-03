@@ -758,10 +758,11 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
       notify(e.message, true);
     }
   }
-  const pageCount = Math.max(1, Math.ceil(products.length / 9));
+  const collectionPageSize = 8;
+  const pageCount = Math.max(1, Math.ceil(products.length / collectionPageSize));
   const currentPage = Math.min(catalogPage, pageCount);
   const visibleProducts = occasion
-    ? products.slice((currentPage - 1) * 9, currentPage * 9)
+    ? products.slice((currentPage - 1) * collectionPageSize, currentPage * collectionPageSize)
     : products.slice(0, 9);
   const whatsapp = store.whatsapp?.replace(/\D/g, '');
   const consult = (p) =>

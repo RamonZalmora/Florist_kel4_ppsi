@@ -112,7 +112,7 @@ test('customer can browse, search, filter and read complete product details', as
   await page.getByRole('textbox', { name: 'Cari produk' }).fill('produk tidak ada');
   await expect(page.getByText('Belum ada produk yang sesuai.')).toBeVisible();
   await page.getByRole('textbox', { name: 'Cari produk' }).fill('');
-  await expect(page.locator('.product-card')).toHaveCount(9);
+  await expect(page.locator('.product-card')).toHaveCount(8);
   await page.evaluate(() => scrollTo(0, 0));
   await mkdir('docs/screenshots', { recursive: true });
   await page.screenshot({

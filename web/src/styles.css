@@ -6731,3 +6731,80 @@ tr:hover td {
     height: 100%;
   }
 }
+
+/* Edge-to-edge occasion tiles with titles over the image. */
+.boutique-home .moment-list {
+  gap: 10px;
+}
+.boutique-home .moment,
+.boutique-home .moment:nth-child(n),
+.boutique-home .moment:hover {
+  position: relative;
+  min-height: 145px;
+  overflow: hidden;
+  align-items: stretch;
+  border: 1px solid #a6c8df;
+  border-radius: 15px;
+  background: #173d58;
+  box-shadow: 0 6px 16px #18466c1c;
+  padding: 0;
+}
+.boutique-home .moment .moment-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+}
+.boutique-home .moment .moment-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 0;
+  filter: none;
+}
+.boutique-home .moment::after {
+  display: block;
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 30%, #082b4bd9 100%);
+  pointer-events: none;
+}
+.boutique-home .moment strong {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  text-align: left;
+  padding: 14px 12px;
+  background: transparent;
+  color: #fff;
+  font:
+    600 17px Georgia,
+    serif;
+  text-shadow: 0 2px 5px #08223b80;
+}
+.boutique-home .moment:hover {
+  border-color: #397fa8;
+  transform: translateY(-2px);
+}
+@media (max-width: 720px) {
+  .boutique-home .moment-list {
+    gap: 7px;
+  }
+  .boutique-home .moment,
+  .boutique-home .moment:nth-child(n),
+  .boutique-home .moment:hover {
+    min-height: 100px;
+    border-radius: 11px;
+  }
+  .boutique-home .moment .moment-image {
+    height: 100%;
+  }
+  .boutique-home .moment strong {
+    font-size: 12px;
+    padding: 10px 6px;
+  }
+}

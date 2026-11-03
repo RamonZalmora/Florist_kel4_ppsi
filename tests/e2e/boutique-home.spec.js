@@ -55,7 +55,7 @@ test('header links home, the filterable full collection and about', async ({ pag
   await expect(nav.getByRole('link')).toHaveText(['Beranda', 'Koleksi bunga', 'Tentang kami']);
   await nav.getByRole('link', { name: 'Koleksi bunga', exact: true }).click();
   await expect(page.locator('.catalog-sidebar')).toBeVisible();
-  await expect(page.locator('.product-card')).toHaveCount(9);
+  await expect(page.locator('.product-card')).toHaveCount(8);
   await page.reload();
   await expect(page.locator('.catalog-sidebar')).toBeVisible();
   await nav.getByRole('link', { name: 'Tentang kami', exact: true }).click();
