@@ -4300,3 +4300,367 @@ tr:hover td {
   opacity: 0.13;
   pointer-events: none;
 }
+
+/* Modern Bien Vendre: midnight panels, clear data, and a quiet floral storefront. */
+:root {
+  --green: #0e7490;
+  --dark: #10234b;
+  --line: #dbe6f3;
+}
+.workspace {
+  background: #e8f0fa;
+}
+.workspace-main {
+  background: linear-gradient(150deg, #f3f7fd 0%, #e6eef9 100%);
+  min-height: 100vh;
+}
+.sidebar {
+  background: linear-gradient(180deg, #071a39 0%, #09254a 55%, #0d3155 100%);
+  color: #c6d9ed;
+  border-right: 1px solid #285478;
+}
+.sidebar .brand {
+  border-bottom-color: #77bbdd25;
+  color: #f5faff;
+}
+.sidebar nav button {
+  color: #bbd5e8;
+  transition:
+    background 0.2s,
+    color 0.2s;
+}
+.sidebar nav button:hover {
+  color: #fff;
+  background: #55c9ec18;
+}
+.sidebar nav button.active {
+  color: #fff;
+  background: linear-gradient(90deg, #116894, #174c78);
+  border-color: #56d9ee55;
+  box-shadow:
+    inset 3px 0 #43dded,
+    0 5px 18px #00183240;
+}
+.sidebar-label {
+  color: #83aec8;
+}
+.sidebar-floral {
+  color: #83afc9;
+}
+.topbar {
+  background: #ffffffc9;
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid #c7d9ed;
+}
+.breadcrumb {
+  color: #6b83a1;
+}
+.breadcrumb strong,
+.page-heading h1 {
+  color: #112b52;
+}
+.workspace-content {
+  padding-top: 34px;
+}
+.dashboard-banner {
+  border: 1px solid #1d517a;
+  border-radius: 18px;
+  background:
+    linear-gradient(100deg, #061934f5 0%, #07375ed9 48%, #0d50669e 100%),
+    url('/assets/bien-hero.webp') center/cover;
+  box-shadow: 0 14px 35px #0a2a5030;
+}
+.dashboard-banner h2 {
+  color: #fff;
+}
+.dashboard-banner h2 em {
+  color: #8ce9ef;
+}
+.dashboard-banner .eyebrow {
+  color: #71dae8;
+}
+.dashboard-banner p {
+  color: #d1e6f4;
+}
+.banner-pill {
+  border-color: #7cc7df77;
+  background: #12537280;
+  color: #ddf8ff;
+}
+.stat-grid {
+  gap: 16px;
+}
+.stat-card {
+  border: 1px solid #c6d9ee;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 7px 20px #2b4b7810;
+}
+.stat-card span {
+  color: #607997;
+}
+.stat-card strong {
+  color: #12345b;
+}
+.stat-card small {
+  color: #6e849b;
+}
+.stat-icon.sage,
+.stat-icon.peach,
+.stat-icon.lavender,
+.stat-icon.gold {
+  background: #e9f4fd;
+  color: #197da6;
+}
+.dashboard-grid {
+  gap: 18px;
+}
+.panel {
+  border: 1px solid #cbdcef;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 8px 23px #183e7110;
+}
+.panel-heading {
+  border-color: #e4edf7;
+}
+.panel-heading h2 {
+  color: #173554;
+}
+.panel-heading p {
+  color: #667f98;
+}
+.period-chip {
+  background: #edf6fc;
+  border-color: #d1e9f5;
+  color: #367695;
+  font-size: 11px;
+  border-radius: 20px;
+}
+.chart-summary strong {
+  color: #0e315a;
+  font-weight: 650;
+}
+.chart-summary span,
+.chart-grid,
+.bar-column small {
+  color: #67809b;
+  font-size: 10px;
+}
+.bar-chart {
+  height: 190px;
+}
+.bar-area {
+  height: 165px;
+}
+.bars {
+  background: repeating-linear-gradient(
+    to top,
+    transparent 0px,
+    transparent 54px,
+    #e6eef7 54px,
+    #e6eef7 55px
+  );
+  border-color: #dce9f4;
+}
+.bar {
+  background: linear-gradient(180deg, #54cde4, #2789c5);
+  border-radius: 7px 7px 2px 2px;
+}
+.bar.current {
+  background: linear-gradient(180deg, #59e2e5, #079ead);
+}
+.bar span {
+  background: #0d3155;
+}
+.favorite-insight {
+  display: flex;
+  align-items: center;
+  gap: 17px;
+  padding: 20px 18px 8px;
+}
+.favorite-ring {
+  width: 93px;
+  height: 93px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.favorite-ring > div {
+  width: 64px;
+  height: 64px;
+  background: #fff;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.favorite-ring strong {
+  color: #133b61;
+  font-size: 20px;
+  line-height: 1;
+}
+.favorite-ring small {
+  color: #66819c;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  margin-top: 4px;
+}
+.favorite-insight-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.favorite-insight-copy strong {
+  color: #173a5d;
+  font-size: 12px;
+}
+.favorite-insight-copy span {
+  color: #70879f;
+  font-size: 11px;
+  line-height: 1.5;
+}
+.popular-row {
+  border-color: #e9f1f9;
+}
+.popular-row strong {
+  color: #1b3d5d;
+}
+.popular-row small {
+  color: #70869e;
+}
+.workspace-footer {
+  border-color: #cadbed;
+  color: #6d849b;
+}
+.catalog-page {
+  background: #f2f7fc;
+}
+.public-nav {
+  background: #ffffffef;
+  border-color: #cddfef;
+}
+.public-nav .nav-links {
+  color: #24496d;
+}
+.catalog-hero {
+  background:
+    linear-gradient(90deg, #051a34f2 0%, #07365ec7 42%, #0c4a5a25 78%),
+    url('/assets/bien-hero.webp') center/cover;
+}
+.catalog-hero .hero-copy h1 em {
+  color: #7fe4e8;
+}
+.catalog-hero .hero-copy .btn {
+  color: #073c59;
+  background: #b7f3ed;
+  border-color: #87e2df;
+}
+.moments {
+  background: #eaf3fb;
+}
+.moments h2,
+.section-heading h2 {
+  color: #103457;
+}
+.moments .eyebrow,
+.collection .eyebrow {
+  color: #1885a5;
+}
+.moment,
+.moment:nth-child(2),
+.moment:nth-child(3),
+.moment:nth-child(4) {
+  background: linear-gradient(145deg, #fff, #eaf4fd);
+  border-color: #aacde6;
+  box-shadow: 0 9px 25px #194a7910;
+}
+.moment strong,
+.product-card h3 {
+  color: #173d61;
+}
+.moment small,
+.product-card p {
+  color: #617d98;
+}
+.moment > span,
+.moment:nth-child(2) > span,
+.moment:nth-child(3) > span,
+.moment:nth-child(4) > span {
+  color: #1386a7;
+  background: #dff4f8;
+}
+.product-card {
+  border-color: #b4d2e9;
+  box-shadow: 0 8px 24px #1b497712;
+}
+.product-price {
+  color: #087f96;
+}
+.catalog-sidebar,
+.about-banner {
+  background: #e9f5fb;
+  border-color: #bbdceb;
+}
+.catalog-page footer {
+  background: #071c36;
+}
+.btn.primary {
+  background: #0d7899;
+  border-color: #0d7899;
+}
+.btn.primary:hover {
+  background: #0b6082;
+}
+.catalog-hero .hero-copy .btn {
+  background: #b7f3ed;
+  color: #073c59;
+}
+@media (max-width: 1000px) {
+  .favorite-insight {
+    padding-bottom: 16px;
+  }
+}
+@media (max-width: 720px) {
+  .workspace-content {
+    padding-top: 24px;
+  }
+  .stat-grid {
+    gap: 10px;
+  }
+  .bar-chart {
+    height: 170px;
+  }
+  .bar-area {
+    height: 145px;
+  }
+  .favorite-insight {
+    grid-column: 1 / -1;
+  }
+}
+@media (max-width: 1000px) {
+  .favorite-insight {
+    grid-column: 1 / -1;
+  }
+}
+@media (min-width: 1001px) {
+  .dashboard-grid {
+    align-items: start;
+    grid-template-columns: minmax(0, 1fr) 300px;
+  }
+  .dashboard-grid .chart-panel {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .dashboard-grid .recent-orders {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  .dashboard-grid .popular-products {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+}
