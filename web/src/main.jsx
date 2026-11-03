@@ -922,9 +922,9 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
                     <span>Little details. Lasting memories.</span>
                   </div>
                   <img
-                    className="hero-bouquet"
-                    src="/assets/catalog/product-21.webp"
-                    alt="Ilustrasi rangkaian bunga wedding premium"
+                    className="hero-bouquet layered-flowers"
+                    src="/assets/hero-layered-flowers.webp"
+                    alt="Ilustrasi rangkaian bunga bertumpuk bernuansa biru, lavender, dan blush"
                   />
                   <div className="hero-note">
                     <span className="dimensional-icon">
@@ -1168,9 +1168,7 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
                             />
                             <div className="home-group-heading">
                               <div>
-                                <span className="eyebrow">0{i + 1} / THE COLLECTION</span>
-                                <h3>{group.name === 'Hadiah' ? 'Gifts, with love' : group.name}</h3>
-                                <p>{group.description}</p>
+                                <h3>{group.name}</h3>
                               </div>
                               <button
                                 aria-label={'Lihat koleksi ' + group.name}
