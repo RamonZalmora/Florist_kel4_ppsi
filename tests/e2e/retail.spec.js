@@ -80,7 +80,6 @@ test('owner has customer metrics, report chart and store edit access', async ({ 
   await login(page, 'owner');
   await go(page, 'Pelanggan');
   await expect(page.locator('.stat-card')).toHaveCount(4);
-  await expect(page.locator('tbody tr').first()).toBeVisible();
   await go(page, 'Riwayat & laporan');
   await expect(page.getByRole('heading', { name: 'Tren penjualan periode' })).toBeVisible();
   await go(page, 'Pengaturan');

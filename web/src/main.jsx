@@ -627,7 +627,7 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
   useEffect(() => {
     Promise.all([api('/categories'), api('/store')])
       .then(([c, s]) => {
-        setCategories(c);
+        setCategories(c.filter((item) => Number(item.product_count) > 0));
         setStore(s);
       })
       .catch((e) => notify(e.message, true));
@@ -786,7 +786,7 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
                 </div>
               </section>
             )}
-            {!occasion && (
+            {!occasion && categories.length > 0 && (
               <section className="moments" id="moments">
                 <div>
                   <span className="eyebrow">UNTUK SETIAP CERITA</span>
@@ -905,9 +905,11 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
                             <span className="view-product">
                               <Eye size={16} /> Lihat detail
                             </span>
-                            {p.categories?.[0] && (
+                            {p.photo?.startsWith('/assets/catalog/') ? (
+                              <span className="product-tag">Foto ilustrasi</span>
+                            ) : p.categories?.[0] ? (
                               <span className="product-tag">{p.categories[0].name}</span>
-                            )}
+                            ) : null}
                           </div>
                           <div className="product-card-info">
                             <div>
@@ -1043,6 +1045,12 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
               <h2>{detail.name}</h2>
               <strong className="detail-price">{money(detail.price)}</strong>
               <p>{detail.description}</p>
+              {detail.photo?.startsWith('/assets/catalog/') && (
+                <p className="hint">
+                  Gambar merupakan ilustrasi yang dibuat ulang; bentuk dan detail produk
+                  dikonfirmasi saat pemesanan.
+                </p>
+              )}
               <dl>
                 <dt>Jenis bunga</dt>
                 <dd>{detail.flower_type}</dd>
@@ -1448,7 +1456,7 @@ function Dashboard({ data, user, go }) {
       </div>
       <div className="demo-notice">
         <Image size={15} />
-        <span>Data awal merupakan contoh demo, bukan transaksi toko sesungguhnya.</span>
+        <span>Pastikan harga, ukuran, dan ketersediaan produk sesuai informasi toko.</span>
       </div>
     </>
   );
@@ -2091,7 +2099,17 @@ function Orders({ data, user, query, notify, refresh }) {
       {edit && (
         <OrderEditor
           order={edit}
-          products={data.products.filter((p) => p.active)}
+          products={data.products
+            .filter(
+              (p) =>
+                p.active || edit.items?.some((item) => String(item.product_id) === String(p.id)),
+            )
+            .map((p) => {
+              const previous = edit.items?.find((item) => String(item.product_id) === String(p.id));
+              return !p.active && previous
+                ? { ...p, name: previous.product_name, price: previous.price }
+                : p;
+            })}
           notify={notify}
           refresh={refresh}
           onClose={() => setEdit(null)}
@@ -2314,6 +2332,7 @@ function OrderEditor({ order, products, onClose, notify, refresh }) {
                 {products.map((p) => (
                   <option value={p.id} key={p.id}>
                     {p.name} · {money(p.price)}
+                    {!p.active ? ' (arsip)' : ''}
                   </option>
                 ))}
               </select>

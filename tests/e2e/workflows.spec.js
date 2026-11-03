@@ -102,19 +102,13 @@ test('customer can browse, search, filter and read complete product details', as
   ).toBeVisible();
   await expect(page.locator('.product-card')).toHaveCount(9);
   await page.getByRole('link', { name: 'Occasion', exact: true }).click();
-  await page.locator('.filter-tabs').getByRole('button', { name: 'Pernikahan' }).click();
-  await expect(page.locator('.product-card')).toHaveCount(7);
-  await page
-    .locator('.product-card')
-    .filter({ hasText: 'Ivory Wedding' })
-    .locator('.product-picture')
-    .click();
-  await expect(page.getByRole('dialog')).toBeVisible();
-  await expect(page.getByText('Large · 24 tangkai')).toBeVisible();
-  await page.getByRole('button', { name: 'Tutup', exact: true }).click();
-  await page.locator('.filter-tabs').getByRole('button', { name: 'Semua koleksi' }).click();
-  await page.getByRole('textbox', { name: 'Cari produk' }).fill('Rosy');
+  await page.getByRole('textbox', { name: 'Cari produk' }).fill('Bouquet Bunga Matahari Ceria');
   await expect(page.locator('.product-card')).toHaveCount(1);
+  await page.locator('.product-card .product-picture').click();
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await expect(page.getByText('Konfirmasi dengan toko', { exact: true })).toBeVisible();
+  await expect(page.getByText(/Gambar merupakan ilustrasi/)).toBeVisible();
+  await page.getByRole('button', { name: 'Tutup', exact: true }).click();
   await page.getByRole('textbox', { name: 'Cari produk' }).fill('produk tidak ada');
   await expect(page.getByText('Belum ada produk yang sesuai.')).toBeVisible();
   await page.getByRole('textbox', { name: 'Cari produk' }).fill('');
@@ -152,7 +146,7 @@ test('admin dashboard and order creation work with server persistence', async ({
 }, testInfo) => {
   await login(page, 'admin');
   await expect(page.locator('.stat-card')).toHaveCount(4);
-  await expect(page.locator('.recent-orders tbody tr').first()).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Pesanan terbaru' })).toBeVisible();
   await page.screenshot({
     path: `docs/screenshots/admin-${testInfo.project.name}.png`,
     fullPage: true,
@@ -169,13 +163,13 @@ test('admin dashboard and order creation work with server persistence', async ({
   const select = page.getByRole('combobox', { name: 'Produk 1' });
   const productId = await select
     .locator('option')
-    .filter({ hasText: 'Rosy Reverie' })
+    .filter({ hasText: 'Bouquet Bunga Matahari Ceria' })
     .getAttribute('value');
   await select.selectOption(productId);
   await page.getByRole('spinbutton', { name: 'Jumlah 1' }).fill('2');
   await page.getByRole('button', { name: 'Simpan', exact: true }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
-  await expect(page.locator('tr').filter({ hasText: customerName })).toContainText('570.000');
+  await expect(page.locator('tr').filter({ hasText: customerName })).toContainText('328.000');
   const row = page.locator('tr').filter({ hasText: customerName });
   await row.getByRole('button', { name: /Hapus BV-/ }).click();
   await page.getByRole('button', { name: 'Hapus pesanan', exact: true }).click();

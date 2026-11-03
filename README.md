@@ -56,7 +56,7 @@ npm.cmd run setup
 
 Di terminal Linux/macOS, gunakan `npm install` dan `npm run setup`. Akhiran `.cmd` di Windows membantu menghindari pembatasan script PowerShell tanpa mengubah execution policy.
 
-Setup membuat `.env` dengan password awal acak jika belum ada, menyiapkan database dan data contoh, lalu membangun website. File `.env` dan data yang sudah ada tidak ditimpa. Koneksi internet diperlukan saat memasang dependensi pertama kali.
+Setup membuat `.env` dengan password awal acak jika belum ada, menyiapkan database dan katalog awal toko, lalu membangun website. File `.env` dan data yang sudah ada tidak ditimpa. Koneksi internet diperlukan saat memasang dependensi pertama kali.
 
 ### 3. Jalankan website
 
@@ -137,7 +137,7 @@ Lihat [panduan pemindahan data](docs/MIGRATION.md). Tersedia `npm run db:import`
 
 Owner dapat mengubah nomor WhatsApp, Instagram, dan alamat toko melalui Pengaturan toko. Tombol pesan membuka WhatsApp dengan nama dan harga produk; pelanggan tetap menekan tombol kirim sendiri.
 
-Data dan ilustrasi awal adalah contoh. Ganti produk, harga, deskripsi, dan gambar melalui dashboard. Foto menggunakan URL HTTPS atau aset lokal; upload berkas langsung belum tersedia.
+Katalog awal disusun dari daftar toko. Harga website adalah usulan awal yang lebih rendah dari harga rujukan dan dapat diubah oleh admin. Gambar katalog dibuat ulang sebagai ilustrasi; periksa kecocokan dan ketersediaan sebelum menerima pesanan. Admin dapat mengunggah foto asli melalui dashboard.
 
 ## Backup dan restore
 
@@ -183,11 +183,11 @@ React, Vite, Lucide, Node.js/Express, PGlite/PostgreSQL, Zod, bcrypt, dan PDFKit
 
 Pesanan yang belum selesai dapat langsung diselesaikan dan menghasilkan satu penjualan dalam transaksi database. Pesanan lama yang dibatalkan tetap disimpan sebagai arsip dan tidak ditampilkan dalam daftar pesanan aktif. Harga item disimpan sebagai snapshot; perubahan katalog tidak mengubah transaksi selesai. Daftar pesanan dibatasi 500 terbaru, sementara laporan mencakup semua penjualan dalam periode.
 
-Pengelolaan akun lanjutan, upload foto, dan konfigurasi domain/HTTPS produksi belum tersedia. Website belum dideploy.
+Pengelolaan akun lanjutan dan konfigurasi domain/HTTPS produksi belum tersedia. Website belum dideploy.
 
 ## Atelier: fitur terbaru
 
-Identitas visual baru memakai hijau hutan, ivory, dan aset floral editorial. Visual produk awal merupakan gambar contoh hasil generasi; ganti dengan foto produk toko sebelum digunakan untuk penawaran nyata.
+Identitas visual memakai biru navy, putih, dan aset floral editorial. Visual produk awal merupakan gambar contoh hasil generasi; ganti dengan foto produk toko sebelum digunakan untuk penawaran nyata.
 
 - **Pengaturan keamanan:** ganti password dan verifikasi email pemulihan. Lupa password memakai tautan sekali pakai yang berlaku 15 menit; semua sesi berakhir setelah reset.
 - **Data bisnis owner:** lihat tabel tanpa aplikasi database tambahan dan unduh JSON setelah konfirmasi password. Ekspor tidak menyertakan akun, password/hash, sesi, atau token; ini bukan backup lengkap.
@@ -228,7 +228,7 @@ Data PostgreSQL mode ini terpisah dari folder PGlite. Pertahankan data lama sebe
 - **Laporan admin dan owner:** grafik tren mengikuti periode dan PDF berupa tabel dengan header berulang serta nomor halaman.
 - **Pelanggan:** empat kartu statistik dan akses baca untuk owner; ringkasan tidak lagi terbatas pada 500 pesanan.
 - **Katalog:** pilihan occasion dan urutan produk paling banyak difavoritkan. Favorit disimpan per browser dan jumlahnya terlihat di halaman produk admin.
-- **Produk contoh:** 20 buket dengan ilustrasi yang dibuat secara digital ditambahkan saat setup jika data demo diaktifkan. Produk yang sudah ada tidak ditimpa; gambar dapat diganti dengan foto asli dari dashboard.
+- **Katalog awal:** produk lama dinonaktifkan dari katalog satu kali, tetapi tetap tersimpan untuk riwayat pesanan. Produk baru disusun dari informasi toko; harga dan gambar dapat disesuaikan melalui dashboard. Rincian harga rujukan tersedia di [daftar harga](docs/DAFTAR-HARGA.md).
 - **Tentang kami:** profil florist, panduan perawatan bunga, dan kanal WhatsApp, Instagram, Shopee serta Tokopedia yang dapat diatur owner.
 - **Foto produk/logo:** upload JPEG/PNG/WebP dari perangkat, maksimal 5 MB; tersimpan sebagai WebP di `.local/uploads`. Ganti password tetap tersedia di Pengaturan keamanan.
 

@@ -47,6 +47,24 @@ test('admin orders show two statuses and can complete directly', async ({ page }
   await page.getByLabel('Password', { exact: true }).fill(process.env.SEED_ADMIN_PASSWORD);
   await page.getByRole('button', { name: 'Masuk ke dashboard' }).click();
   await expect(page.getByRole('heading', { name: 'Dashboard', exact: true })).toBeVisible();
+  const api = page.context().request;
+  const me = await (await api.get('/api/auth/me')).json();
+  const product = (await (await api.get('/api/products')).json())[0];
+  const created = await api.post('/api/orders', {
+    headers: { 'X-CSRF-Token': me.csrf_token },
+    data: {
+      customer_name: 'Browser fixture',
+      phone_number: '081234567777',
+      order_date: '2026-01-01',
+      delivery_date: '2026-01-02',
+      request: '',
+      items: [{ product_id: product.id, quantity: 1 }],
+    },
+  });
+  expect(created.status()).toBe(201);
+  const order = await created.json();
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'Dashboard', exact: true })).toBeVisible();
   const menu = page.getByRole('button', { name: 'Buka menu' });
   if (await menu.isVisible()) await menu.click();
   await page.locator('.sidebar nav').getByRole('button', { name: 'Pesanan', exact: true }).click();
@@ -60,4 +78,9 @@ test('admin orders show two statuses and can complete directly', async ({ page }
     .click();
   await expect(page.getByRole('button', { name: 'Selesaikan & catat penjualan' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Mulai proses' })).toHaveCount(0);
+  expect(
+    (
+      await api.delete('/api/orders/' + order.id, { headers: { 'X-CSRF-Token': me.csrf_token } })
+    ).ok(),
+  ).toBe(true);
 });
