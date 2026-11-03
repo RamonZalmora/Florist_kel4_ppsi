@@ -49,7 +49,7 @@ test('forgot-password screen explains local mail and invalid reset links fail sa
 test('customer can sort the occasion catalog', async ({ page }) => {
   await page.goto('/catalog');
   await expect(page.locator('.home-product-group')).toHaveCount(4);
-  await page.getByRole('link', { name: 'Occasion', exact: true }).click();
+  await page.getByRole('link', { name: 'Koleksi bunga', exact: true }).click();
   const collapsedFilters = page.locator('.catalog-filter-panel:not([open]) > summary');
   if (await collapsedFilters.isVisible()) await collapsedFilters.click();
   await expect(page.getByLabel('Urutkan')).toHaveValue('newest');

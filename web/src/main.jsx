@@ -581,7 +581,9 @@ function AboutPage({ store, whatsapp, onExplore }) {
 function Catalog({ user, onLogin, onDashboard, notify }) {
   const [sort, setSort] = useState('newest'),
     [page, setPage] = useState(location.pathname === '/about' ? 'about' : 'catalog'),
-    [occasion, setOccasion] = useState(false),
+    [occasion, setOccasion] = useState(
+      new URLSearchParams(location.search).get('view') === 'collection',
+    ),
     [catalogPage, setCatalogPage] = useState(1),
     [filtersOpen, setFiltersOpen] = useState(() => window.matchMedia('(min-width: 721px)').matches),
     [favorites, setFavorites] = useState([]);
@@ -671,15 +673,19 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
   }, [category, productType, budget, search, sort, occasion]);
   useEffect(() => setCatalogPage(1), [category, productType, budget, search, sort, occasion]);
   useEffect(() => {
-    const syncPage = () => setPage(location.pathname === '/about' ? 'about' : 'catalog');
+    const syncPage = () => {
+      setPage(location.pathname === '/about' ? 'about' : 'catalog');
+      setOccasion(new URLSearchParams(location.search).get('view') === 'collection');
+    };
     window.addEventListener('popstate', syncPage);
     return () => window.removeEventListener('popstate', syncPage);
   }, []);
   function navigatePublic(next, hash = '') {
-    const path = next === 'about' ? '/about' : '/catalog';
+    const path =
+      next === 'about' ? '/about' : next === 'collection' ? '/catalog?view=collection' : '/catalog';
     history.pushState(null, '', path + hash);
-    setPage(next);
-    if (next === 'about') window.scrollTo({ top: 0, behavior: 'smooth' });
+    setPage(next === 'collection' ? 'catalog' : next);
+    if (next === 'about' || !hash) window.scrollTo({ top: 0, behavior: 'smooth' });
     else
       setTimeout(
         () => document.getElementById(hash.slice(1))?.scrollIntoView({ behavior: 'smooth' }),
@@ -709,6 +715,7 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
         )
       : null;
   function openCollection(categoryId = '', type = '') {
+    navigatePublic('collection', '#collection');
     setOccasion(true);
     setCategory(String(categoryId));
     setProductType(type);
@@ -831,10 +838,10 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
         </a>
         <div className="nav-links">
           <a
-            href="#collection"
+            href="/catalog"
             onClick={(e) => {
               e.preventDefault();
-              navigatePublic('catalog', '#collection');
+              navigatePublic('catalog');
               setOccasion(false);
               setCategory('');
               setProductType('');
@@ -842,13 +849,13 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
               setSearch('');
             }}
           >
-            Koleksi bunga
+            Beranda
           </a>
           <a
-            href="#collection"
+            href="/catalog?view=collection"
             onClick={(e) => {
               e.preventDefault();
-              navigatePublic('catalog', '#collection');
+              navigatePublic('collection');
               setOccasion(true);
               setCategory('');
               setProductType('');
@@ -856,7 +863,7 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
               setSearch('');
             }}
           >
-            Occasion
+            Koleksi bunga
           </a>
           <a
             href="/about"

@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test('new shop products can be found and ordered with the listed price', async ({ page }) => {
   await page.goto('/catalog');
-  await page.getByRole('link', { name: 'Occasion', exact: true }).click();
+  await page.getByRole('link', { name: 'Koleksi bunga', exact: true }).click();
   await page.getByRole('textbox', { name: 'Cari produk' }).fill('Frame Mahar Bunga Biru');
   const card = page.locator('.product-card');
   await expect(card).toHaveCount(1);

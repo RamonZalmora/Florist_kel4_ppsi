@@ -17,7 +17,7 @@ test('compact home shows grouped collections, complete photos and working collec
   await expect(
     page.locator('.catalog-sidebar').getByRole('button', { name: /Wedding/ }),
   ).toHaveAttribute('aria-pressed', 'true');
-  await page.getByRole('link', { name: 'Koleksi bunga', exact: true }).click();
+  await page.getByRole('link', { name: 'Beranda', exact: true }).click();
   await page
     .locator('.home-single')
     .filter({ hasText: 'Snack' })
@@ -28,4 +28,19 @@ test('compact home shows grouped collections, complete photos and working collec
   await expect(
     page.locator('.catalog-sidebar').getByRole('button', { name: 'Snack', exact: true }),
   ).toHaveAttribute('aria-pressed', 'true');
+});
+
+test('header links home, the filterable full collection and about', async ({ page }) => {
+  await page.goto('/catalog');
+  const nav = page.locator('.nav-links');
+  await expect(nav.getByRole('link')).toHaveText(['Beranda', 'Koleksi bunga', 'Tentang kami']);
+  await nav.getByRole('link', { name: 'Koleksi bunga', exact: true }).click();
+  await expect(page.locator('.catalog-sidebar')).toBeVisible();
+  await expect(page.locator('.product-card')).toHaveCount(9);
+  await page.reload();
+  await expect(page.locator('.catalog-sidebar')).toBeVisible();
+  await nav.getByRole('link', { name: 'Tentang kami', exact: true }).click();
+  await expect(page).toHaveURL(/\/about$/);
+  await nav.getByRole('link', { name: 'Beranda', exact: true }).click();
+  await expect(page.locator('.home-product-group')).toHaveCount(4);
 });

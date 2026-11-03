@@ -91,7 +91,7 @@ test('owner has customer metrics, report chart and store edit access', async ({ 
 test('catalog offers budget filters without order tracking', async ({ page }) => {
   await page.goto('/catalog');
   await expect(page.getByRole('button', { name: 'Lacak pesanan' })).toHaveCount(0);
-  await page.getByRole('link', { name: 'Occasion', exact: true }).click();
+  await page.getByRole('link', { name: 'Koleksi bunga', exact: true }).click();
   const collapsedFilters = page.locator('.catalog-filter-panel:not([open]) > summary');
   if (await collapsedFilters.isVisible()) await collapsedFilters.click();
   await expect(page.getByRole('button', { name: /Hemat/ })).toBeVisible();
