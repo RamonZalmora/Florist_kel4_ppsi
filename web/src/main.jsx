@@ -1282,7 +1282,15 @@ function Workspace({ user, view, setView, logout, notify }) {
 function Dashboard({ data, user, go }) {
   const { summary, trend, popular } = data.dashboard,
     max = Math.max(...trend.map((t) => Number(t.total)), 1),
-    total = trend.reduce((n, t) => n + Number(t.total), 0);
+    total = trend.reduce((n, t) => n + Number(t.total), 0),
+    favoriteTotal = popular.reduce((n, item) => n + Number(item.favorite_count), 0),
+    favoriteColors = ['#22d3ee', '#3b82f6', '#7c9cf5', '#b1c7f4'];
+  let favoriteCursor = 0;
+  const favoriteSegments = popular.map((item, i) => {
+    const start = favoriteCursor;
+    favoriteCursor += favoriteTotal ? (Number(item.favorite_count) / favoriteTotal) * 100 : 0;
+    return `${favoriteColors[i % favoriteColors.length]} ${start}% ${favoriteCursor}%`;
+  });
   const stats = [
     [
       'Penjualan bulan ini',
@@ -1395,6 +1403,31 @@ function Dashboard({ data, user, go }) {
             </div>
             <Heart size={18} />
           </div>
+          <div className="favorite-insight">
+            <div
+              className="favorite-ring"
+              role="img"
+              aria-label={
+                favoriteTotal
+                  ? `Total ${favoriteTotal} favorit pada empat produk teratas`
+                  : 'Belum ada favorit pada produk teratas'
+              }
+              style={{
+                background: favoriteTotal
+                  ? `conic-gradient(${favoriteSegments.join(',')})`
+                  : '#dfe8f5',
+              }}
+            >
+              <div>
+                <strong>{favoriteTotal}</strong>
+                <small>FAVORIT</small>
+              </div>
+            </div>
+            <div className="favorite-insight-copy">
+              <strong>Yang paling disukai</strong>
+              <span>Jumlah tanda hati untuk empat produk teratas</span>
+            </div>
+          </div>
           {popular.map((p, i) => (
             <div className="popular-row" key={p.id}>
               <Photo src={p.photo} alt={p.name} />
@@ -1402,7 +1435,7 @@ function Dashboard({ data, user, go }) {
                 <strong>{p.name}</strong>
                 <small>{p.favorite_count} favorit</small>
               </div>
-              <span>0{i + 1}</span>
+              <span style={{ color: favoriteColors[i % favoriteColors.length] }}>0{i + 1}</span>
             </div>
           ))}
           <button
