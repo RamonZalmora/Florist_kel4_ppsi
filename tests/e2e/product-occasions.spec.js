@@ -16,7 +16,7 @@ test('admin adds and changes occasions directly in the product form', async ({ p
     await page.getByLabel('Nama produk').fill(name);
     await page.getByLabel('Harga (Rp)').fill('99000');
     await page.getByLabel('Ukuran', { exact: true }).fill('M');
-    await page.getByLabel('Jenis bunga').fill('Boneka');
+    await page.getByLabel('Bahan / rincian produk').fill('Boneka');
     await page.getByLabel('Deskripsi', { exact: true }).fill('Produk pengujian occasion');
     await page.getByRole('checkbox', { name: 'Wisuda', exact: true }).check();
     await page.getByRole('checkbox', { name: 'Hadiah', exact: true }).check();

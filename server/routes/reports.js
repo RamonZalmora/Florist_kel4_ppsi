@@ -150,7 +150,7 @@ dashboard.get('/', async (req, res) => {
       `SELECT to_char(d.day,'YYYY-MM-DD') AS day,COALESCE(sum(s.total_sale),0) AS total FROM generate_series((now() AT TIME ZONE 'Asia/Jakarta')::date-6,(now() AT TIME ZONE 'Asia/Jakarta')::date,'1 day'::interval) d(day) LEFT JOIN sales s ON s.sale_date=d.day::date GROUP BY d.day ORDER BY d.day`,
     ),
     db.query(
-      `SELECT p.id,p.name,p.photo,p.active,sum(oi.quantity)::int AS sold_count,COALESCE((SELECT json_agg(json_build_object('id',c.id,'name',c.name)) FROM recommendations r JOIN categories c ON c.id=r.category_id WHERE r.product_id=p.id),'[]') AS categories FROM products p JOIN order_items oi ON oi.product_id=p.id JOIN orders o ON o.id=oi.order_id AND o.status='completed' JOIN sales s ON s.order_id=o.id GROUP BY p.id ORDER BY sold_count DESC,p.id DESC`,
+      `SELECT p.id,p.name,p.photo,p.active,p.product_type_id,sum(oi.quantity)::int AS sold_count,COALESCE((SELECT json_agg(json_build_object('id',c.id,'name',c.name)) FROM recommendations r JOIN categories c ON c.id=r.category_id WHERE r.product_id=p.id),'[]') AS categories FROM products p JOIN order_items oi ON oi.product_id=p.id JOIN orders o ON o.id=oi.order_id AND o.status='completed' JOIN sales s ON s.order_id=o.id GROUP BY p.id ORDER BY sold_count DESC,p.id DESC`,
     ),
   ]);
   res.json({ summary: summary.rows[0], trend: trend.rows, popular: popular.rows });

@@ -114,3 +114,53 @@ test('local database rejects a second writer while the owner process is alive', 
     await rm(directory, { recursive: true, force: true });
   }
 });
+
+test('database transfer preserves custom product types and product assignments', async () => {
+  const source = await PGlite.create(),
+    target = await PGlite.create();
+  const { createProductTypes } = await import('../server/db/product-types.js');
+  const adapt = (client) => ({
+    query: async (sql, params = []) => {
+      const result = params.length
+        ? await client.query(sql, params)
+        : (await client.exec(sql)).at(-1);
+      return {
+        ...result,
+        rows: result?.rows || [],
+        rowCount: result?.rows?.length || result?.affectedRows || 0,
+      };
+    },
+  });
+  try {
+    const schema = await readFile(new URL('../server/db/001_initial.sql', import.meta.url), 'utf8');
+    await source.exec(schema);
+    await target.exec(schema);
+    await createProductTypes(adapt(source));
+    await createProductTypes(adapt(target));
+    const type = (
+      await source.query(
+        "INSERT INTO product_types(name,description) VALUES('Custom gift','Custom type') RETURNING id",
+      )
+    ).rows[0];
+    await source.query(
+      "INSERT INTO products(name,price,flower_type,size,description,product_type_id) VALUES('Custom product',25000,'Gift','M','Test',$1)",
+      [type.id],
+    );
+    await source.transaction((reader) => target.transaction((writer) => transfer(reader, writer)));
+    assert.equal(
+      (
+        await target.query(
+          'SELECT t.name FROM products p JOIN product_types t ON t.id=p.product_type_id',
+        )
+      ).rows[0].name,
+      'Custom gift',
+    );
+    const next = (
+      await target.query("INSERT INTO product_types(name) VALUES('Next type') RETURNING id")
+    ).rows[0];
+    assert.ok(Number(next.id) > Number(type.id));
+  } finally {
+    await source.close();
+    await target.close();
+  }
+});

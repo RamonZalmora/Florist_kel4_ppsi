@@ -6,7 +6,8 @@ import { db, transaction } from '../db/pool.js';
 import { fail } from '../validation.js';
 const tables = {
   store_settings: 'id,name,address,whatsapp,instagram,description,logo,updated_at',
-  products: 'id,name,price,flower_type,size,description,photo,active',
+  product_types: 'id,name,description,photo,code',
+  products: 'id,name,price,flower_type,product_type_id,size,description,photo,active',
   categories: 'id,name,description,photo',
   recommendations: 'id,category_id,product_id,note',
   orders: 'id,customer_name,phone_number,order_date,delivery_date,request,status,total',

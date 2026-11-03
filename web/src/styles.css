@@ -6978,3 +6978,203 @@ tr:hover td {
     line-height: 1.6;
   }
 }
+
+/* Unified React workspace components for classification and operations. */
+.workspace-search-strip {
+  display: flex;
+  justify-content: flex-end;
+  margin: 0 0 18px;
+}
+.workspace-search-strip .search-box {
+  width: min(360px, 100%);
+  background: #fff;
+  border-color: #bfd7ea;
+}
+.workspace .panel,
+.workspace .stat-card {
+  border: 1px solid #244e73;
+  box-shadow:
+    0 4px 0 #cbddeb,
+    0 12px 26px #244e7310;
+  border-radius: 17px;
+}
+.workspace .stat-card {
+  background: linear-gradient(130deg, #fff, #eef7ff);
+}
+.classification-sections {
+  display: grid;
+  gap: 30px;
+}
+.classification-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.classification-title h2 {
+  margin: 0 0 4px;
+  font-size: 20px;
+  color: #173f61;
+}
+.classification-title small {
+  font-size: 11px;
+  color: #7893a8;
+}
+.classification-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+}
+.classification-card {
+  overflow: hidden;
+  background: linear-gradient(135deg, #fff, #edf7ff);
+  border: 1px solid #204e74;
+  border-radius: 18px;
+  box-shadow:
+    0 4px 0 #cbddea,
+    0 9px 18px #244f7210;
+  min-width: 0;
+}
+.classification-cover {
+  height: 145px;
+  position: relative;
+  background: linear-gradient(135deg, #e4f1fa, #f9fcff);
+}
+.classification-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 7px;
+}
+.classification-cover > span {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  background: #153d60e6;
+  color: #fff;
+  border-radius: 9px;
+  padding: 5px 8px;
+  font-size: 10px;
+}
+.classification-card-body {
+  padding: 15px;
+}
+.classification-card h3 {
+  margin: 0 0 9px;
+  font:
+    500 21px Georgia,
+    serif;
+  color: #1a4667;
+}
+.classification-card p {
+  font-size: 11px;
+  color: #7590a5;
+  line-height: 1.7;
+}
+.classification-preview {
+  display: flex;
+  gap: 6px;
+  min-height: 40px;
+  margin: 12px 0;
+}
+.classification-preview img {
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+  border: 1px solid #c7dfed;
+  background: white;
+  border-radius: 8px;
+}
+.classification-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: flex-end;
+}
+.classification-actions .text-btn {
+  margin-right: auto;
+  font-size: 10px;
+}
+.occasion-product-tabs {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+  margin: 0 0 17px;
+}
+.occasion-product-tabs button {
+  border: 1px solid #b7d5e8;
+  border-radius: 999px;
+  padding: 9px 13px;
+  color: #416c89;
+  background: #f6fbff;
+  font-size: 12px;
+  cursor: pointer;
+}
+.occasion-product-tabs button.active {
+  background: linear-gradient(120deg, #123a5b, #237d99);
+  color: white;
+  border-color: #173f61;
+}
+.form-section-title {
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: #216485;
+  padding: 12px 0 8px;
+  border-bottom: 1px solid #d2e3ef;
+  margin: 8px 0 0;
+}
+.sales-line-chart {
+  padding: 12px 18px 18px;
+  background: linear-gradient(180deg, #fff, #f2f9ff);
+  border-radius: 0 0 17px 17px;
+}
+.sales-line-chart svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  min-height: 210px;
+}
+@media (max-width: 1200px) {
+  .classification-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 900px) {
+  .classification-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 720px) {
+  .classification-grid {
+    gap: 11px;
+  }
+  .classification-card-body {
+    padding: 11px;
+  }
+  .classification-title h2 {
+    font-size: 18px;
+  }
+  .classification-title small {
+    display: none;
+  }
+  .classification-cover {
+    height: 120px;
+  }
+  .classification-card h3 {
+    font-size: 18px;
+  }
+  .classification-actions {
+    flex-wrap: wrap;
+  }
+  .classification-actions .text-btn {
+    width: 100%;
+  }
+  .sales-line-chart {
+    padding: 8px;
+  }
+  .sales-line-chart svg {
+    min-height: 160px;
+  }
+  .workspace-search-strip {
+    margin-bottom: 14px;
+  }
+}

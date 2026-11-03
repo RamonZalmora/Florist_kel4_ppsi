@@ -15,7 +15,7 @@ async function go(page, label) {
 test('owner can inspect data and export JSON', async ({ page }, info) => {
   await login(page);
   await go(page, 'Data bisnis');
-  await expect(page.getByRole('heading', { name: 'Data bisnis', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Unduh JSON' })).toBeVisible();
   await expect(page.locator('tbody tr').first()).toBeVisible();
   await page.getByLabel('Konfirmasi password owner').fill(process.env.SEED_OWNER_PASSWORD);
   const downloadPromise = page.waitForEvent('download');

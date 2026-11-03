@@ -40,7 +40,7 @@ test.afterEach(async ({ page }, testInfo) => {
     expect(response.ok()).toBeTruthy();
   }
 });
-test('admin product, category and recommendation forms update the public catalog', async ({
+test('admin product and occasion forms update the public catalog', async ({
   page,
   request,
 }, testInfo) => {
@@ -48,8 +48,8 @@ test('admin product, category and recommendation forms update the public catalog
   const marker = 'E2E ' + randomBytes(4).toString('hex');
   testInfo.annotations.push({ type: 'catalog-fixture', description: marker });
   await navigate(page, 'Kategori');
-  await page.getByRole('button', { name: 'Tambah kategori' }).click();
-  await page.getByLabel('Nama kategori').fill(marker + ' momen');
+  await page.getByRole('button', { name: 'Tambah occasion' }).click();
+  await page.getByLabel('Nama occasion').fill(marker + ' momen');
   await page.getByLabel('Deskripsi', { exact: true }).fill('Momen integrasi browser');
   await page.getByRole('button', { name: 'Simpan', exact: true }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
@@ -59,8 +59,9 @@ test('admin product, category and recommendation forms update the public catalog
   await page.getByLabel('Nama produk').fill(marker + ' bouquet');
   await page.getByLabel('Harga (Rp)').fill('320000');
   await page.getByLabel('Ukuran', { exact: true }).fill('Medium');
-  await page.getByLabel('Jenis bunga').fill('Mawar');
+  await page.getByLabel('Bahan / rincian produk').fill('Mawar');
   await page.getByLabel('Deskripsi', { exact: true }).fill('Produk uji katalog');
+  await page.getByRole('checkbox', { name: marker + ' momen', exact: true }).check();
   await page.getByRole('button', { name: 'Simpan', exact: true }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
   const productRow = page.locator('tr').filter({ hasText: marker + ' bouquet' });
@@ -70,20 +71,6 @@ test('admin product, category and recommendation forms update the public catalog
   await page.getByRole('button', { name: 'Simpan', exact: true }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await expect(productRow).toContainText('350.000');
-  await navigate(page, 'Rekomendasi');
-  await page.getByRole('button', { name: 'Tambah rekomendasi' }).click();
-  await page
-    .getByRole('combobox', { name: 'Kategori', exact: true })
-    .selectOption({ label: marker + ' momen' });
-  await page
-    .getByRole('combobox', { name: 'Produk', exact: true })
-    .selectOption({ label: marker + ' bouquet' });
-  await page.getByLabel('Alasan rekomendasi').fill('Kurasi browser');
-  await page.getByRole('button', { name: 'Simpan', exact: true }).click();
-  await expect(page.getByRole('dialog')).toHaveCount(0);
-  await expect(page.locator('tr').filter({ hasText: marker + ' bouquet' })).toContainText(
-    'Kurasi browser',
-  );
   const categories = await (await request.get('/api/categories')).json();
   const category = categories.find((c) => c.name === marker + ' momen');
   const products = await (await request.get('/api/products?category=' + category.id)).json();
@@ -176,8 +163,9 @@ test('admin dashboard and order creation work with server persistence', async ({
   await expect(row).toHaveCount(0);
   await navigate(page, 'Produk');
   await expect(page.getByRole('button', { name: 'Tambah produk' })).toBeVisible();
-  await navigate(page, 'Rekomendasi');
-  await expect(page.getByRole('button', { name: 'Tambah rekomendasi' })).toBeVisible();
+  await expect(
+    page.locator('.sidebar nav').getByRole('button', { name: 'Rekomendasi', exact: true }),
+  ).toHaveCount(0);
 });
 test('owner has read-only orders and can download filtered PDF', async ({ page }, testInfo) => {
   await login(page, 'owner');

@@ -15,6 +15,7 @@ export const productSchema = z.object({
   name: text(120),
   price: z.coerce.number().positive().max(1000000000).multipleOf(0.01),
   flower_type: text(150),
+  product_type_id: idSchema.nullable().optional(),
   size: text(80),
   description: text(5000),
   photo: photo.default('/assets/floral-hero.svg'),

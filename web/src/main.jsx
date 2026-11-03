@@ -1,3 +1,4 @@
+import { SalesLineChart } from './SalesLineChart';
 import { PhotoField, StoreEditor, SalesTrend } from './RetailFeatures';
 import { RecoveryScreen, AccountSecurity, DataStudio } from './StudioFeatures';
 import React, { useState, useEffect, useCallback } from 'react';
@@ -680,6 +681,7 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
   }
   const [products, setProducts] = useState([]),
     [categories, setCategories] = useState([]),
+    [availableTypes, setAvailableTypes] = useState([]),
     [store, setStore] = useState({}),
     [category, setCategory] = useState(''),
     [productType, setProductType] = useState(''),
@@ -689,8 +691,9 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
     [error, setError] = useState(''),
     [detail, setDetail] = useState(null);
   useEffect(() => {
-    Promise.all([api('/categories'), api('/store')])
-      .then(([c, s]) => {
+    Promise.all([api('/categories'), api('/store'), api('/product-types')])
+      .then(([c, s, types]) => {
+        setAvailableTypes(types);
         setCategories(c.filter((item) => Number(item.product_count) > 0));
         setStore(s);
       })
@@ -706,7 +709,14 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
             search,
             sort: occasion ? sort : 'popular',
             ...(category ? { category } : {}),
-            ...(productType ? { type: productType } : {}),
+            ...(productType &&
+            availableTypes.some((t) => t.code === productType || 'id:' + t.id === productType)
+              ? {
+                  type_id: availableTypes.find(
+                    (t) => t.code === productType || 'id:' + t.id === productType,
+                  )?.id,
+                }
+              : {}),
             ...(budget === 'hemat' ? { max_price: '99999.99' } : {}),
             ...(budget === 'menengah' ? { min_price: '100000', max_price: '249999.99' } : {}),
             ...(budget === 'premium' ? { min_price: '250000' } : {}),
@@ -729,7 +739,7 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
       active = false;
       clearTimeout(timer);
     };
-  }, [category, productType, budget, search, sort, occasion]);
+  }, [category, productType, budget, search, sort, occasion, availableTypes]);
   useEffect(() => setCatalogPage(1), [category, productType, budget, search, sort, occasion]);
   useEffect(() => {
     const syncPage = () => {
@@ -819,6 +829,7 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
     ['klobot', 'Klobot', /klobot/i],
   ];
   const homeSingles = singleTypes
+    .filter(([code]) => availableTypes.some((t) => t.code === code))
     .map(([type, label, match]) => {
       const item = products.find(
         (p) => !used.has(String(p.id)) && match.test(p.name + ' ' + p.flower_type),
@@ -1119,16 +1130,7 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
                         <div className="filter-chips">
                           {[
                             ['', 'Semua'],
-                            ['bunga', 'Bunga'],
-                            ['kering', 'Bunga kering'],
-                            ['foto', 'Foto'],
-                            ['snack', 'Snack'],
-                            ['uang', 'Uang'],
-                            ['akrilik', 'Akrilik'],
-                            ['frame', 'Frame & mahar'],
-                            ['boneka', 'Boneka'],
-                            ['vas', 'Vas'],
-                            ['klobot', 'Klobot'],
+                            ...availableTypes.map((t) => [t.code || 'id:' + t.id, t.name]),
                           ].map(([value, label]) => (
                             <button
                               key={value}
@@ -1454,7 +1456,6 @@ const navAdmin = [
   ['dashboard', 'Dashboard', LayoutDashboard],
   ['products', 'Produk', Package],
   ['categories', 'Kategori', Tags],
-  ['recommendations', 'Rekomendasi', Sparkles],
   ['orders', 'Pesanan', ShoppingBag],
   ['reports', 'Riwayat & laporan', ChartNoAxesCombined],
   ['customers', 'Pelanggan', Users],
@@ -1472,7 +1473,8 @@ function Workspace({ user, view, setView, logout, notify }) {
     [data, setData] = useState(null),
     [error, setError] = useState(''),
     [loading, setLoading] = useState(true),
-    [query, setQuery] = useState('');
+    [query, setQuery] = useState(''),
+    [productCategory, setProductCategory] = useState('');
   const refresh = useCallback(() => setVersion((v) => v + 1), []);
   useEffect(() => {
     let active = true;
@@ -1482,11 +1484,13 @@ function Workspace({ user, view, setView, logout, notify }) {
       api('/dashboard'),
       api('/orders'),
       api('/categories'),
+      api('/product-types'),
       api(user.role === 'admin' ? '/manage/products' : '/products'),
       ...(user.role === 'admin' ? [api('/manage/recommendations')] : []),
     ])
-      .then(([dashboard, orders, categories, products, recommendations]) => {
-        if (active) setData({ dashboard, orders, categories, products, recommendations });
+      .then(([dashboard, orders, categories, productTypes, products, recommendations]) => {
+        if (active)
+          setData({ dashboard, orders, categories, productTypes, products, recommendations });
       })
       .catch((e) => {
         if (active) setError(e.message);
@@ -1505,7 +1509,7 @@ function Workspace({ user, view, setView, logout, notify }) {
   }
   const navigation = user.role === 'admin' ? navAdmin : navOwner,
     title = navigation.find((n) => n[0] === view)?.[1] || 'Pengaturan';
-  const shared = { data, query, notify, refresh, user };
+  const shared = { data, query, notify, refresh, user, go, productCategory, setProductCategory };
   return (
     <div className="workspace">
       <aside className={'sidebar ' + (mobile ? 'open' : '')}>
@@ -1589,37 +1593,17 @@ function Workspace({ user, view, setView, logout, notify }) {
           </div>
         </header>
         <main className="workspace-content">
-          {view !== 'dashboard' && (
-            <div className="page-heading">
-              <div>
-                <span className="eyebrow">BIEN VENDRE / {user.role.toUpperCase()}</span>
-                <h1>{view === 'dashboard' ? 'Dashboard' : title}</h1>
-                <p>
-                  {view === 'dashboard'
-                    ? `Selamat datang, ${user.name}. Mari buat hari ini bermakna.`
-                    : {
-                        products: 'Kelola setiap rangkaian dalam koleksi Anda.',
-                        categories: 'Kategori momen untuk rekomendasi yang lebih personal.',
-                        recommendations: 'Hubungkan produk terbaik dengan momen yang tepat.',
-                        orders: 'Setiap pesanan adalah cerita yang perlu dirawat.',
-                        customers: 'Kenali pelanggan dari pesanan yang telah dicatat.',
-                        reports: 'Pantau penjualan dan unduh laporan berdasarkan periode.',
-                        settings: 'Informasi toko dan akses akun Anda.',
-                        data: 'Jelajahi dan unduh data bisnis Anda secara aman.',
-                      }[view]}
-                </p>
-              </div>
-              {view !== 'dashboard' && view !== 'settings' && view !== 'reports' && (
-                <label className="search-box">
-                  <Search size={17} />
-                  <input
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Cari data…"
-                    aria-label="Cari data"
-                  />
-                </label>
-              )}
+          {view !== 'dashboard' && view !== 'settings' && view !== 'reports' && (
+            <div className="workspace-search-strip">
+              <label className="search-box">
+                <Search size={17} />
+                <input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Cari data…"
+                  aria-label="Cari data"
+                />
+              </label>
             </div>
           )}
           {error ? (
@@ -1638,7 +1622,6 @@ function Workspace({ user, view, setView, logout, notify }) {
                 {view === 'dashboard' && <Dashboard {...shared} go={go} />}{' '}
                 {view === 'products' && <Products {...shared} />}{' '}
                 {view === 'categories' && <Categories {...shared} />}{' '}
-                {view === 'recommendations' && <Recommendations {...shared} />}{' '}
                 {view === 'orders' && <Orders {...shared} />}{' '}
                 {view === 'customers' && <Customers {...shared} />}{' '}
                 {view === 'reports' && <Reports notify={notify} />}{' '}
@@ -1662,10 +1645,15 @@ function Dashboard({ data, user, go }) {
   const [salesCategory, setSalesCategory] = useState('');
   const { summary, trend } = data.dashboard;
   const popular = data.dashboard.popular
-    .filter((p) => !salesCategory || p.categories.some((c) => String(c.id) === salesCategory))
+    .filter(
+      (p) =>
+        !salesCategory ||
+        (salesCategory.startsWith('type:')
+          ? String(p.product_type_id) === salesCategory.slice(5)
+          : p.categories.some((c) => String(c.id) === salesCategory)),
+    )
     .slice(0, 4);
-  const max = Math.max(...trend.map((t) => Number(t.total)), 1),
-    total = trend.reduce((n, t) => n + Number(t.total), 0),
+  const total = trend.reduce((n, t) => n + Number(t.total), 0),
     favoriteTotal = popular.reduce((n, item) => n + Number(item.sold_count), 0),
     favoriteColors = ['#22d3ee', '#3b82f6', '#7c9cf5', '#b1c7f4'];
   let favoriteCursor = 0;
@@ -1756,36 +1744,7 @@ function Dashboard({ data, user, go }) {
             <strong>{money(total)}</strong>
             <span>Total penjualan selesai</span>
           </div>
-          <div
-            className="bar-chart"
-            role="img"
-            aria-label={
-              'Penjualan tujuh hari terakhir: ' +
-              trend.map((t) => date(t.day) + ' ' + money(t.total)).join(', ')
-            }
-          >
-            <div className="chart-grid">
-              <span>{money(max)}</span>
-              <span>{money(max / 2)}</span>
-              <span>Rp 0</span>
-            </div>
-            <div className="bars">
-              {trend.map((t, i) => (
-                <div className="bar-column" key={t.day}>
-                  <div className="bar-area">
-                    <div
-                      className={'bar ' + (i === 6 ? 'current' : '')}
-                      style={{ height: (Number(t.total) / max) * 100 + '%' }}
-                      title={money(t.total)}
-                    >
-                      <span>{money(t.total)}</span>
-                    </div>
-                  </div>
-                  <small>{new Date(t.day).toLocaleDateString('id-ID', { weekday: 'short' })}</small>
-                </div>
-              ))}
-            </div>
-          </div>
+          <SalesLineChart trend={trend} label="Penjualan tujuh hari terakhir" />
         </section>
         <section className="panel recent-orders">
           <div className="panel-heading">
@@ -1819,11 +1778,20 @@ function Dashboard({ data, user, go }) {
               onChange={(e) => setSalesCategory(e.target.value)}
             >
               <option value="">Semua kategori</option>
-              {data.categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
+              <optgroup label="Occasion">
+                {data.categories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </optgroup>
+              <optgroup label="Jenis produk">
+                {data.productTypes.map((t) => (
+                  <option key={t.id} value={'type:' + t.id}>
+                    {t.name}
+                  </option>
+                ))}
+              </optgroup>
             </select>
           </label>
           <div className="favorite-insight">
@@ -1914,14 +1882,21 @@ function useMutation(notify, refresh) {
   }
   return { busy, error, mutate, setError };
 }
-function Products({ data, query, notify, refresh }) {
+function Products({ data, query, notify, refresh, productCategory, setProductCategory }) {
   const [uploading, setUploading] = useState(false);
   const [edit, setEdit] = useState(null),
     [remove, setRemove] = useState(null),
     { busy, error, mutate, setError } = useMutation(notify, refresh);
-  const products = data.products.filter((p) =>
-    (p.name + ' ' + p.flower_type).toLowerCase().includes(query.toLowerCase()),
-  );
+  const products = data.products.filter((p) => {
+    const links = data.recommendations.filter((r) => String(r.product_id) === String(p.id));
+    return (
+      (p.name + ' ' + p.flower_type).toLowerCase().includes(query.toLowerCase()) &&
+      (!productCategory ||
+        (productCategory === 'none'
+          ? !links.length
+          : links.some((r) => String(r.category_id) === productCategory)))
+    );
+  });
   function open(p) {
     setError('');
     setEdit(p);
@@ -1932,6 +1907,7 @@ function Products({ data, query, notify, refresh }) {
       body = Object.fromEntries(f);
     body.price = Number(body.price);
     body.active = f.get('active') === 'on';
+    body.product_type_id = f.get('product_type_id') ? Number(f.get('product_type_id')) : null;
     body.category_ids = f.getAll('category_ids').map(Number);
     mutate(
       '/manage/products' + (edit.id ? '/' + edit.id : ''),
@@ -1946,6 +1922,26 @@ function Products({ data, query, notify, refresh }) {
         <span>{products.length} produk dalam koleksi</span>
         <button className="btn primary" onClick={() => open({ active: true, photo: asset })}>
           <Plus size={17} /> Tambah produk
+        </button>
+      </div>
+      <div className="occasion-product-tabs" aria-label="Daftar produk per occasion">
+        <button className={!productCategory ? 'active' : ''} onClick={() => setProductCategory('')}>
+          Semua produk
+        </button>
+        {data.categories.map((c) => (
+          <button
+            key={c.id}
+            className={productCategory === String(c.id) ? 'active' : ''}
+            onClick={() => setProductCategory(String(c.id))}
+          >
+            {c.name}
+          </button>
+        ))}
+        <button
+          className={productCategory === 'none' ? 'active' : ''}
+          onClick={() => setProductCategory('none')}
+        >
+          Tanpa occasion
         </button>
       </div>
       <div className="panel table-wrap">
@@ -1979,8 +1975,13 @@ function Products({ data, query, notify, refresh }) {
                   </div>
                 </td>
                 <td>
-                  {p.flower_type}
-                  <small className="cell-sub">{p.size}</small>
+                  <strong>
+                    {data.productTypes.find((t) => String(t.id) === String(p.product_type_id))
+                      ?.name || 'Belum dipilih'}
+                  </strong>
+                  <small className="cell-sub">
+                    {p.flower_type} · {p.size}
+                  </small>
                 </td>
                 <td className="nowrap">{money(p.price)}</td>
                 <td>
@@ -2019,6 +2020,7 @@ function Products({ data, query, notify, refresh }) {
       {edit && (
         <Modal title={edit.id ? 'Edit produk' : 'Tambah produk'} onClose={() => setEdit(null)}>
           <form className="editor-form" onSubmit={submit}>
+            <h3 className="form-section-title">01 / Informasi produk</h3>
             <label>
               Nama produk
               <input name="name" defaultValue={edit.name} required maxLength={120} />
@@ -2047,8 +2049,25 @@ function Products({ data, query, notify, refresh }) {
                 />
               </label>
             </div>
+            <h3 className="form-section-title">02 / Jenis & bahan</h3>
             <label>
-              Jenis bunga
+              Jenis produk
+              <select
+                name="product_type_id"
+                aria-label="Jenis produk"
+                required
+                defaultValue={edit.product_type_id || data.productTypes[0]?.id || ''}
+              >
+                <option value="">Pilih jenis produk</option>
+                {data.productTypes.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Bahan / rincian produk
               <input name="flower_type" defaultValue={edit.flower_type} required maxLength={150} />
             </label>
             <label>
@@ -2061,6 +2080,7 @@ function Products({ data, query, notify, refresh }) {
                 rows={4}
               />
             </label>
+            <h3 className="form-section-title">03 / Occasion produk</h3>
             <fieldset className="product-occasions">
               <legend>Occasion / kategori</legend>
               <p>Pilih satu atau beberapa momen yang cocok untuk produk ini.</p>
@@ -2086,6 +2106,7 @@ function Products({ data, query, notify, refresh }) {
                 <p>Belum ada occasion. Tambahkan kategori di menu Kategori.</p>
               )}
             </fieldset>
+            <h3 className="form-section-title">04 / Foto & publikasi</h3>
             <PhotoField initialValue={edit.photo} onBusyChange={setUploading} />
             <label className="checkbox">
               <input type="checkbox" name="active" defaultChecked={edit.active} /> Aktif di katalog
@@ -2098,8 +2119,8 @@ function Products({ data, query, notify, refresh }) {
       {remove && (
         <Modal title="Hapus produk?" onClose={() => setRemove(null)}>
           <p>
-            Hapus <strong>{remove.name}</strong>? Produk yang digunakan dalam rekomendasi atau
-            pesanan tidak dapat dihapus. Anda dapat menonaktifkannya melalui Edit.
+            Hapus <strong>{remove.name}</strong>? Produk yang terhubung dengan occasion atau pesanan
+            tidak dapat dihapus. Anda dapat menonaktifkannya melalui Edit.
           </p>
           <div className="form-actions">
             <button className="btn outline" onClick={() => setRemove(null)}>
@@ -2126,247 +2147,140 @@ function Products({ data, query, notify, refresh }) {
     </>
   );
 }
-function Categories({ data, query, notify, refresh }) {
-  const [edit, setEdit] = useState(null),
-    [remove, setRemove] = useState(null),
-    { busy, error, mutate, setError } = useMutation(notify, refresh);
-  function submit(e) {
-    e.preventDefault();
-    mutate(
-      '/manage/categories' + (edit.id ? '/' + edit.id : ''),
-      edit.id ? 'PUT' : 'POST',
-      Object.fromEntries(new FormData(e.target)),
-      () => setEdit(null),
-    );
-  }
+function Categories(props) {
   return (
-    <>
-      <div className="toolbar">
-        <span>{data.categories.length} kategori momen</span>
-        <button
-          className="btn primary"
-          onClick={() => {
-            setError('');
-            setEdit({ photo: '/assets/floral-hero.svg' });
-          }}
-        >
-          <Plus size={17} /> Tambah kategori
-        </button>
-      </div>
-      <div className="category-grid">
-        {data.categories
-          .filter((c) => c.name.toLowerCase().includes(query.toLowerCase()))
-          .map((c, i) => (
-            <article className="panel category-card" key={c.id}>
-              <div className={'category-symbol tone-' + (i % 3)}>
-                <Flower2 size={30} />
-              </div>
-              <h2>{c.name}</h2>
-              <p>{c.description || 'Belum ada deskripsi.'}</p>
-              <span>{c.product_count} rekomendasi produk</span>
-              <div className="row-actions">
-                <button
-                  className="btn outline"
-                  onClick={() => {
-                    setError('');
-                    setEdit(c);
-                  }}
-                >
-                  <Pencil size={15} /> Edit
-                </button>
-                <button
-                  className="icon-btn danger"
-                  onClick={() => setRemove(c)}
-                  aria-label={'Hapus ' + c.name}
-                >
-                  <Trash2 size={16} />
-                </button>
-              </div>
-            </article>
-          ))}
-      </div>
-      {!data.categories.length && <Empty text="Belum ada kategori." />}
-      {edit && (
-        <Modal title={edit.id ? 'Edit kategori' : 'Tambah kategori'} onClose={() => setEdit(null)}>
-          <form className="editor-form" onSubmit={submit}>
-            <label>
-              Nama kategori
-              <input name="name" required defaultValue={edit.name} maxLength={100} />
-            </label>
-            <label>
-              Deskripsi
-              <textarea
-                name="description"
-                defaultValue={edit.description}
-                maxLength={1000}
-                rows={3}
-              />
-            </label>
-            <label>
-              URL foto
-              <input name="photo" required defaultValue={edit.photo} />
-            </label>
-            {error && <p className="form-error">{error}</p>}
-            <FormActions busy={busy} onClose={() => setEdit(null)} />
-          </form>
-        </Modal>
-      )}
-      {remove && (
-        <Modal title="Hapus kategori?" onClose={() => setRemove(null)}>
-          <p>
-            Kategori <strong>{remove.name}</strong> hanya dapat dihapus setelah rekomendasi terkait
-            dihapus.
-          </p>
-          <div className="form-actions">
-            <button className="btn outline" onClick={() => setRemove(null)}>
-              Batal
-            </button>
-            <button
-              className="btn destructive"
-              disabled={busy}
-              onClick={() =>
-                mutate(
-                  '/manage/categories/' + remove.id,
-                  'DELETE',
-                  null,
-                  () => setRemove(null),
-                  'Kategori dihapus.',
-                )
-              }
-            >
-              Hapus kategori
-            </button>
-          </div>
-        </Modal>
-      )}
-    </>
+    <div className="classification-sections">
+      <ClassificationSection {...props} kind="occasion" />
+      <ClassificationSection {...props} kind="type" />
+    </div>
   );
 }
-function Recommendations({ data, query, notify, refresh }) {
+function ClassificationSection({ data, query, notify, refresh, go, setProductCategory, kind }) {
+  const isType = kind === 'type';
+  const entries = (isType ? data.productTypes : data.categories).filter((c) =>
+    c.name.toLowerCase().includes(query.toLowerCase()),
+  );
   const [edit, setEdit] = useState(null),
-    [remove, setRemove] = useState(null),
-    { busy, error, mutate, setError } = useMutation(notify, refresh);
+    [remove, setRemove] = useState(null);
+  const { busy, error, mutate, setError } = useMutation(notify, refresh);
+  const path = '/manage/' + (isType ? 'product-types' : 'categories');
   function submit(e) {
     e.preventDefault();
     mutate(
-      '/manage/recommendations' + (edit.id ? '/' + edit.id : ''),
+      path + (edit.id ? '/' + edit.id : ''),
       edit.id ? 'PUT' : 'POST',
       Object.fromEntries(new FormData(e.target)),
       () => setEdit(null),
     );
   }
   return (
-    <>
+    <section className="classification-section">
       <div className="toolbar">
-        <span>Pilihan produk untuk setiap momen</span>
+        <div className="classification-title">
+          <span className="dimensional-icon">
+            {isType ? <Package size={22} /> : <Flower2 size={22} />}
+          </span>
+          <div>
+            <h2>{isType ? 'Jenis produk' : 'Occasion'}</h2>
+            <small>
+              {entries.length} {isType ? 'jenis' : 'momen'} ·{' '}
+              {isType ? 'Snack, uang, boneka, dan lainnya' : 'Wedding, wisuda, hadiah, dan lainnya'}
+            </small>
+          </div>
+        </div>
         <button
           className="btn primary"
-          disabled={!data.products.length || !data.categories.length}
           onClick={() => {
             setError('');
-            setEdit({});
+            setEdit({ photo: asset });
           }}
         >
-          <Plus size={17} /> Tambah rekomendasi
+          <Plus size={16} />
+          {isType ? 'Tambah jenis' : 'Tambah occasion'}
         </button>
       </div>
-      <div className="panel table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Produk</th>
-              <th>Kategori momen</th>
-              <th>Catatan rekomendasi</th>
-              <th>Aksi</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.recommendations
-              .filter((r) =>
-                (r.product_name + ' ' + r.category_name)
-                  .toLowerCase()
-                  .includes(query.toLowerCase()),
-              )
-              .map((r) => (
-                <tr key={r.id}>
-                  <td>
-                    <div className="table-product">
-                      <Photo src={r.photo} alt={r.product_name} />
-                      <strong>
-                        {r.product_name}
-                        {!r.active && <small className="cell-sub">Produk nonaktif</small>}
-                      </strong>
-                    </div>
-                  </td>
-                  <td>
-                    <span className="tag">{r.category_name}</span>
-                  </td>
-                  <td>{r.note || '—'}</td>
-                  <td>
-                    <div className="row-actions">
-                      <button
-                        className="icon-btn"
-                        onClick={() => {
-                          setError('');
-                          setEdit(r);
-                        }}
-                        aria-label={'Edit rekomendasi ' + r.product_name}
-                      >
-                        <Pencil size={16} />
-                      </button>
-                      <button
-                        className="icon-btn danger"
-                        onClick={() => setRemove(r)}
-                        aria-label={'Hapus rekomendasi ' + r.product_name}
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-          </tbody>
-        </table>
-        {!data.recommendations.length && (
-          <Empty text="Tambahkan kategori dan produk, lalu hubungkan dalam rekomendasi." />
-        )}
+      <div className="classification-grid">
+        {entries.map((c) => {
+          const items = data.products
+            .filter((p) =>
+              isType
+                ? String(p.product_type_id) === String(c.id)
+                : data.recommendations.some(
+                    (r) =>
+                      String(r.category_id) === String(c.id) &&
+                      String(r.product_id) === String(p.id),
+                  ),
+            )
+            .filter((p) => p.active);
+          return (
+            <article className="classification-card" key={c.id}>
+              <div className="classification-cover">
+                <Photo src={c.photo} alt="" />
+                <span>{c.product_count} produk aktif</span>
+              </div>
+              <div className="classification-card-body">
+                <h3>{c.name}</h3>
+                {c.description && <p>{c.description}</p>}
+                <div className="classification-preview">
+                  {items.slice(0, 3).map((p) => (
+                    <Photo key={p.id} src={p.photo} alt={p.name} />
+                  ))}
+                </div>
+                <div className="classification-actions">
+                  {!isType && (
+                    <button
+                      className="text-btn"
+                      onClick={() => {
+                        setProductCategory(String(c.id));
+                        go('products');
+                      }}
+                    >
+                      Lihat produk <ArrowUpRight size={14} />
+                    </button>
+                  )}
+                  <button
+                    className="icon-btn"
+                    aria-label={'Edit ' + c.name}
+                    onClick={() => {
+                      setError('');
+                      setEdit(c);
+                    }}
+                  >
+                    <Pencil size={15} />
+                  </button>
+                  <button
+                    className="icon-btn danger"
+                    aria-label={'Hapus ' + c.name}
+                    onClick={() => setRemove(c)}
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                </div>
+              </div>
+            </article>
+          );
+        })}
       </div>
+      {!entries.length && (
+        <Empty text={isType ? 'Belum ada jenis produk.' : 'Belum ada occasion.'} />
+      )}
       {edit && (
         <Modal
-          title={edit.id ? 'Edit rekomendasi' : 'Tambah rekomendasi'}
+          title={(edit.id ? 'Edit ' : 'Tambah ') + (isType ? 'jenis produk' : 'occasion')}
           onClose={() => setEdit(null)}
         >
           <form className="editor-form" onSubmit={submit}>
             <label>
-              Kategori
-              <select name="category_id" defaultValue={edit.category_id || ''} required>
-                <option value="" disabled>
-                  Pilih kategori
-                </option>
-                {data.categories.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
+              {isType ? 'Nama jenis' : 'Nama occasion'}
+              <input name="name" defaultValue={edit.name} required maxLength={100} />
             </label>
             <label>
-              Produk
-              <select name="product_id" defaultValue={edit.product_id || ''} required>
-                <option value="" disabled>
-                  Pilih produk
-                </option>
-                {data.products.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                    {!p.active ? ' (nonaktif)' : ''}
-                  </option>
-                ))}
-              </select>
+              Deskripsi
+              <textarea name="description" defaultValue={edit.description} maxLength={1000} />
             </label>
             <label>
-              Alasan rekomendasi
-              <textarea name="note" defaultValue={edit.note} maxLength={300} rows={3} />
+              URL foto
+              <input name="photo" defaultValue={edit.photo} required />
             </label>
             {error && <p className="form-error">{error}</p>}
             <FormActions busy={busy} onClose={() => setEdit(null)} />
@@ -2374,11 +2288,9 @@ function Recommendations({ data, query, notify, refresh }) {
         </Modal>
       )}
       {remove && (
-        <Modal title="Hapus rekomendasi?" onClose={() => setRemove(null)}>
-          <p>
-            Hapus rekomendasi <strong>{remove.product_name}</strong> dari kategori{' '}
-            {remove.category_name}?
-          </p>
+        <Modal title={'Hapus ' + remove.name + '?'} onClose={() => setRemove(null)}>
+          <p>Data yang masih digunakan produk perlu dilepas terlebih dahulu.</p>
+          {error && <p className="form-error">{error}</p>}
           <div className="form-actions">
             <button className="btn outline" onClick={() => setRemove(null)}>
               Batal
@@ -2386,24 +2298,17 @@ function Recommendations({ data, query, notify, refresh }) {
             <button
               className="btn destructive"
               disabled={busy}
-              onClick={() =>
-                mutate(
-                  '/manage/recommendations/' + remove.id,
-                  'DELETE',
-                  null,
-                  () => setRemove(null),
-                  'Rekomendasi dihapus.',
-                )
-              }
+              onClick={() => mutate(path + '/' + remove.id, 'DELETE', null, () => setRemove(null))}
             >
               Hapus
             </button>
           </div>
         </Modal>
       )}
-    </>
+    </section>
   );
 }
+
 function OrderTable({ orders, user, compact, onDetail, onEdit, onRemove, onStatus }) {
   return (
     <div className="table-wrap">

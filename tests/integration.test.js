@@ -861,3 +861,71 @@ test('products save occasion assignments atomically and keep existing recommenda
     0,
   );
 });
+
+test('admin-managed product types drive exact filtering and preserve references', async () => {
+  const type = await request('/manage/product-types', {
+    method: 'POST',
+    session: admin,
+    body: { name: 'Jenis uji ' + suffix, description: 'Custom type' },
+  });
+  assert.equal(type.status, 201);
+  assert.equal(
+    (
+      await request('/manage/product-types', {
+        method: 'POST',
+        body: { name: 'Forbidden' },
+      })
+    ).status,
+    401,
+  );
+  const response = await request('/manage/products', {
+    method: 'POST',
+    session: admin,
+    body: { ...product, name: 'Typed ' + suffix, product_type_id: type.data.id },
+  });
+  assert.equal(response.status, 201);
+  const id = response.data.id;
+  created.products.push(id);
+  assert.equal((await request('/products?type_id=' + type.data.id)).data[0].id, id);
+  assert.equal(
+    (
+      await request('/manage/products/' + id, {
+        method: 'PUT',
+        session: admin,
+        body: { ...product, name: 'Renamed type product ' + suffix },
+      })
+    ).status,
+    200,
+  );
+  assert.equal((await request('/products?type_id=' + type.data.id)).data[0].id, id);
+  assert.equal(
+    (await request('/manage/product-types/' + type.data.id, { method: 'DELETE', session: admin }))
+      .status,
+    409,
+  );
+  assert.equal(
+    (
+      await request('/manage/products/' + id, {
+        method: 'PUT',
+        session: admin,
+        body: { ...product, product_type_id: 99999999 },
+      })
+    ).status,
+    422,
+  );
+  assert.equal(
+    (
+      await request('/manage/products/' + id, {
+        method: 'PUT',
+        session: admin,
+        body: { ...product, product_type_id: null },
+      })
+    ).status,
+    200,
+  );
+  assert.equal(
+    (await request('/manage/product-types/' + type.data.id, { method: 'DELETE', session: admin }))
+      .status,
+    200,
+  );
+});

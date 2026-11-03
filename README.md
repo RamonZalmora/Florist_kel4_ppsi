@@ -7,8 +7,8 @@ Website katalog dan manajemen penjualan florist dengan tampilan pelanggan, dashb
 ## Fitur
 
 - Katalog, pencarian, detail produk, dan rekomendasi menurut kategori momen.
-- Filter occasion, jenis produk, dan anggaran: Hemat di bawah Rp100.000, Menengah Rp100.000–Rp249.999,99, dan Premium mulai Rp250.000. Filter jenis menggunakan kata pada nama dan jenis produk; admin dapat mengatur kaitan produk dengan occasion pada menu Rekomendasi.
-- Pengelolaan produk, kategori, rekomendasi, dan pesanan oleh admin. Occasion bisa dipilih langsung saat menambah atau mengedit produk; menu Rekomendasi tetap tersedia untuk mengelola catatan rekomendasi.
+- Filter occasion, jenis produk, dan anggaran: Hemat di bawah Rp100.000, Menengah Rp100.000–Rp249.999,99, dan Premium mulai Rp250.000. Filter jenis menggunakan kata pada nama dan jenis produk; admin mengatur jenis dan occasion langsung pada formulir produk.
+- Pengelolaan produk, Occasion, jenis produk, dan pesanan oleh admin. Occasion bisa dipilih langsung saat menambah atau mengedit produk; Occasion dan jenis produk dikelola melalui dua kelompok di menu Kategori.
 - Pesanan multi-item, permintaan khusus, status belum selesai atau selesai, dan riwayat penjualan.
 - Dashboard admin dan owner, filter periode penjualan, dan unduhan laporan PDF.
 - Login dengan hak akses, password bcrypt, sesi HttpOnly, serta perlindungan CSRF.
@@ -242,3 +242,7 @@ Lihat [audit fitur dan batas penggunaan](docs/FEATURE-AUDIT.md). Fokus tetap loc
 Setup lokal menambahkan satu kali 30 pesanan berlabel `[DEMO]`: 24 selesai dan enam belum selesai. Nama serta nomor kontak adalah simulasi, bukan pelanggan asli. Data ini mengisi grafik, laporan penjualan, dan produk paling dibeli berdasarkan pesanan selesai. Kategori pada produk terlaris mengikuti hubungan produk dengan Occasion.
 
 Untuk melewati penambahan demo, atur `SEED_DEMO=false` sebelum setup. Untuk menghapus data simulasi setelah mencoba, hentikan server dan jalankan `npm run demo:clear`. Perintah ini hanya menghapus pesanan dan penjualan dengan penanda demo; setup berikutnya tidak akan menambahkannya ulang.
+
+### Kategori dan jenis produk
+
+Menu Kategori berisi Occasion (Wedding, Wisuda, dan lainnya) serta Jenis Produk (Snack, Uang, Boneka, dan lainnya). Admin dapat menambah jenis baru, memilihnya saat mengisi produk, serta menyaring daftar produk per Occasion. Menu Rekomendasi sudah digabungkan ke alur ini; hubungan produk dengan Occasion yang lama tetap tersimpan. Grafik dashboard dan laporan memakai komponen React grafik garis yang sama.

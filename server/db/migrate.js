@@ -1,3 +1,4 @@
+import { createProductTypes } from './product-types.js';
 import { readFile } from 'node:fs/promises';
 import { basename } from 'node:path';
 import { db, transaction, databaseDriver } from './pool.js';
@@ -126,6 +127,13 @@ export async function migrate() {
         "ALTER TABLE store_settings ADD COLUMN map_url varchar(1000) NOT NULL DEFAULT 'https://maps.app.goo.gl/cZhMm6Z3326uHWz77'",
       );
       await client.query('INSERT INTO schema_migrations(version) VALUES($1)', ['014']);
+    }
+    if (
+      !(await client.query('SELECT version FROM schema_migrations WHERE version=$1', ['015']))
+        .rowCount
+    ) {
+      await createProductTypes(client);
+      await client.query('INSERT INTO schema_migrations(version) VALUES($1)', ['015']);
     }
   });
 }

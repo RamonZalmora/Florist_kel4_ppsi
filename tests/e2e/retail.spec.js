@@ -29,7 +29,7 @@ test('admin can upload a real product photo without store edit access', async ({
     await page.getByLabel('Nama produk').fill(name);
     await page.getByLabel('Harga (Rp)').fill('220000');
     await page.getByLabel('Ukuran', { exact: true }).fill('Medium');
-    await page.getByLabel('Jenis bunga').fill('Mawar');
+    await page.getByLabel('Bahan / rincian produk').fill('Mawar');
     await page.getByLabel('Deskripsi', { exact: true }).fill('Fixture upload');
     const image = await sharp({
       create: { width: 8, height: 8, channels: 3, background: '#dcb8aa' },

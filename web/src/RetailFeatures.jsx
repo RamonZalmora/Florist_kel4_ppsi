@@ -1,3 +1,4 @@
+import { SalesLineChart } from './SalesLineChart';
 import React, { useState } from 'react';
 import { Upload, Search, ShieldCheck, Package, LoaderCircle } from 'lucide-react';
 import { api, money, date } from './api';
@@ -273,44 +274,15 @@ export function OrderTracker() {
 }
 
 export function SalesTrend({ trend = [] }) {
-  const maximum = Math.max(...trend.map((x) => Number(x.total)), 1);
   return (
     <section className="panel sales-trend">
       <div className="panel-heading">
         <div>
           <h2>Tren penjualan periode</h2>
-          <p>
-            Harian untuk periode hingga 62 hari; bulanan untuk periode lebih panjang. Tanggal tanpa
-            penjualan bernilai nol.
-          </p>
+          <p>Pergerakan penjualan pada periode yang dipilih.</p>
         </div>
       </div>
-      {trend.length ? (
-        <div
-          className="trend-scroll"
-          role="img"
-          aria-label={
-            'Tren penjualan: ' + trend.map((x) => x.day + ' ' + money(x.total)).join(', ')
-          }
-        >
-          <div className="trend-bars">
-            {trend.map((x) => (
-              <div className="trend-column" key={x.day}>
-                <div className="trend-bar-space">
-                  <div
-                    style={{ height: (Number(x.total) / maximum) * 100 + '%' }}
-                    title={money(x.total)}
-                  />
-                </div>
-                <small>{x.day}</small>
-                <span>{money(x.total)}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : (
-        <div className="empty">Belum ada penjualan pada periode ini.</div>
-      )}
+      <SalesLineChart trend={trend} />
     </section>
   );
 }

@@ -34,6 +34,15 @@ catalog.get('/categories', async (req, res) =>
     ).rows,
   ),
 );
+catalog.get('/product-types', async (req, res) =>
+  res.json(
+    (
+      await db.query(
+        'SELECT t.*,count(p.id)::int AS product_count FROM product_types t LEFT JOIN products p ON p.product_type_id=t.id AND p.active=true GROUP BY t.id ORDER BY t.id',
+      )
+    ).rows,
+  ),
+);
 catalog.get('/products', async (req, res) => {
   const search = String(req.query.search || '').slice(0, 120),
     category = req.query.category ? idSchema.parse(req.query.category) : null;
@@ -45,6 +54,7 @@ catalog.get('/products', async (req, res) => {
     : null;
   if (minPrice !== null && maxPrice !== null && minPrice > maxPrice)
     fail(422, 'Harga minimum tidak boleh melebihi harga maksimum.');
+  const typeId = req.query.type_id ? idSchema.parse(req.query.type_id) : null;
   const type = req.query.type ? z.enum(Object.keys(productTypes)).parse(req.query.type) : null;
   const sort = z
     .enum(['recommended', 'price_asc', 'price_desc', 'popular', 'newest'])
@@ -59,13 +69,14 @@ catalog.get('/products', async (req, res) => {
   res.json(
     (
       await db.query(
-        `SELECT p.*,COALESCE((SELECT sum(oi.quantity) FROM order_items oi JOIN sales s ON s.order_id=oi.order_id WHERE oi.product_id=p.id),0) AS sold_count,(SELECT count(*)::int FROM product_favorites f WHERE f.product_id=p.id) AS favorite_count,COALESCE((SELECT json_agg(json_build_object('id',c.id,'name',c.name)) FROM recommendations r JOIN categories c ON c.id=r.category_id WHERE r.product_id=p.id),'[]') AS categories FROM products p WHERE p.active=true AND (p.name ILIKE $1 OR p.description ILIKE $1) AND ($2::bigint IS NULL OR EXISTS(SELECT 1 FROM recommendations r WHERE r.product_id=p.id AND r.category_id=$2)) AND ($3::numeric IS NULL OR p.price<=$3) AND ($4::numeric IS NULL OR p.price>=$4) AND ($5::text[] IS NULL OR lower(p.name || ' ' || p.flower_type) LIKE ANY($5::text[])) ORDER BY ${order}`,
+        `SELECT p.*,COALESCE((SELECT sum(oi.quantity) FROM order_items oi JOIN sales s ON s.order_id=oi.order_id WHERE oi.product_id=p.id),0) AS sold_count,(SELECT count(*)::int FROM product_favorites f WHERE f.product_id=p.id) AS favorite_count,COALESCE((SELECT json_agg(json_build_object('id',c.id,'name',c.name)) FROM recommendations r JOIN categories c ON c.id=r.category_id WHERE r.product_id=p.id),'[]') AS categories FROM products p WHERE p.active=true AND (p.name ILIKE $1 OR p.description ILIKE $1) AND ($2::bigint IS NULL OR EXISTS(SELECT 1 FROM recommendations r WHERE r.product_id=p.id AND r.category_id=$2)) AND ($3::numeric IS NULL OR p.price<=$3) AND ($4::numeric IS NULL OR p.price>=$4) AND ($5::text[] IS NULL OR lower(p.name || ' ' || p.flower_type) LIKE ANY($5::text[])) AND ($6::bigint IS NULL OR p.product_type_id=$6) ORDER BY ${order}`,
         [
           '%' + search + '%',
           category,
           maxPrice,
           minPrice,
           type ? productTypes[type].map((value) => `%${value}%`) : null,
+          typeId,
         ],
       )
     ).rows,
@@ -134,9 +145,10 @@ for (const [path, table, schema, columns] of [
     'products',
     'products',
     productSchema.extend({ category_ids: z.array(idSchema).max(200).optional() }),
-    ['name', 'price', 'flower_type', 'size', 'description', 'photo', 'active'],
+    ['name', 'price', 'flower_type', 'size', 'description', 'photo', 'active', 'product_type_id'],
   ],
   ['categories', 'categories', categorySchema, ['name', 'description', 'photo']],
+  ['product-types', 'product_types', categorySchema, ['name', 'description', 'photo']],
   [
     'recommendations',
     'recommendations',
@@ -147,6 +159,13 @@ for (const [path, table, schema, columns] of [
   management.post('/' + path, async (req, res) => {
     const body = schema.parse(req.body);
     const row = await transaction(async (client) => {
+      if (
+        table === 'products' &&
+        body.product_type_id &&
+        !(await client.query('SELECT id FROM product_types WHERE id=$1', [body.product_type_id]))
+          .rowCount
+      )
+        fail(422, 'Jenis produk tidak ditemukan.');
       const { rows } = await client.query(
         `INSERT INTO ${table}(${columns.join(',')}) VALUES(${columns.map((_, i) => '$' + (i + 1)).join(',')}) RETURNING *`,
         columns.map((k) => body[k]),
@@ -160,10 +179,18 @@ for (const [path, table, schema, columns] of [
   management.put('/' + path + '/:id', async (req, res) => {
     const body = schema.parse(req.body),
       id = idSchema.parse(req.params.id);
+    const fields = columns.filter((k) => body[k] !== undefined);
     const row = await transaction(async (client) => {
+      if (
+        table === 'products' &&
+        body.product_type_id &&
+        !(await client.query('SELECT id FROM product_types WHERE id=$1', [body.product_type_id]))
+          .rowCount
+      )
+        fail(422, 'Jenis produk tidak ditemukan.');
       const { rows } = await client.query(
-        `UPDATE ${table} SET ${columns.map((k, i) => k + '=$' + (i + 1)).join(',')}${table === 'products' ? ',updated_at=now()' : ''} WHERE id=$${columns.length + 1} RETURNING *`,
-        [...columns.map((k) => body[k]), id],
+        `UPDATE ${table} SET ${fields.map((k, i) => k + '=$' + (i + 1)).join(',')}${table === 'products' ? ',updated_at=now()' : ''} WHERE id=$${fields.length + 1} RETURNING *`,
+        [...fields.map((k) => body[k]), id],
       );
       if (!rows.length) fail(404, 'Data tidak ditemukan.');
       if (table === 'products' && body.category_ids !== undefined)

@@ -28,6 +28,18 @@ for (const role of ['admin', 'owner']) {
         .reduce((n, p) => n + Number(p.sold_count), 0);
       await expect(page.locator('.favorite-ring strong')).toHaveText(String(total));
     }
+    const productTypes = await (await page.request.get('/api/product-types')).json();
+    const type = productTypes.find((t) =>
+      dashboard.popular.some((p) => String(p.product_type_id) === String(t.id)),
+    );
+    if (type) {
+      await page.getByLabel('Kategori produk terlaris').selectOption('type:' + type.id);
+      const count = dashboard.popular
+        .filter((p) => String(p.product_type_id) === String(type.id))
+        .slice(0, 4)
+        .reduce((n, p) => n + Number(p.sold_count), 0);
+      await expect(page.locator('.favorite-ring strong')).toHaveText(String(count));
+    }
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );
