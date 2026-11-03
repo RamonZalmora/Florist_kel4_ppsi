@@ -4940,3 +4940,56 @@ tr:hover td {
     display: none;
   }
 }
+
+/* Occasions can be assigned directly while editing a product. */
+.product-occasions {
+  margin: 0;
+  padding: 16px;
+  border: 1px solid #cde1ee;
+  border-radius: 14px;
+  background: #f4faff;
+}
+.product-occasions legend {
+  padding: 0 5px;
+  color: #173e5e;
+  font-weight: 700;
+  font-size: 13px;
+}
+.product-occasions p {
+  color: #607d90;
+  font-size: 12px;
+  margin: 0 0 12px;
+}
+.occasion-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.occasion-options label {
+  position: relative;
+  cursor: pointer;
+}
+.occasion-options input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+.occasion-options span {
+  display: inline-block;
+  border: 1px solid #cadee9;
+  background: white;
+  color: #365b70;
+  border-radius: 99px;
+  padding: 8px 12px;
+  font-size: 12px;
+}
+.occasion-options input:checked + span {
+  color: white;
+  background: #106d89;
+  border-color: #106d89;
+}
+.occasion-options input:focus-visible + span {
+  outline: 3px solid #68c6e4;
+  outline-offset: 2px;
+}

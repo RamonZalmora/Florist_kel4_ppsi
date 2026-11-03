@@ -1628,6 +1628,7 @@ function Products({ data, query, notify, refresh }) {
       body = Object.fromEntries(f);
     body.price = Number(body.price);
     body.active = f.get('active') === 'on';
+    body.category_ids = f.getAll('category_ids').map(Number);
     mutate(
       '/manage/products' + (edit.id ? '/' + edit.id : ''),
       edit.id ? 'PUT' : 'POST',
@@ -1664,6 +1665,12 @@ function Products({ data, query, notify, refresh }) {
                     <div>
                       <strong>{p.name}</strong>
                       <small>PRD-{String(p.id).padStart(3, '0')}</small>
+                      <small>
+                        {data.recommendations
+                          .filter((r) => String(r.product_id) === String(p.id))
+                          .map((r) => r.category_name)
+                          .join(' · ') || 'Belum ada occasion'}
+                      </small>
                     </div>
                   </div>
                 </td>
@@ -1750,6 +1757,31 @@ function Products({ data, query, notify, refresh }) {
                 rows={4}
               />
             </label>
+            <fieldset className="product-occasions">
+              <legend>Occasion / kategori</legend>
+              <p>Pilih satu atau beberapa momen yang cocok untuk produk ini.</p>
+              {data.categories.length ? (
+                <div className="occasion-options">
+                  {data.categories.map((c) => (
+                    <label key={c.id}>
+                      <input
+                        type="checkbox"
+                        name="category_ids"
+                        value={c.id}
+                        defaultChecked={data.recommendations.some(
+                          (r) =>
+                            String(r.product_id) === String(edit.id) &&
+                            String(r.category_id) === String(c.id),
+                        )}
+                      />
+                      <span>{c.name}</span>
+                    </label>
+                  ))}
+                </div>
+              ) : (
+                <p>Belum ada occasion. Tambahkan kategori di menu Kategori.</p>
+              )}
+            </fieldset>
             <PhotoField initialValue={edit.photo} onBusyChange={setUploading} />
             <label className="checkbox">
               <input type="checkbox" name="active" defaultChecked={edit.active} /> Aktif di katalog

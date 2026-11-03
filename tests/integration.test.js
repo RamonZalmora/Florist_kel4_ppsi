@@ -764,3 +764,75 @@ test('legacy processing becomes unfinished while cancelled and completed history
     for (const id of legacy) await db.query('DELETE FROM orders WHERE id=$1', [id]);
   }
 });
+
+test('products save occasion assignments atomically and keep existing recommendation notes', async () => {
+  const categories = [];
+  for (const name of ['First', 'Second']) {
+    const response = await request('/manage/categories', {
+      method: 'POST',
+      session: admin,
+      body: { name: `${name} occasion ${suffix}` },
+    });
+    assert.equal(response.status, 201);
+    categories.push(response.data.id);
+    created.categories.push(response.data.id);
+  }
+  const body = { ...product, name: `Occasion product ${suffix}`, category_ids: categories };
+  const made = await request('/manage/products', { method: 'POST', session: admin, body });
+  assert.equal(made.status, 201);
+  const id = made.data.id;
+  created.products.push(id);
+  let links = (await request('/manage/recommendations', { session: admin })).data.filter(
+    (r) => r.product_id === id,
+  );
+  assert.equal(links.length, 2);
+  await db.query("UPDATE recommendations SET note='Catatan khusus' WHERE id=$1", [links[0].id]);
+  assert.equal(
+    (await request('/manage/products/' + id, { method: 'PUT', session: admin, body })).status,
+    200,
+  );
+  links = (await request('/manage/recommendations', { session: admin })).data.filter(
+    (r) => r.product_id === id,
+  );
+  assert.ok(links.some((r) => r.note === 'Catatan khusus'));
+  const failed = await request('/manage/products/' + id, {
+    method: 'PUT',
+    session: admin,
+    body: { ...body, name: 'Should rollback', category_ids: [9999999] },
+  });
+  assert.equal(failed.status, 422);
+  assert.equal((await request('/products/' + id)).data.name, body.name);
+  assert.equal((await request('/products/' + id)).data.categories.length, 2);
+  assert.equal(
+    (
+      await request('/manage/products/' + id, {
+        method: 'PUT',
+        session: admin,
+        body: { ...body, category_ids: [categories[0]] },
+      })
+    ).status,
+    200,
+  );
+  assert.equal((await request('/products/' + id)).data.categories.length, 1);
+  assert.equal(
+    (
+      await request('/manage/products/' + id, {
+        method: 'PUT',
+        session: admin,
+        body: { ...body, category_ids: [] },
+      })
+    ).status,
+    200,
+  );
+  assert.equal((await request('/products/' + id)).data.categories.length, 0);
+  const invalidNew = await request('/manage/products', {
+    method: 'POST',
+    session: admin,
+    body: { ...body, name: `Rollback ${suffix}`, category_ids: [9999999] },
+  });
+  assert.equal(invalidNew.status, 422);
+  assert.equal(
+    (await request('/products?search=' + encodeURIComponent(`Rollback ${suffix}`))).data.length,
+    0,
+  );
+});

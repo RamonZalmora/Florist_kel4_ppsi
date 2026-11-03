@@ -8,7 +8,7 @@ Website katalog dan manajemen penjualan florist dengan tampilan pelanggan, dashb
 
 - Katalog, pencarian, detail produk, dan rekomendasi menurut kategori momen.
 - Filter occasion, jenis produk, dan anggaran: Hemat di bawah Rp100.000, Menengah Rp100.000–Rp249.999,99, dan Premium mulai Rp250.000. Filter jenis menggunakan kata pada nama dan jenis produk; admin dapat mengatur kaitan produk dengan occasion pada menu Rekomendasi.
-- Pengelolaan produk, kategori, rekomendasi, dan pesanan oleh admin.
+- Pengelolaan produk, kategori, rekomendasi, dan pesanan oleh admin. Occasion bisa dipilih langsung saat menambah atau mengedit produk; menu Rekomendasi tetap tersedia untuk mengelola catatan rekomendasi.
 - Pesanan multi-item, permintaan khusus, status belum selesai atau selesai, dan riwayat penjualan.
 - Dashboard admin dan owner, filter periode penjualan, dan unduhan laporan PDF.
 - Login dengan hak akses, password bcrypt, sesi HttpOnly, serta perlindungan CSRF.

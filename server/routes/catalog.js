@@ -2,7 +2,7 @@ import { storeInfo } from '../store.js';
 import { z } from 'zod';
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
-import { db } from '../db/pool.js';
+import { db, transaction } from '../db/pool.js';
 import { authenticate, authorize } from '../auth.js';
 import {
   idSchema,
@@ -133,7 +133,7 @@ for (const [path, table, schema, columns] of [
   [
     'products',
     'products',
-    productSchema,
+    productSchema.extend({ category_ids: z.array(idSchema).max(200).optional() }),
     ['name', 'price', 'flower_type', 'size', 'description', 'photo', 'active'],
   ],
   ['categories', 'categories', categorySchema, ['name', 'description', 'photo']],
@@ -146,21 +146,31 @@ for (const [path, table, schema, columns] of [
 ]) {
   management.post('/' + path, async (req, res) => {
     const body = schema.parse(req.body);
-    const { rows } = await db.query(
-      `INSERT INTO ${table}(${columns.join(',')}) VALUES(${columns.map((_, i) => '$' + (i + 1)).join(',')}) RETURNING *`,
-      columns.map((k) => body[k]),
-    );
-    res.status(201).json(rows[0]);
+    const row = await transaction(async (client) => {
+      const { rows } = await client.query(
+        `INSERT INTO ${table}(${columns.join(',')}) VALUES(${columns.map((_, i) => '$' + (i + 1)).join(',')}) RETURNING *`,
+        columns.map((k) => body[k]),
+      );
+      if (table === 'products' && body.category_ids !== undefined)
+        await syncProductCategories(client, rows[0].id, body.category_ids);
+      return rows[0];
+    });
+    res.status(201).json(row);
   });
   management.put('/' + path + '/:id', async (req, res) => {
     const body = schema.parse(req.body),
       id = idSchema.parse(req.params.id);
-    const { rows } = await db.query(
-      `UPDATE ${table} SET ${columns.map((k, i) => k + '=$' + (i + 1)).join(',')}${table === 'products' ? ',updated_at=now()' : ''} WHERE id=$${columns.length + 1} RETURNING *`,
-      [...columns.map((k) => body[k]), id],
-    );
-    if (!rows.length) fail(404, 'Data tidak ditemukan.');
-    res.json(rows[0]);
+    const row = await transaction(async (client) => {
+      const { rows } = await client.query(
+        `UPDATE ${table} SET ${columns.map((k, i) => k + '=$' + (i + 1)).join(',')}${table === 'products' ? ',updated_at=now()' : ''} WHERE id=$${columns.length + 1} RETURNING *`,
+        [...columns.map((k) => body[k]), id],
+      );
+      if (!rows.length) fail(404, 'Data tidak ditemukan.');
+      if (table === 'products' && body.category_ids !== undefined)
+        await syncProductCategories(client, rows[0].id, body.category_ids);
+      return rows[0];
+    });
+    res.json(row);
   });
   management.delete('/' + path + '/:id', async (req, res) => {
     const result = await db.query(`DELETE FROM ${table} WHERE id=$1 RETURNING id`, [
@@ -169,6 +179,22 @@ for (const [path, table, schema, columns] of [
     if (!result.rowCount) fail(404, 'Data tidak ditemukan.');
     res.json({ ok: true });
   });
+}
+async function syncProductCategories(client, productId, categoryIds) {
+  const ids = [...new Set(categoryIds)];
+  if (ids.length) {
+    const found = await client.query('SELECT id FROM categories WHERE id=ANY($1::bigint[])', [ids]);
+    if (found.rowCount !== ids.length) fail(422, 'Kategori tidak ditemukan.');
+  }
+  await client.query(
+    'DELETE FROM recommendations WHERE product_id=$1 AND NOT (category_id=ANY($2::bigint[]))',
+    [productId, ids],
+  );
+  for (const id of ids)
+    await client.query(
+      'INSERT INTO recommendations(category_id,product_id) VALUES($1,$2) ON CONFLICT(category_id,product_id) DO NOTHING',
+      [id, productId],
+    );
 }
 management.get('/recommendations', async (req, res) =>
   res.json(
