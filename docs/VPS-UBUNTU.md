@@ -84,7 +84,7 @@ Respons harus menunjukkan `status: ok` dan `driver: postgres`. Akun yang dipinda
 
 ## 6. DNS, HTTPS dan pemeriksaan
 
-Setelah data dan aplikasi siap, ubah A record untuk domain yang digunakan ke IP VPS dan tunggu DNS mengarah ke VPS. Periksa AAAA atau record www yang sudah ada sebelum mengubahnya; jangan mengubah record email. `SITE_ADDRESS` default hanya melayani `bienvendre.id`.
+Setelah data dan aplikasi siap, ubah A record untuk domain yang digunakan ke IP VPS dan tunggu DNS mengarah ke VPS. Periksa AAAA atau record www yang sudah ada sebelum mengubahnya; jangan mengubah record email. `www.bienvendre.id` harus mengarah ke domain utama atau IP VPS dan akan dialihkan ke `bienvendre.id`.
 
 ```sh
 docker compose --env-file .env.production -f compose.production.yaml up -d proxy
