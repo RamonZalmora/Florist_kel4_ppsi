@@ -1699,14 +1699,27 @@ function Dashboard({ data, user, go }) {
   const trend = (data.dashboard.trend30 || weekTrend).slice(-salesDays);
   const best = popular.slice(0, 4);
   const periodTotal = trend.reduce((sum, day) => sum + Number(day.total), 0);
-  const occasionColors = ['#23486a', '#467aaf', '#438d98', '#8db3ce'];
+  const occasionColors = [
+    '#8255b3',
+    '#218b9c',
+    '#138575',
+    '#cc587d',
+    '#d38925',
+    '#3469bd',
+    '#7b8e35',
+    '#bf5740',
+    '#5b63b6',
+    '#a36b40',
+    '#317c51',
+    '#75647c',
+  ];
   const occasions = (
     (sellerGroup === 'category' ? data.dashboard.occasionSales : data.dashboard.productTypeSales) ||
     []
   )
     .map((occasion, index) => ({
       ...occasion,
-      color: occasionColors[index % occasionColors.length],
+      color: occasionColors[index] || `hsl(${Math.round(index * 137.508) % 360} 58% 42%)`,
       quantity:
         categoryPeriod === 'all'
           ? Number(occasion.total_orders || 0)
@@ -1968,7 +1981,9 @@ function Dashboard({ data, user, go }) {
                       {occasion.name}
                       <small>{occasion.quantity} pesanan</small>
                     </span>
-                    <strong>{percentLabel(occasion.quantity)}</strong>
+                    <strong style={{ color: occasion.color }}>
+                      {percentLabel(occasion.quantity)}
+                    </strong>
                   </div>
                 ))
               ) : (
