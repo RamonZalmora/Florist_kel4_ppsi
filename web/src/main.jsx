@@ -1,3 +1,4 @@
+import { defaultAboutStory } from './store-content';
 import { SalesLineChart } from './SalesLineChart';
 import { hasCoordinates, storeMapLink, storeMapEmbed } from './store-location';
 import { OrderStatusChart } from './OrderStatusChart';
@@ -547,14 +548,7 @@ function AboutPage({ store, whatsapp, onExplore }) {
           </h2>
         </div>
         <div>
-          <p>
-            {store.about_story ||
-              'Kami membantu Anda menemukan rangkaian yang sesuai untuk pernikahan, wisuda, ulang tahun, dan hadiah spesial. Jelajahi koleksi dan rekomendasi berdasarkan momen yang ingin dirayakan.'}
-          </p>
-          <p>
-            {store.about_service ||
-              'Setiap produk dilengkapi informasi jenis bunga, ukuran, dan harga. Untuk mendiskusikan pilihan atau permintaan khusus, hubungi toko melalui kanal yang tersedia.'}
-          </p>
+          <p className="about-story-text">{store.about_story || defaultAboutStory}</p>
         </div>
       </section>
       <section className="about-values">

@@ -38,8 +38,6 @@ test('owner settings save stories and location to the public About page', async 
     await screenshot(page, `docs/screenshots/owner-settings-${info.project.name}.png`);
     await page.getByRole('tab', { name: 'Tentang Kami', exact: true }).click();
     await page.getByLabel('Cerita toko di Tentang Kami').fill('Rangkaian penuh cerita dari owner.');
-    await page.getByLabel('Layanan di Tentang Kami').fill('Konsultasi buket untuk momen spesial.');
-    await page.getByLabel('Tips perawatan bunga').fill('Ganti air bersih setiap hari.');
     await page.getByRole('tab', { name: 'Lokasi toko', exact: true }).click();
     await page.getByLabel('Alamat toko', { exact: true }).fill('Jl. Melati, Pekanbaru, Riau');
     await page.getByLabel('Latitude (lintang)').fill('0.5071');
@@ -61,8 +59,8 @@ test('owner settings save stories and location to the public About page', async 
     ).toBeVisible();
     await expect(
       page.getByText('Konsultasi buket untuk momen spesial.', { exact: true }),
-    ).toBeVisible();
-    await expect(page.getByText('Ganti air bersih setiap hari.', { exact: true })).toBeVisible();
+    ).toHaveCount(0);
+    await expect(page.getByText('Ganti air bersih setiap hari.', { exact: true })).toHaveCount(0);
     await expect(page.locator('.location-address')).toContainText('Jl. Melati, Pekanbaru, Riau');
     await expect(page.getByTitle('Peta lokasi Bien Vendre')).toHaveAttribute(
       'src',

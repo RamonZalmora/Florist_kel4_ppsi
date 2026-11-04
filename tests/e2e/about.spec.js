@@ -39,7 +39,7 @@ test('about page links to the channels configured by the store', async ({ page }
   );
   await page.goto('/about');
   await expect(page.getByText('Cerita khusus dari owner')).toBeVisible();
-  await expect(page.getByText('Konsultasi khusus dari owner')).toBeVisible();
+  await expect(page.getByText('Konsultasi khusus dari owner')).toHaveCount(0);
   await expect(page.getByRole('heading', { name: 'Merawat bunga potong' })).toHaveCount(0);
   await expect(
     page.locator('.about-contact .social-links').getByRole('link', { name: 'WhatsApp' }),

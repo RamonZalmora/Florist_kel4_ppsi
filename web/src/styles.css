@@ -13946,3 +13946,7 @@ tr:hover td {
     font-size: 26px;
   }
 }
+
+.about-story .about-story-text {
+  white-space: pre-line;
+}

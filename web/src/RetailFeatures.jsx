@@ -1,3 +1,4 @@
+import { defaultAboutStory } from './store-content';
 import { SalesLineChart } from './SalesLineChart';
 import React, { useState } from 'react';
 import {
@@ -110,7 +111,10 @@ export function PhotoField({
 }
 
 export function StoreEditor({ store, onSaved, notify }) {
-  const [draft, setDraft] = useState(store),
+  const [draft, setDraft] = useState({
+      ...store,
+      about_story: store.about_story || defaultAboutStory,
+    }),
     [section, setSection] = useState('profile');
   const [busy, setBusy] = useState(false),
     [uploading, setUploading] = useState(false),
@@ -145,7 +149,12 @@ export function StoreEditor({ store, onSaved, notify }) {
   async function submit(e) {
     e.preventDefault();
     setError('');
-    const body = { ...draft, logo: new FormData(e.target).get('logo') };
+    const body = {
+      ...draft,
+      about_service: '',
+      care_tips: '',
+      logo: new FormData(e.target).get('logo'),
+    };
     for (const key of ['latitude', 'longitude'])
       body[key] = String(body[key] ?? '').trim() === '' ? null : Number(body[key]);
     if ((body.latitude === null) !== (body.longitude === null)) {
@@ -240,23 +249,12 @@ export function StoreEditor({ store, onSaved, notify }) {
             {field('about_story', 'Cerita toko di Tentang Kami', {
               multiline: true,
               maxLength: 2000,
-              rows: 5,
-              placeholder: 'Awal perjalanan, karakter, dan nilai toko Anda.',
-            })}
-            {field('about_service', 'Layanan di Tentang Kami', {
-              multiline: true,
-              maxLength: 2000,
-              rows: 4,
-              placeholder: 'Layanan, konsultasi, dan pilihan pesanan yang tersedia.',
-            })}
-            {field('care_tips', 'Tips perawatan bunga', {
-              multiline: true,
-              maxLength: 2000,
-              rows: 3,
+              rows: 9,
+              placeholder: 'Ceritakan tentang toko, produk, dan cara pemesanan dalam satu teks.',
             })}
             <p className="owner-inline-note">
               <Sparkles size={16} />
-              Kosongkan bagian cerita untuk memakai teks bawaan landing.
+              Gunakan satu kolom ini untuk cerita toko, pilihan produk, dan cara pemesanan.
             </p>
           </section>
           <section
