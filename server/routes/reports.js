@@ -19,7 +19,7 @@ reports.get('/pdf', async (req, res) => {
     'Content-Type': 'application/pdf',
     'Content-Disposition': `attachment; filename="bien-vendre-${report.from}-${report.to}.pdf"`,
   });
-  salesPdf(report, store, res);
+  await salesPdf(report, store, res);
 });
 reports.get('/excel', async (req, res) => {
   const report = await salesReport(req.query, { paginate: false, defaultPeriod: 'custom' });

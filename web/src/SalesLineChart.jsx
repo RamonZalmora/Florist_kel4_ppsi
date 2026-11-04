@@ -39,14 +39,14 @@ export function SalesLineChart({
       >
         <defs>
           <linearGradient id={gradient} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#527ee8" stopOpacity=".4" />
-            <stop offset="65%" stopColor="#4fc5cd" stopOpacity=".14" />
-            <stop offset="100%" stopColor="#4fc5cd" stopOpacity=".02" />
+            <stop offset="0%" stopColor="#467aaf" stopOpacity=".4" />
+            <stop offset="65%" stopColor="#438d98" stopOpacity=".14" />
+            <stop offset="100%" stopColor="#438d98" stopOpacity=".02" />
           </linearGradient>
           <linearGradient id={gradient + '-line'} x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="#315bc3" />
-            <stop offset="50%" stopColor="#6b6cce" />
-            <stop offset="100%" stopColor="#19a7af" />
+            <stop offset="0%" stopColor="#23486a" />
+            <stop offset="50%" stopColor="#467aaf" />
+            <stop offset="100%" stopColor="#438d98" />
           </linearGradient>
         </defs>
         {[0, 0.25, 0.5, 0.75, 1].map((r) => (

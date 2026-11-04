@@ -1,3 +1,7 @@
+import sharp from 'sharp';
+import { readFile } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
+import { resolve, sep } from 'node:path';
 import PDFDocument from 'pdfkit';
 import writeExcelFile from 'write-excel-file/node';
 import { unzipSync, zipSync, strFromU8, strToU8 } from 'fflate';
@@ -8,7 +12,39 @@ const money = (value) =>
 const periodLabel = (report) => `${report.from} - ${report.to}`;
 const navy = '#183e67';
 
-export function salesPdf(report, store, response) {
+async function reportLogo(store) {
+  const publicRoots = [
+    new URL('../../dist/', import.meta.url),
+    new URL('../../web/public/', import.meta.url),
+  ];
+  const candidates = [];
+  const logo = store.logo || '/assets/bien-mark.svg';
+  if (logo.startsWith('/assets/')) {
+    for (const rootUrl of publicRoots) {
+      const root = resolve(fileURLToPath(rootUrl));
+      const path = resolve(root, '.' + logo);
+      if (path.startsWith(root + sep)) candidates.push(path);
+    }
+  } else if (/^\/uploads\/[a-f0-9-]{36}\.webp$/.test(logo)) {
+    candidates.push(fileURLToPath(new URL('../../.local' + logo, import.meta.url)));
+  }
+  for (const root of publicRoots)
+    candidates.push(fileURLToPath(new URL('assets/bien-mark.svg', root)));
+  for (const path of candidates) {
+    try {
+      return await sharp(await readFile(path), { limitInputPixels: 25000000 })
+        .resize(160, 160, { fit: 'inside' })
+        .png()
+        .toBuffer();
+    } catch {
+      /* Try the bundled brand mark if a configured local logo is unavailable. */
+    }
+  }
+  return null;
+}
+
+export async function salesPdf(report, store, response) {
+  const logo = await reportLogo(store);
   const doc = new PDFDocument({ size: 'A4', margin: 44, bufferPages: true });
   doc.pipe(response);
   const left = 44,
@@ -25,12 +61,18 @@ export function salesPdf(report, store, response) {
       doc.text(label, x, y + 9, { width: w, align });
     return y + 28;
   }
-  doc.fillColor(navy).font('Helvetica-Bold').fontSize(23).text(store.name, left, 40, { width });
+  if (logo) doc.image(logo, left, 40, { fit: [48, 48], align: 'center', valign: 'center' });
+  const titleLeft = logo ? left + 62 : left;
+  doc
+    .fillColor(navy)
+    .font('Helvetica-Bold')
+    .fontSize(23)
+    .text(store.name, titleLeft, 40, { width: width - (titleLeft - left) });
   doc
     .fillColor('#6a8cab')
     .font('Helvetica-Bold')
     .fontSize(10)
-    .text('LAPORAN PENJUALAN', left, 73, { width });
+    .text('LAPORAN PENJUALAN', titleLeft, 73, { width: width - (titleLeft - left) });
   doc
     .fillColor('#718aa1')
     .font('Helvetica')

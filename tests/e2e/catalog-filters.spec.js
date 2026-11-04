@@ -16,7 +16,10 @@ test('occasion, product type and budget filters combine and reset on desktop and
     'true',
   );
   await filters.getByRole('button', { name: 'Boneka', exact: true }).click();
-  await filters.getByRole('button', { name: /Hemat/ }).click();
+  await filters.getByRole('spinbutton', { name: 'Harga minimum (Rp)', exact: true }).fill('10000');
+  await filters
+    .getByRole('spinbutton', { name: 'Harga maksimum (Rp)', exact: true })
+    .fill('99999.99');
   await expect(page.locator('.catalog-result-bar')).toContainText('produk ditemukan');
   await expect(page.locator('.product-card').first()).toBeVisible();
   const products = await (
@@ -29,9 +32,27 @@ test('occasion, product type and budget filters combine and reset on desktop and
     'aria-pressed',
     'false',
   );
-  await expect(filters.getByRole('button', { name: /Hemat/ })).toHaveAttribute(
-    'aria-pressed',
-    'false',
-  );
+  await expect(
+    filters.getByRole('spinbutton', { name: 'Harga minimum (Rp)', exact: true }),
+  ).toHaveValue('');
+  await expect(
+    filters.getByRole('spinbutton', { name: 'Harga maksimum (Rp)', exact: true }),
+  ).toHaveValue('');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
+test('collection expands inline and can be collapsed without losing the original products', async ({
+  page,
+}) => {
+  await page.goto('/catalog?view=collection');
+  await expect(page.locator('.product-grid .product-card')).toHaveCount(8);
+  const first = await page.locator('.product-grid .product-card').first().textContent();
+  await page.getByRole('button', { name: 'Lihat lebih banyak', exact: true }).click();
+  await expect(page.locator('.product-grid .product-card')).toHaveCount(16);
+  await expect(page.locator('.product-grid .product-card').first()).toHaveText(first);
+  await page.getByRole('button', { name: 'Tampilkan lebih sedikit', exact: true }).click();
+  await expect(page.locator('.product-grid .product-card')).toHaveCount(8);
+  await expect(
+    page.getByRole('button', { name: 'Tampilkan lebih sedikit', exact: true }),
+  ).toHaveCount(0);
 });

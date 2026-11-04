@@ -24,6 +24,7 @@ export function PhotoField({
   onBusyChange = () => {},
   onValueChange = () => {},
   uploadLabel,
+  blankWhenEmpty = false,
 }) {
   const [url, setUrl] = useState(initialValue),
     [busy, setBusy] = useState(false),
@@ -55,10 +56,20 @@ export function PhotoField({
         {url ? (
           <img className="upload-preview" src={url} alt="Pratinjau foto" />
         ) : (
-          <div className="photo-upload-placeholder">
-            <Upload size={32} />
-            <strong>Tambahkan foto terbaik</strong>
-            <span>Tampilkan karakter koleksi Anda</span>
+          <div
+            className={
+              blankWhenEmpty
+                ? 'photo-upload-placeholder photo-upload-blank'
+                : 'photo-upload-placeholder'
+            }
+          >
+            {!blankWhenEmpty && (
+              <>
+                <Upload size={32} />
+                <strong>Tambahkan foto terbaik</strong>
+                <span>Tampilkan karakter koleksi Anda</span>
+              </>
+            )}
           </div>
         )}
         <label className="upload-label">
@@ -85,7 +96,7 @@ export function PhotoField({
             setUrl(e.target.value);
             onValueChange(e.target.value);
           }}
-          required
+          required={!blankWhenEmpty}
           placeholder="https://… atau /uploads/…"
         />
       </label>

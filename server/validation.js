@@ -18,7 +18,10 @@ export const productSchema = z.object({
   product_type_id: idSchema.nullable().optional(),
   size: text(80),
   description: text(5000),
-  photo: photo.default('/assets/floral-hero.svg'),
+  photo: z.preprocess(
+    (value) => (value === '' || value == null ? '/assets/product-empty.svg' : value),
+    photo,
+  ),
   active: z.boolean().default(true),
 });
 export const categorySchema = z.object({

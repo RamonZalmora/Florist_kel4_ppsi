@@ -51,7 +51,7 @@ const statuses = {
   pending: 'Belum selesai',
   completed: 'Selesai',
 };
-const asset = '/assets/bouquet-rose.svg';
+const asset = '/assets/product-empty.svg';
 function Photo({ src, alt, ...props }) {
   return (
     <img
@@ -72,7 +72,7 @@ function Photo({ src, alt, ...props }) {
       alt={alt}
       loading="lazy"
       onError={(e) => {
-        if (!e.currentTarget.src.endsWith('bouquet-rose.svg')) e.currentTarget.src = asset;
+        if (!e.currentTarget.src.endsWith('product-empty.svg')) e.currentTarget.src = asset;
       }}
       {...props}
     />
@@ -667,7 +667,8 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
     [store, setStore] = useState({}),
     [category, setCategory] = useState(''),
     [productType, setProductType] = useState(''),
-    [budget, setBudget] = useState(''),
+    [minPrice, setMinPrice] = useState(''),
+    [maxPrice, setMaxPrice] = useState(''),
     [search, setSearch] = useState(''),
     [loading, setLoading] = useState(true),
     [error, setError] = useState(''),
@@ -699,9 +700,8 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
                   )?.id,
                 }
               : {}),
-            ...(budget === 'hemat' ? { max_price: '99999.99' } : {}),
-            ...(budget === 'menengah' ? { min_price: '100000', max_price: '249999.99' } : {}),
-            ...(budget === 'premium' ? { min_price: '250000' } : {}),
+            ...(minPrice !== '' ? { min_price: minPrice } : {}),
+            ...(maxPrice !== '' ? { max_price: maxPrice } : {}),
           }),
       )
         .then((p) => {
@@ -721,11 +721,14 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
       active = false;
       clearTimeout(timer);
     };
-  }, [category, productType, budget, search, sort, occasion, availableTypes]);
+  }, [category, productType, minPrice, maxPrice, search, sort, occasion, availableTypes]);
   useLayoutEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
   }, [page, occasion]);
-  useEffect(() => setCatalogPage(1), [category, productType, budget, search, sort, occasion]);
+  useEffect(
+    () => setCatalogPage(1),
+    [category, productType, minPrice, maxPrice, search, sort, occasion],
+  );
   useEffect(() => {
     history.scrollRestoration = 'manual';
     const syncPage = () => {
@@ -751,11 +754,8 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
     }
   }
   const collectionPageSize = 8;
-  const pageCount = Math.max(1, Math.ceil(products.length / collectionPageSize));
-  const currentPage = Math.min(catalogPage, pageCount);
-  const visibleProducts = occasion
-    ? products.slice((currentPage - 1) * collectionPageSize, currentPage * collectionPageSize)
-    : products.slice(0, 9);
+  const visibleCount = Math.min(catalogPage * collectionPageSize, products.length);
+  const visibleProducts = occasion ? products.slice(0, visibleCount) : products.slice(0, 9);
   const whatsapp = store.whatsapp?.replace(/\D/g, '');
   const consult = (p) =>
     whatsapp
@@ -771,7 +771,8 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
     setOccasion(true);
     setCategory(String(categoryId));
     setProductType(type);
-    setBudget('');
+    setMinPrice('');
+    setMaxPrice('');
     setSearch('');
   }
   const used = new Set();
@@ -894,7 +895,8 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
               setOccasion(false);
               setCategory('');
               setProductType('');
-              setBudget('');
+              setMinPrice('');
+              setMaxPrice('');
               setSearch('');
             }}
           >
@@ -908,7 +910,8 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
               setOccasion(true);
               setCategory('');
               setProductType('');
-              setBudget('');
+              setMinPrice('');
+              setMaxPrice('');
               setSearch('');
             }}
           >
@@ -1000,7 +1003,8 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
                         setOccasion(true);
                         setCategory(String(c.id));
                         setProductType('');
-                        setBudget('');
+                        setMinPrice('');
+                        setMaxPrice('');
                         setSearch('');
                         document
                           .getElementById('collection')
@@ -1067,7 +1071,7 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
                         <span className="filter-indicator">
                           {Number(Boolean(category)) +
                             Number(Boolean(productType)) +
-                            Number(Boolean(budget))}{' '}
+                            Number(minPrice !== '' || maxPrice !== '')}{' '}
                           filter
                         </span>
                       </summary>
@@ -1120,26 +1124,34 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
                         <h3>
                           Harga <small>sesuai anggaran</small>
                         </h3>
-                        <div className="budget-list">
-                          {[
-                            ['', 'Semua harga', ''],
-                            ['hemat', 'Hemat', 'Di bawah Rp100.000'],
-                            ['menengah', 'Menengah', 'Rp100.000–Rp249.999'],
-                            ['premium', 'Premium', 'Mulai Rp250.000'],
-                          ].map(([value, label, description]) => (
-                            <button
-                              key={value}
-                              className={budget === value ? 'active' : ''}
-                              aria-pressed={budget === value}
-                              onClick={() => setBudget(value)}
-                            >
-                              <span className="budget-dot" />
-                              <span>
-                                <strong>{label}</strong>
-                                {description && <small>{description}</small>}
-                              </span>
-                            </button>
-                          ))}
+                        <div className="price-range-fields">
+                          <label>
+                            Harga minimum (Rp)
+                            <input
+                              type="number"
+                              inputMode="decimal"
+                              min="0"
+                              max="1000000000"
+                              step="0.01"
+                              value={minPrice}
+                              onChange={(e) => setMinPrice(e.target.value)}
+                              placeholder="Tanpa minimum"
+                            />
+                          </label>
+                          <label>
+                            Harga maksimum (Rp)
+                            <input
+                              type="number"
+                              inputMode="decimal"
+                              min="0.01"
+                              max="1000000000"
+                              step="0.01"
+                              value={maxPrice}
+                              onChange={(e) => setMaxPrice(e.target.value)}
+                              placeholder="Tanpa maksimum"
+                            />
+                          </label>
+                          <small>Kosongkan untuk melihat semua harga.</small>
                         </div>
                       </div>
                       <div className="catalog-tools">
@@ -1155,7 +1167,8 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
                           onClick={() => {
                             setCategory('');
                             setProductType('');
-                            setBudget('');
+                            setMinPrice('');
+                            setMaxPrice('');
                             setSearch('');
                             setSort('newest');
                           }}
@@ -1253,29 +1266,34 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
                     !error &&
                     products.length > 0 &&
                     (occasion ? (
-                      <nav className="pagination" aria-label="Halaman produk">
-                        <button
-                          disabled={currentPage === 1}
-                          onClick={() => setCatalogPage(currentPage - 1)}
-                        >
-                          Sebelumnya
-                        </button>
-                        {Array.from({ length: pageCount }, (_, i) => (
-                          <button
-                            key={i}
-                            aria-current={currentPage === i + 1 ? 'page' : undefined}
-                            onClick={() => setCatalogPage(i + 1)}
-                          >
-                            {i + 1}
-                          </button>
-                        ))}
-                        <button
-                          disabled={currentPage === pageCount}
-                          onClick={() => setCatalogPage(currentPage + 1)}
-                        >
-                          Selanjutnya
-                        </button>
-                      </nav>
+                      <div className="collection-more" aria-label="Tampilkan produk koleksi">
+                        <p>
+                          Menampilkan {visibleCount} dari {products.length} produk
+                        </p>
+                        <div>
+                          {visibleCount < products.length && (
+                            <button
+                              className="btn primary"
+                              onClick={() => setCatalogPage((value) => value + 1)}
+                            >
+                              Lihat lebih banyak <Plus size={16} />
+                            </button>
+                          )}
+                          {catalogPage > 1 && (
+                            <button
+                              className="btn outline"
+                              onClick={() => {
+                                setCatalogPage(1);
+                                document
+                                  .getElementById('collection')
+                                  ?.scrollIntoView({ behavior: 'instant', block: 'start' });
+                              }}
+                            >
+                              Tampilkan lebih sedikit
+                            </button>
+                          )}
+                        </div>
+                      </div>
                     ) : (
                       <button
                         className="btn outline browse-all"
@@ -1697,23 +1715,14 @@ function Dashboard({ data, user, go }) {
   const trend = (data.dashboard.trend30 || weekTrend).slice(-salesDays);
   const best = popular.slice(0, 4);
   const periodTotal = trend.reduce((sum, day) => sum + Number(day.total), 0);
-  const occasionColors = [
-    '#3164bc',
-    '#20a89b',
-    '#9970cb',
-    '#e6a04d',
-    '#dc7999',
-    '#4f9fc4',
-    '#8b9e4e',
-    '#b77559',
-  ];
+  const occasionColors = ['#23486a', '#467aaf', '#438d98', '#8db3ce'];
   const occasions = (
     (sellerGroup === 'category' ? data.dashboard.occasionSales : data.dashboard.productTypeSales) ||
     []
   )
     .map((occasion, index) => ({
       ...occasion,
-      color: occasionColors[index] || `hsl(${Math.round((index * 137.508 + 215) % 360)} 48% 55%)`,
+      color: occasionColors[index % occasionColors.length],
       quantity:
         categoryPeriod === 'all'
           ? Number(occasion.total_orders || 0)
@@ -2216,6 +2225,7 @@ function Products({ data, query, setQuery, notify, refresh, productCategory, set
     if (uploading) return;
     const form = new FormData(event.target),
       body = Object.fromEntries(form);
+    body.photo = body.photo || asset;
     body.price = Number(body.price);
     body.active = form.get('active') === 'on';
     body.product_type_id = form.get('product_type_id') ? Number(form.get('product_type_id')) : null;
@@ -2593,7 +2603,7 @@ function Products({ data, query, setQuery, notify, refresh, productCategory, set
               </div>
               <aside className="catalog-editor-media">
                 <h3 className="form-section-title">04 / Foto & publikasi</h3>
-                <PhotoField initialValue={edit.photo} onBusyChange={setUploading} />
+                <PhotoField initialValue={edit.photo} onBusyChange={setUploading} blankWhenEmpty />
                 <label className="checkbox">
                   <input type="checkbox" name="active" defaultChecked={edit.active} /> Aktif di
                   katalog

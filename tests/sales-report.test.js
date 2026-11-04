@@ -244,6 +244,7 @@ test('Excel and PDF exports contain every filtered transaction, typed values, fr
     const pdf = await request('/pdf?' + query, session);
     assert.equal(pdf.status, 200);
     assert.equal(pdf.data.subarray(0, 5).toString(), '%PDF-');
+    assert.match(pdf.data.toString('latin1'), /\/Subtype\s*\/Image/);
     assert.ok((pdf.data.toString('latin1').match(/\/Type \/Page\b/g) || []).length >= 2);
   }
   const empty = await request('/excel?from=2000-01-01&to=2000-01-02');
