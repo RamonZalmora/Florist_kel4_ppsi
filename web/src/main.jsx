@@ -741,12 +741,7 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
       next === 'about' ? '/about' : next === 'collection' ? '/catalog?view=collection' : '/catalog';
     history.pushState(null, '', path + hash);
     setPage(next === 'collection' ? 'catalog' : next);
-    if (next === 'about' || !hash) window.scrollTo({ top: 0, behavior: 'instant' });
-    else
-      setTimeout(
-        () => document.getElementById(hash.slice(1))?.scrollIntoView({ behavior: 'smooth' }),
-        0,
-      );
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
   }
   async function showProduct(id) {
     try {
@@ -772,16 +767,12 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
         )
       : null;
   function openCollection(categoryId = '', type = '') {
-    navigatePublic('collection', '#collection');
+    navigatePublic('collection');
     setOccasion(true);
     setCategory(String(categoryId));
     setProductType(type);
     setBudget('');
     setSearch('');
-    setTimeout(
-      () => document.getElementById('collection')?.scrollIntoView({ behavior: 'smooth' }),
-      0,
-    );
   }
   const used = new Set();
   const homeGroups = ['Wedding', 'Wisuda', 'Hadiah', 'Dekorasi']
