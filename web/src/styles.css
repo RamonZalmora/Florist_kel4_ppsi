@@ -13705,3 +13705,185 @@ tr:hover td {
     0 5px 0 #d1dfea,
     0 10px 19px #23486a20;
 }
+
+/* Account recovery follows the blue storefront and workspace identity. */
+.recovery-page.recovery-modern {
+  padding: 32px 20px;
+  background: radial-gradient(ellipse at top left, #d9edf9, transparent 60%), #f1f7fb;
+  color: #23486a;
+}
+.recovery-layout {
+  width: min(100%, 980px);
+  display: grid;
+  grid-template-columns: 0.95fr 1.05fr;
+  overflow: hidden;
+  border: 1px solid #d1e1ec;
+  border-radius: 26px;
+  background: #fff;
+  box-shadow: 0 24px 64px #23486a15;
+}
+.recovery-brand-panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 46px;
+  padding: 34px;
+  background:
+    linear-gradient(160deg, #102d50f5, #23486ae8),
+    url('/assets/bien-hero.webp') center/cover;
+  color: #fff;
+}
+.recovery-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #fff;
+  text-decoration: none;
+  font-family: Georgia, serif;
+  font-size: 23px;
+}
+.recovery-brand img {
+  width: 44px;
+  height: 44px;
+}
+.recovery-brand small {
+  display: block;
+  margin-top: 5px;
+  color: #bcd4e7;
+  font:
+    8px system-ui,
+    sans-serif;
+  letter-spacing: 0.2em;
+}
+.recovery-brand-copy .eyebrow {
+  color: #bcd4e7;
+  font-size: 9px;
+}
+.recovery-brand-copy h2 {
+  color: #fff;
+  font:
+    34px/1.2 Georgia,
+    serif;
+  margin: 18px 0;
+}
+.recovery-brand-copy p {
+  color: #d3e1ec;
+  font-size: 13px;
+  line-height: 1.8;
+}
+.recovery-brand-note {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #bcd4e7;
+  font-size: 11px;
+}
+.recovery-modern .recovery-card {
+  max-width: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: #fff;
+  padding: 36px;
+}
+.recovery-modern .recovery-card > .text-btn {
+  color: #467aaf;
+  font-size: 12px;
+}
+.recovery-icon {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: #edf4f9;
+  color: #467aaf;
+  margin: 32px 0 18px;
+  border: 1px solid #d8e4ee;
+}
+.recovery-modern .recovery-card > .eyebrow {
+  color: #467aaf;
+  font-size: 9px;
+}
+.recovery-modern .recovery-card h1 {
+  font:
+    700 29px/1.2 system-ui,
+    sans-serif;
+  letter-spacing: -0.04em;
+  color: #23486a;
+}
+.recovery-modern .recovery-card > p {
+  color: #627c91;
+  line-height: 1.7;
+}
+.recovery-modern .editor-form {
+  gap: 18px;
+}
+.recovery-modern .editor-form label {
+  color: #23486a;
+  font-size: 12px;
+  font-weight: 650;
+}
+.recovery-modern input {
+  background: #f8fbfd;
+  border: 1px solid #cbdde9;
+  border-radius: 11px;
+  padding: 13px 14px;
+}
+.recovery-modern input:focus {
+  outline: 3px solid #467aaf25;
+  border-color: #467aaf;
+}
+.recovery-modern .btn.primary {
+  background: linear-gradient(135deg, #23486a, #315c80);
+  border-color: #23486a;
+  border-radius: 11px;
+}
+.recovery-modern .btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.recovery-modern .success-message {
+  background: #edf5f5;
+  color: #23486a;
+  border: 1px solid #cfe2e5;
+}
+.recovery-modern .recovery-card > .hint {
+  color: #627c91;
+  font-size: 11px;
+  line-height: 1.7;
+}
+@media (max-width: 720px) {
+  .recovery-page.recovery-modern {
+    padding: 20px 14px;
+    align-items: flex-start;
+  }
+  .recovery-layout {
+    grid-template-columns: 1fr;
+    border-radius: 20px;
+  }
+  .recovery-brand-panel {
+    padding: 20px 24px;
+    gap: 0;
+  }
+  .recovery-brand-copy,
+  .recovery-brand-note {
+    display: none;
+  }
+  .recovery-brand {
+    font-size: 20px;
+  }
+  .recovery-brand img {
+    width: 36px;
+    height: 36px;
+  }
+  .recovery-modern .recovery-card {
+    padding: 24px;
+  }
+  .recovery-icon {
+    margin-top: 24px;
+  }
+  .recovery-modern .recovery-card h1 {
+    font-size: 26px;
+  }
+}

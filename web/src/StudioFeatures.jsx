@@ -20,6 +20,7 @@ import {
   Eye,
   X,
   LockKeyhole as ExportLock,
+  LoaderCircle,
 } from 'lucide-react';
 import { api, money, date, today } from './api';
 
@@ -71,104 +72,135 @@ export function RecoveryScreen({
   }
   const title =
     mode === 'forgot'
-      ? 'Kembali ke ruang Anda.'
+      ? 'Lupa password?'
       : mode === 'verify'
-        ? 'Satu langkah lebih aman.'
+        ? 'Verifikasi email Anda.'
         : 'Mulai dengan password baru.';
   return (
-    <main className="recovery-page">
-      <section className="recovery-card">
-        <button className="text-btn" onClick={onBack}>
-          <ArrowLeft size={16} /> Kembali ke login
-        </button>
-        <div className="flower-mark">
-          <Flower2 size={32} />
-        </div>
-        <span className="eyebrow">BIEN VENDRE · ACCOUNT CARE</span>
-        <h1>{title}</h1>
-        <p>
-          {mode === 'forgot'
-            ? 'Gunakan email pemulihan yang sudah diverifikasi pada akun Anda.'
-            : mode === 'verify'
-              ? 'Konfirmasikan alamat email agar akun Anda dapat dipulihkan dengan aman.'
-              : 'Gunakan minimal 12 karakter. Tautan hanya berlaku satu kali selama 15 menit.'}
-        </p>
-        {deliveryMode === 'local' && (
-          <p className="soft-note local-mail-note">
-            Mode lokal: instruksi disimpan di folder .local/mail pada laptop, bukan dikirim ke
-            email. Buka file terbaru dengan Notepad. Email pemulihan harus diverifikasi terlebih
-            dahulu lewat Pengaturan.
-          </p>
-        )}
-        {message ? (
-          <div className="success-message" role="status">
-            <ShieldCheck size={24} />
-            <p>{message}</p>
-            <a className="btn primary" href="/login">
-              Masuk kembali
-            </a>
+    <main className="recovery-page recovery-modern">
+      <div className="recovery-layout">
+        <aside className="recovery-brand-panel">
+          <a className="recovery-brand" href="/catalog">
+            <img src="/assets/bien-mark.svg" alt="" />
+            <span>
+              Bien Vendre<small>FLORIST & GIFTS</small>
+            </span>
+          </a>
+          <div className="recovery-brand-copy">
+            <span className="eyebrow">RUANG KERJA BIEN VENDRE</span>
+            <h2>Kembali mengelola cerita indah.</h2>
+            <p>Pulihkan akses akun Anda untuk melanjutkan pengelolaan toko.</p>
           </div>
-        ) : (
-          <form className="editor-form" onSubmit={submit}>
-            {mode === 'forgot' && (
-              <label>
-                Email pemulihan
-                <input name="email" type="email" required autoComplete="email" />
-              </label>
-            )}
-            {mode === 'reset' && (
-              <>
+          <div className="recovery-brand-note">
+            <ShieldCheck size={19} />
+            <span>Akses pribadi untuk admin dan owner</span>
+          </div>
+        </aside>
+        <section className="recovery-card">
+          <button className="text-btn" onClick={onBack}>
+            <ArrowLeft size={16} /> Kembali ke login
+          </button>
+          <div className="recovery-icon">
+            <LockKeyhole size={25} />
+          </div>
+          <span className="eyebrow">KEAMANAN AKUN</span>
+          <h1>{title}</h1>
+          <p>
+            {mode === 'forgot'
+              ? 'Gunakan email pemulihan yang sudah diverifikasi pada akun Anda.'
+              : mode === 'verify'
+                ? 'Konfirmasikan alamat email agar akun Anda dapat dipulihkan dengan aman.'
+                : 'Gunakan minimal 12 karakter. Tautan hanya berlaku satu kali selama 15 menit.'}
+          </p>
+          {deliveryMode === 'local' && (
+            <p className="soft-note local-mail-note">
+              Mode lokal: instruksi disimpan di folder .local/mail pada laptop, bukan dikirim ke
+              email. Buka file terbaru dengan Notepad. Email pemulihan harus diverifikasi terlebih
+              dahulu lewat Pengaturan.
+            </p>
+          )}
+          {message ? (
+            <div className="success-message" role="status">
+              <ShieldCheck size={24} />
+              <p>{message}</p>
+              <a className="btn primary" href="/login">
+                Masuk kembali
+              </a>
+            </div>
+          ) : (
+            <form className="editor-form" onSubmit={submit}>
+              {mode === 'forgot' && (
                 <label>
-                  Password baru
+                  Email pemulihan
                   <input
-                    name="password"
-                    type="password"
-                    minLength={12}
-                    maxLength={72}
+                    name="email"
+                    type="email"
                     required
-                    autoComplete="new-password"
+                    autoComplete="email"
+                    placeholder="nama@email.com"
                   />
                 </label>
-                <label>
-                  Ulangi password
-                  <input name="confirm" type="password" required autoComplete="new-password" />
-                </label>
-              </>
-            )}
-            {mode === 'forgot' && available === false && (
-              <p className="form-error">
-                Pemulihan email belum diaktifkan. Hubungi owner toko untuk bantuan.
-              </p>
-            )}
-            {mode !== 'forgot' && !token && (
-              <p className="form-error">
-                Tautan tidak lengkap. Buka kembali tautan dari email Anda.
-              </p>
-            )}
-            {error && (
-              <p className="form-error" role="alert">
-                {error}
-              </p>
-            )}
-            <button
-              className="btn primary full"
-              disabled={busy || (mode === 'forgot' ? available !== true : !token)}
-            >
-              {mode === 'verify' ? <ShieldCheck size={17} /> : <Mail size={17} />}{' '}
-              {busy
-                ? 'Memproses…'
-                : mode === 'forgot'
-                  ? 'Kirim instruksi pemulihan'
-                  : mode === 'verify'
-                    ? 'Verifikasi email'
-                    : 'Simpan password baru'}
-            </button>
-          </form>
-        )}
-        <small className="hint">
-          Tautan pemulihan bersifat pribadi. Tim toko tidak akan meminta password Anda.
-        </small>
-      </section>
+              )}
+              {mode === 'reset' && (
+                <>
+                  <label>
+                    Password baru
+                    <input
+                      name="password"
+                      type="password"
+                      minLength={12}
+                      maxLength={72}
+                      required
+                      autoComplete="new-password"
+                    />
+                  </label>
+                  <label>
+                    Ulangi password
+                    <input name="confirm" type="password" required autoComplete="new-password" />
+                  </label>
+                </>
+              )}
+              {mode === 'forgot' && available === false && (
+                <p className="form-error">
+                  Pemulihan email belum diaktifkan. Hubungi owner toko untuk bantuan.
+                </p>
+              )}
+              {mode !== 'forgot' && !token && (
+                <p className="form-error">
+                  Tautan tidak lengkap. Buka kembali tautan dari email Anda.
+                </p>
+              )}
+              {error && (
+                <p className="form-error" role="alert">
+                  {error}
+                </p>
+              )}
+              <button
+                className="btn primary full"
+                disabled={busy || (mode === 'forgot' ? available !== true : !token)}
+              >
+                {busy ? (
+                  <LoaderCircle size={17} className="spin" />
+                ) : mode === 'verify' ? (
+                  <ShieldCheck size={17} />
+                ) : (
+                  <Mail size={17} />
+                )}{' '}
+                {busy
+                  ? 'Memproses…'
+                  : mode === 'forgot'
+                    ? 'Kirim instruksi pemulihan'
+                    : mode === 'verify'
+                      ? 'Verifikasi email'
+                      : 'Simpan password baru'}
+              </button>
+            </form>
+          )}
+          <small className="hint">
+            Tautan pemulihan bersifat pribadi. Tim toko tidak akan meminta password Anda.
+          </small>
+        </section>
+      </div>
     </main>
   );
 }

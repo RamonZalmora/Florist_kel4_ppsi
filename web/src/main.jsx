@@ -154,7 +154,9 @@ function App() {
         ? 'reset'
         : location.pathname === '/verify-email'
           ? 'verify'
-          : null;
+          : location.pathname === '/forgot-password'
+            ? 'forgot'
+            : null;
     const token = new URLSearchParams(location.hash.slice(1)).get('token') || '';
     if (mode) history.replaceState(null, '', location.pathname);
     return { mode, token };
@@ -654,8 +656,7 @@ function AboutPage({ store, whatsapp, onExplore }) {
   );
 }
 function Catalog({ user, onLogin, onDashboard, notify }) {
-  const [sort, setSort] = useState('newest'),
-    [page, setPage] = useState(location.pathname === '/about' ? 'about' : 'catalog'),
+  const [page, setPage] = useState(location.pathname === '/about' ? 'about' : 'catalog'),
     [occasion, setOccasion] = useState(
       new URLSearchParams(location.search).get('view') === 'collection',
     ),
@@ -690,7 +691,7 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
         '/products?' +
           new URLSearchParams({
             search,
-            sort: occasion ? sort : 'popular',
+            sort: occasion ? 'recommended' : 'popular',
             ...(category ? { category } : {}),
             ...(productType &&
             availableTypes.some((t) => t.code === productType || 'id:' + t.id === productType)
@@ -721,14 +722,11 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
       active = false;
       clearTimeout(timer);
     };
-  }, [category, productType, minPrice, maxPrice, search, sort, occasion, availableTypes]);
+  }, [category, productType, minPrice, maxPrice, search, occasion, availableTypes]);
   useLayoutEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
   }, [page, occasion]);
-  useEffect(
-    () => setCatalogPage(1),
-    [category, productType, minPrice, maxPrice, search, sort, occasion],
-  );
+  useEffect(() => setCatalogPage(1), [category, productType, minPrice, maxPrice, search, occasion]);
   useEffect(() => {
     history.scrollRestoration = 'manual';
     const syncPage = () => {
@@ -1155,13 +1153,6 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
                         </div>
                       </div>
                       <div className="catalog-tools">
-                        <label>
-                          Urutkan
-                          <select value={sort} onChange={(e) => setSort(e.target.value)}>
-                            <option value="newest">Terbaru diperbarui</option>
-                            <option value="popular">Produk terlaris</option>
-                          </select>
-                        </label>
                         <button
                           className="text-btn"
                           onClick={() => {
@@ -1170,7 +1161,6 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
                             setMinPrice('');
                             setMaxPrice('');
                             setSearch('');
-                            setSort('newest');
                           }}
                         >
                           Reset filter
