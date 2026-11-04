@@ -4139,6 +4139,33 @@ function Reports({ data, notify }) {
             </button>
           </div>
         </div>
+        <form className="reports-custom-period reports-custom-period-top" onSubmit={customPeriod}>
+          <h3>
+            <CalendarDays size={14} /> Periode khusus
+          </h3>
+          <label>
+            Dari tanggal
+            <input
+              type="date"
+              value={from}
+              onChange={(event) => setFrom(event.target.value)}
+              required
+            />
+          </label>
+          <label>
+            Sampai tanggal
+            <input
+              type="date"
+              value={to}
+              min={from}
+              onChange={(event) => setTo(event.target.value)}
+              required
+            />
+          </label>
+          <button className="btn primary" disabled={loading}>
+            <Search size={14} /> Tampilkan
+          </button>
+        </form>
         <div className="reports-active-period">
           <span>
             <CalendarDays size={14} />
@@ -4389,33 +4416,6 @@ function Reports({ data, notify }) {
                 <option value="lowest">Penjualan terkecil</option>
               </select>
             </label>
-            <form className="reports-custom-period" onSubmit={customPeriod}>
-              <h3>
-                <CalendarDays size={14} /> Periode khusus
-              </h3>
-              <label>
-                Dari tanggal
-                <input
-                  type="date"
-                  value={from}
-                  onChange={(event) => setFrom(event.target.value)}
-                  required
-                />
-              </label>
-              <label>
-                Sampai tanggal
-                <input
-                  type="date"
-                  value={to}
-                  min={from}
-                  onChange={(event) => setTo(event.target.value)}
-                  required
-                />
-              </label>
-              <button className="btn primary" disabled={loading}>
-                <Search size={14} /> Tampilkan
-              </button>
-            </form>
           </aside>
         </div>
       </div>
