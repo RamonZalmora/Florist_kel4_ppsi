@@ -13422,3 +13422,18 @@ tr:hover td {
     height: 21px;
   }
 }
+
+/* Keep public contact channels centered on desktop and mobile. */
+.catalog-page .public-footer .footer-channels {
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+  gap: 12px;
+}
+.catalog-page .public-footer .footer-channels .social-links {
+  justify-content: center;
+  width: 100%;
+}
+.about-page .about-contact {
+  grid-template-columns: minmax(0, 1fr);
+}

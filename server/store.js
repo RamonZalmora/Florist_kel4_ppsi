@@ -8,10 +8,12 @@ export async function storeInfo() {
   return (
     row || {
       name: 'Bien Vendre',
-      latitude: 0.4734722222,
-      longitude: 101.3748055556,
-      map_url: 'https://maps.app.goo.gl/cZhMm6Z3326uHWz77',
-      address: process.env.STORE_ADDRESS || 'Pekanbaru, Riau',
+      latitude: null,
+      longitude: null,
+      map_url: 'https://maps.app.goo.gl/JaEdz7xbLw2YZqXo9',
+      address:
+        process.env.STORE_ADDRESS ||
+        'Jl. Bangau Sakti, Simpang Baru, Binawidya, Kota Pekanbaru, Riau 28292',
       whatsapp: '6282380087007',
       instagram: 'https://www.instagram.com/bienvendreofficial?psln=bm10anhqdTk5eG1y',
       shopee: 'https://shopee.co.id/bienvendreofficial',

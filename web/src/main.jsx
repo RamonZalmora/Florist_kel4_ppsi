@@ -3,7 +3,7 @@ import { hasCoordinates, storeMapLink, storeMapEmbed } from './store-location';
 import { OrderStatusChart } from './OrderStatusChart';
 import { PhotoField, StoreEditor } from './RetailFeatures';
 import { RecoveryScreen, AccountSecurity, DataStudio } from './StudioFeatures';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useCallback } from 'react';
 import { createRoot } from 'react-dom/client';
 import {
   Flower2,
@@ -163,6 +163,10 @@ function App() {
     [checking, setChecking] = useState(true),
     [view, setView] = useState(location.pathname === '/login' ? 'login' : 'catalog'),
     [toast, setToast] = useState(null);
+  useLayoutEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    document.querySelector('.workspace-content')?.scrollTo({ top: 0, behavior: 'instant' });
+  }, [view]);
   const notify = useCallback((message, error = false) => setToast({ message, error }), []);
   useEffect(() => {
     api('/auth/me')
@@ -645,14 +649,6 @@ function AboutPage({ store, whatsapp, onExplore }) {
           )}
           <SocialLinks store={store} whatsapp={whatsapp} />
         </div>
-        <div className="about-care">
-          <h3>Merawat bunga potong</h3>
-          <p>
-            {store.care_tips ||
-              'Potong ujung batang secara miring, gunakan air bersih, dan ganti air secara berkala. Simpan rangkaian jauh dari panas dan sinar matahari langsung.'}
-          </p>
-          <small>Ketersediaan bunga dan detail rangkaian dapat dikonfirmasi kepada toko.</small>
-        </div>
       </section>
     </div>
   );
@@ -726,9 +722,14 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
       clearTimeout(timer);
     };
   }, [category, productType, budget, search, sort, occasion, availableTypes]);
+  useLayoutEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [page, occasion]);
   useEffect(() => setCatalogPage(1), [category, productType, budget, search, sort, occasion]);
   useEffect(() => {
+    history.scrollRestoration = 'manual';
     const syncPage = () => {
+      window.scrollTo({ top: 0, behavior: 'instant' });
       setPage(location.pathname === '/about' ? 'about' : 'catalog');
       setOccasion(new URLSearchParams(location.search).get('view') === 'collection');
     };
@@ -740,7 +741,7 @@ function Catalog({ user, onLogin, onDashboard, notify }) {
       next === 'about' ? '/about' : next === 'collection' ? '/catalog?view=collection' : '/catalog';
     history.pushState(null, '', path + hash);
     setPage(next === 'collection' ? 'catalog' : next);
-    if (next === 'about' || !hash) window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (next === 'about' || !hash) window.scrollTo({ top: 0, behavior: 'instant' });
     else
       setTimeout(
         () => document.getElementById(hash.slice(1))?.scrollIntoView({ behavior: 'smooth' }),

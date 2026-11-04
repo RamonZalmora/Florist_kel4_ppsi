@@ -13,12 +13,17 @@ export function hasCoordinates(store) {
   );
 }
 export function storeMapLink(store) {
-  return hasCoordinates(store)
-    ? `https://www.google.com/maps/search/?api=1&query=${Number(store.latitude)},${Number(store.longitude)}`
-    : store.map_url || '';
+  return (
+    store.map_url ||
+    (hasCoordinates(store)
+      ? `https://www.google.com/maps/search/?api=1&query=${Number(store.latitude)},${Number(store.longitude)}`
+      : '')
+  );
 }
 export function storeMapEmbed(store) {
   return hasCoordinates(store)
     ? `https://maps.google.com/maps?q=${Number(store.latitude)},${Number(store.longitude)}&z=16&output=embed`
-    : '';
+    : store.address
+      ? `https://maps.google.com/maps?q=${encodeURIComponent(store.address)}&z=16&output=embed`
+      : '';
 }

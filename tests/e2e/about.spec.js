@@ -40,7 +40,7 @@ test('about page links to the channels configured by the store', async ({ page }
   await page.goto('/about');
   await expect(page.getByText('Cerita khusus dari owner')).toBeVisible();
   await expect(page.getByText('Konsultasi khusus dari owner')).toBeVisible();
-  await expect(page.getByText('Tips khusus dari owner')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Merawat bunga potong' })).toHaveCount(0);
   await expect(
     page.locator('.about-contact .social-links').getByRole('link', { name: 'WhatsApp' }),
   ).toHaveAttribute('href', 'https://wa.me/6281234567890');
@@ -60,19 +60,13 @@ test('about page links to the channels configured by the store', async ({ page }
 
 test('about and footer show the supplied map location', async ({ page }) => {
   await page.goto('/about');
-  await expect(page.getByTitle('Peta lokasi Bien Vendre')).toHaveAttribute(
-    'src',
-    /0\.4734722222,101\.3748055556/,
-  );
+  await expect(page.getByTitle('Peta lokasi Bien Vendre')).toHaveAttribute('src', /Bangau/);
   await expect(page.getByRole('link', { name: 'Buka Google Maps', exact: true })).toHaveAttribute(
     'href',
-    'https://www.google.com/maps/search/?api=1&query=0.4734722222,101.3748055556',
+    'https://maps.app.goo.gl/JaEdz7xbLw2YZqXo9',
   );
   await expect(
     page.locator('.public-footer').getByRole('link', { name: /Lihat lokasi di Google Maps/ }),
-  ).toHaveAttribute(
-    'href',
-    'https://www.google.com/maps/search/?api=1&query=0.4734722222,101.3748055556',
-  );
+  ).toHaveAttribute('href', 'https://maps.app.goo.gl/JaEdz7xbLw2YZqXo9');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
