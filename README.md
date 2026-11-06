@@ -1,248 +1,198 @@
-# Bien Vendre · Florist & Gifts
+# Bien Vendre Florist and Gifts
 
-Website katalog dan manajemen penjualan florist dengan tampilan pelanggan, dashboard serta laporan untuk admin dan owner. Bahasa Indonesia, mata uang rupiah, dan zona waktu Asia/Jakarta.
+Website katalog dan pengelolaan operasional toko florist Bien Vendre. Sistem menghubungkan penelusuran produk oleh pelanggan, pencatatan pesanan oleh admin, dan pemantauan penjualan oleh owner dalam satu aplikasi berbasis web.
 
-![Dashboard Bien Vendre](docs/screenshots/admin-desktop.png)
+**Kunjungi website: [https://bienvendre.online](https://bienvendre.online)**
 
-## Fitur
+## Tentang Proyek
 
-- Katalog, pencarian, detail produk, dan rekomendasi menurut kategori momen.
-- Filter occasion, jenis produk, dan anggaran: Hemat di bawah Rp100.000, Menengah Rp100.000–Rp249.999,99, dan Premium mulai Rp250.000. Filter jenis menggunakan kata pada nama dan jenis produk; admin mengatur jenis dan occasion langsung pada formulir produk.
-- Pengelolaan produk, Occasion, jenis produk, dan pesanan oleh admin. Occasion bisa dipilih langsung saat menambah atau mengedit produk; Occasion dan jenis produk dikelola melalui dua kelompok di menu Kategori.
-- Pesanan multi-item, permintaan khusus, status belum selesai atau selesai, dan riwayat penjualan.
-- Dashboard admin dan owner, filter periode penjualan, dan unduhan laporan PDF.
-- Login dengan hak akses, password bcrypt, sesi HttpOnly, serta perlindungan CSRF.
-- Tampilan responsif untuk desktop dan HP.
+Bien Vendre menyediakan katalog rangkaian bunga artificial, bunga kering, dan hadiah untuk berbagai momen, seperti wisuda, ulang tahun, serta pernikahan. Pelanggan dapat melihat produk dan harga sebelum berkonsultasi melalui WhatsApp.
 
-| Pengguna | Akses |
-|---|---|
-| Pelanggan | Katalog, detail, dan rekomendasi tanpa login; konsultasi melalui kanal toko. |
-| Admin | Mengelola katalog, mencatat pesanan, melihat penjualan, dan mengunduh laporan. |
-| Owner | Melihat pesanan dan penjualan serta mengunduh laporan. |
+Sistem membantu toko mengelola informasi produk, mengelompokkan katalog, mencatat detail pesanan, dan menyusun laporan penjualan. Antarmuka menggunakan bahasa Indonesia, format rupiah, dan zona waktu Asia/Jakarta.
 
-## Mulai cepat di Windows
+## Cara Mengakses Melalui Internet
 
-**Fokus saat ini adalah penggunaan lokal. Tidak perlu Render, Neon, Resend, Docker, atau akun layanan tambahan.**
+1. Buka Google Chrome, Microsoft Edge, atau browser lain pada laptop maupun ponsel.
+2. Kunjungi **[bienvendre.online](https://bienvendre.online)** menggunakan koneksi internet.
+3. Pilih **Koleksi bunga** untuk menelusuri produk atau **Tentang kami** untuk melihat profil dan lokasi toko.
+4. Gunakan tombol **Pesan via WhatsApp** pada produk untuk berkonsultasi dengan tim toko.
+5. Admin dan owner dapat memilih **Login tim** atau membuka [halaman login](https://bienvendre.online/login) dengan akun yang diberikan pengelola.
 
-1. Instal [Node.js LTS](https://nodejs.org/) versi 22 atau lebih baru.
-2. Unduh/ekstrak kode terbaru ke folder lokal.
-3. Klik dua kali **`Mulai-BienVendre.cmd`** pada folder proyek.
-4. Tunggu setup selesai. Browser akan diminta membuka katalog secara otomatis. Jika tidak terbuka, ketik `http://localhost:3000/catalog` di browser.
-5. Biarkan jendela launcher tetap berjalan. Untuk berhenti tekan Ctrl+C.
+Katalog publik dapat diakses tanpa akun. Tombol WhatsApp membuka percakapan; pesanan belum otomatis tersimpan di sistem sampai dicatat oleh admin.
 
-Kebutuhan aplikasi diunduh saat pertama kali jika belum terpasang; setelah itu gunakan launcher yang sama. Launcher menjalankan setup idempotent agar migrasi terbaru diterapkan tanpa menimpa data yang sudah ada. Kalau server sedang berjalan, hentikan dahulu sebelum membuka launcher lagi. Setelah perubahan dependency, jalankan `npm.cmd ci` sekali sebelum startup.
+## Fitur Utama
 
-Login tim di `http://localhost:3000/login`; password awal admin/owner ada di `.env`. Data disimpan dalam `.local/database`. Memperbarui produk melalui dashboard tidak membutuhkan rebuild; perubahan kode tampilan langsung terbaca dalam mode dev.
+### Halaman Publik
 
-Launcher khusus Windows disediakan; pengujian otomatis di runner ini dilakukan pada Linux. Langkah terminal berikut merupakan alternatif.
+- **Beranda:** identitas toko, pengenalan produk, dan akses menuju koleksi.
+- **Katalog:** foto, nama, harga, deskripsi, dan detail produk.
+- **Pencarian dan filter:** occasion, jenis produk, serta harga minimum dan maksimum yang dapat ditentukan pelanggan.
+- **Koleksi bertahap:** tampilkan lebih banyak produk dan sembunyikan kembali tanpa berpindah halaman.
+- **Pemesanan WhatsApp:** percakapan dengan konteks produk untuk membahas ketersediaan, detail, dan jadwal.
+- **Tentang Kami:** cerita toko, alamat, peta, dan tautan kanal digital.
+- **Desain responsif:** tampilan menyesuaikan layar desktop dan ponsel.
 
-## Menjalankan di laptop (Tanpa Docker)
+### Ruang Kerja Admin
 
-**Cukup instal [Node.js LTS](https://nodejs.org/) versi 22 atau lebih baru.** Database lokal berjalan bersama aplikasi; tidak perlu Docker Desktop, WSL, atau instalasi server PostgreSQL.
+- Dashboard ringkasan penjualan, grafik, kategori atau jenis produk terlaris, dan status pesanan.
+- Pengelolaan produk, harga, foto, informasi bahan, serta status aktif katalog.
+- Pengelolaan occasion dan jenis produk, termasuk hubungan produk dengan beberapa occasion.
+- Pencatatan nama pemesan, nomor telepon, beberapa produk, jumlah, jadwal, dan catatan khusus.
+- Perhitungan total pesanan berdasarkan harga produk dan jumlah yang dipilih.
+- Pencarian, filter, pagination, dan tombol chat WhatsApp pada daftar pesanan.
+- Penyelesaian pesanan yang menghasilkan catatan penjualan.
+- Laporan dengan filter periode dan tanggal khusus, serta unduhan PDF berlogo toko dan Excel.
 
-### 1. Unduh dan buka folder proyek
+### Ruang Kerja Owner
 
-Unduh dari [GitHub](https://github.com/RamonZalmora/Florist_kel4_ppsi) → **Code → Download ZIP**, lalu ekstrak. Buka folder yang berisi `package.json`. Di kolom alamat File Explorer, ketik `powershell`, lalu Enter.
+- Pemantauan dashboard, daftar pesanan, serta riwayat dan laporan penjualan.
+- Peninjauan dan ekspor data bisnis sesuai fasilitas yang tersedia.
+- Pengaturan identitas toko, cerita Tentang Kami, alamat, koordinat atau tautan peta, serta kanal kontak.
+- Informasi toko yang terhubung dengan halaman publik.
+- Pengaturan keamanan akun dan perubahan password. Pemulihan melalui email memerlukan email terverifikasi serta konfigurasi layanan pengiriman.
 
-Jika menggunakan Git, clone repositori atau jalankan `git pull origin main` pada checkout yang sudah ada. Pertahankan `.env` dan folder data lokal.
+## Alur Bisnis
 
-### 2. Setup pertama
+1. Pelanggan menemukan produk melalui katalog dan filter.
+2. Pelanggan berkonsultasi melalui WhatsApp untuk menyepakati detail pesanan.
+3. Admin mencatat produk, jumlah, kontak pemesan, jadwal, dan permintaan khusus.
+4. Tim toko menyiapkan pesanan sesuai kesepakatan.
+5. Admin menandai pesanan sebagai selesai setelah penanganan selesai.
+6. Catatan penjualan menjadi sumber dashboard dan laporan untuk evaluasi toko.
 
-Di PowerShell Windows:
+**Catatan:** status selesai bukan verifikasi pembayaran online otomatis. Laporan menunjukkan nilai penjualan dari pesanan selesai, bukan laba bersih.
 
-```powershell
-npm.cmd install
-npm.cmd run setup
+## Keunggulan Website
+
+- **Mudah memilih produk:** foto, harga, occasion, dan jenis produk membantu pelanggan menemukan pilihan sebelum menghubungi toko.
+- **Pemesanan fleksibel:** WhatsApp mendukung diskusi kebutuhan khusus yang umum pada pesanan florist.
+- **Pencatatan terstruktur:** detail pesanan disimpan dalam database dan dapat ditemukan melalui pencarian serta filter.
+- **Pembagian tugas jelas:** admin menangani operasional, sedangkan owner memantau usaha dan mengatur informasi toko sesuai hak akses.
+- **Evaluasi praktis:** ringkasan, grafik, periode khusus, serta ekspor PDF dan Excel membantu meninjau penjualan.
+- **Informasi mudah diperbarui:** produk dan profil toko dapat dikelola melalui antarmuka tanpa mengubah kode untuk setiap pembaruan data.
+- **Dapat dikembangkan:** pemisahan frontend, backend, dan database mendukung penambahan fitur berikutnya.
+
+## Teknologi yang Digunakan
+
+### Frontend
+
+- **React 19** untuk antarmuka pengguna.
+- **JavaScript dan JSX** untuk logika serta komponen halaman.
+- **CSS** untuk desain, animasi, dan layout responsif.
+- **Vite 6** untuk pengembangan dan build frontend.
+- **Lucide React** untuk ikon antarmuka.
+- **SVG dan komponen React** untuk grafik dashboard.
+
+### Backend dan Database
+
+- **Node.js 22** sebagai runtime pada deployment produksi.
+- **Express 5** untuk API dan proses bisnis.
+- **PostgreSQL 17** untuk database produksi pada VPS.
+- **PGlite** untuk database pengembangan lokal.
+- **node-postgres (`pg`)** untuk koneksi PostgreSQL.
+- **SQL** untuk pengolahan data, relasi, transaksi, dan migrasi database.
+- **Zod** untuk validasi input.
+- **Multer dan Sharp** untuk penerimaan serta pengolahan gambar.
+- **PDFKit dan write-excel-file** untuk ekspor laporan.
+- **dotenv** untuk konfigurasi lingkungan.
+
+### Autentikasi dan Keamanan
+
+- Session berbasis cookie dan pemeriksaan hak akses admin atau owner pada backend.
+- Hash password menggunakan **bcryptjs**.
+- Perlindungan **CSRF**, header keamanan melalui **Helmet**, dan pembatasan permintaan pada endpoint tertentu melalui **express-rate-limit**.
+- Akses website menggunakan **HTTPS**.
+
+### Hosting dan Alat Pengembangan
+
+- **VPS Rumahweb** dengan **Ubuntu 24.04 LTS**.
+- **Docker dan Docker Compose** untuk menjalankan aplikasi, database, dan proxy.
+- **Caddy** sebagai reverse proxy dan pengelola sertifikat HTTPS.
+- **Git dan GitHub** untuk pengelolaan versi kode.
+- **npm** untuk dependensi dan perintah proyek.
+- **Node.js Test Runner dan Playwright** untuk pengujian backend dan browser.
+- **Prettier** untuk konsistensi format kode.
+- **GitHub Actions** untuk pemeriksaan build, pengujian, dan format kode. Workflow pemeriksaan tidak otomatis melakukan deployment VPS.
+
+## Arsitektur Singkat
+
+```text
+Browser pelanggan atau tim toko
+             |
+            HTTPS
+             |
+       Caddy pada VPS
+             |
+    Node.js dan Express
+      |              |
+Frontend React   API aplikasi
+                     |
+                 PostgreSQL
 ```
 
-Di terminal Linux/macOS, gunakan `npm install` dan `npm run setup`. Akhiran `.cmd` di Windows membantu menghindari pembatasan script PowerShell tanpa mengubah execution policy.
+Frontend dibangun menjadi file statis di `dist/` dan dilayani oleh Express. API memproses permintaan, memeriksa hak akses, serta membaca atau menulis database. Data PostgreSQL dan file upload produksi menggunakan volume Docker agar tetap tersedia pada pembaruan container normal.
 
-Setup membuat `.env` dengan password awal acak jika belum ada, menyiapkan database dan katalog awal toko, lalu membangun website. File `.env` dan data yang sudah ada tidak ditimpa. Koneksi internet diperlukan saat memasang dependensi pertama kali.
+## Struktur Proyek
 
-### 3. Jalankan website
-
-```powershell
-npm.cmd run dev
+```text
+web/                       Frontend dan aset publik
+  src/                     Komponen React, API client, dan CSS
+  public/assets/           Logo dan gambar katalog
+server/                    Backend Express
+  routes/                  Endpoint API berdasarkan fitur
+  db/                      Koneksi, migrasi, dan data awal
+  reports/                 Pengolahan dan ekspor laporan
+scripts/                   Setup, backup, dan deployment
+deploy/                    Konfigurasi Caddy
+docs/                      Dokumentasi teknis dan operasional
+tests/                     Pengujian backend dan browser
+.github/workflows/         Pemeriksaan otomatis GitHub Actions
+compose.production.yaml    Layanan Docker untuk VPS
+Dockerfile                 Tahapan build image aplikasi
+package.json               Dependensi dan perintah proyek
 ```
 
-Tunggu alamat frontend muncul di terminal, lalu buka Chrome/Edge:
+Folder `.local/` berisi data dan file kerja lokal, termasuk database PGlite, upload, backup, serta kebutuhan pengujian. File `.env`, data lokal, dan kredensial tidak disertakan ke repositori.
 
-| Halaman | Alamat |
-|---|---|
-| Katalog | http://localhost:3000/catalog |
-| Login admin/owner | http://localhost:3000/login |
+## Pengembangan Lokal
 
-Terminal harus tetap terbuka. Untuk berhenti, tekan **Ctrl+C**. Penggunaan berikutnya cukup `npm.cmd run dev`; tidak perlu mengulang instalasi atau setup.
-
-### 4. Login
-
-Buka konfigurasi lokal dengan `notepad .env`:
-
-| Username | Password awal |
-|---|---|
-| `admin` | Nilai `SEED_ADMIN_PASSWORD` |
-| `owner` | Nilai `SEED_OWNER_PASSWORD` |
-
-Salin nilai setelah tanda `=`. Jangan membagikan `.env` atau memasukkannya ke Git. Mengubah variabel seed tidak mereset password akun yang sudah ada.
-
-## Memperbarui produk dan tampilan
-
-**Data produk:** login sebagai admin → Produk → Tambah/Edit → Simpan. Perubahan langsung tersimpan dalam database. Buka atau refresh katalog untuk melihat data terbaru; tidak perlu build ulang atau restart aplikasi.
-
-**Kode tampilan:** jalankan `npm run dev`, kemudian edit komponen di `web/src/main.jsx`, gaya di `web/src/styles.css`, atau aset di `web/public/assets/`. Vite memperbarui tampilan tanpa build ulang. Backend memakai Node watch agar perubahan kode server terbaca kembali.
-
-Mode pengembangan memakai frontend pada port 3000 dan backend pada port 3001. Permintaan API diteruskan oleh Vite, sehingga pengguna cukup membuka alamat frontend. Jangan menjalankan `npm start` bersamaan dengan mode dev pada port yang sama.
-
-Untuk menjalankan hasil build:
+Gunakan **Node.js 22 atau lebih baru** dan npm. Jalankan dari direktori proyek:
 
 ```bash
-npm run build
-npm start
+npm ci
+npm run setup
+npm run dev
 ```
 
-Website hasil build juga memakai port 3000. Perubahan kode frontend memerlukan build ulang pada mode ini.
+Pada PowerShell Windows, gunakan `npm.cmd` jika eksekusi `npm` dibatasi. Alternatif peluncur Windows tersedia melalui `Mulai-BienVendre.cmd`.
 
-## Database lokal
+- Katalog lokal: `http://localhost:3000/catalog`.
+- Login tim lokal: `http://localhost:3000/login`.
+- Konfigurasi akun awal dikelola secara privat melalui `.env`. Mengubah nilai seed tidak mereset password akun yang sudah dibuat.
+- Database laptop dan database VPS merupakan penyimpanan terpisah; perubahan data lokal tidak otomatis tersinkron ke produksi.
 
-Mode default menggunakan **PGlite**, mesin PostgreSQL yang berjalan di dalam proses Node.js. Data disimpan permanen di `.local/database`, bukan hanya di memori. Relasi tabel, foreign key, transaksi, dan histori penjualan tetap digunakan.
-
-```dotenv
-DB_DRIVER=pglite
-DB_DIRECTORY=.local/database
-```
-
-Satu folder database hanya boleh digunakan oleh satu proses aplikasi. Hentikan server sebelum menjalankan setup, inspeksi, backup, atau import; pengunci database mencegah dua proses menulis bersamaan. Jangan hapus `.local/database` jika data ingin dipertahankan. Database ini tidak menyediakan port PostgreSQL untuk koneksi langsung DBeaver.
-
-Untuk melihat jumlah baris tabel dan daftar produk dari terminal setelah server dihentikan:
-
-```bash
-npm run db:inspect
-```
-
-PostgreSQL eksternal tetap didukung untuk kebutuhan server atau hosting. Isi konfigurasi berikut dengan koneksi milik Anda, lalu jalankan migrasi:
-
-```dotenv
-DB_DRIVER=postgres
-DATABASE_URL=postgresql://username:password@host:5432/bien_vendre
-```
-
-Mode eksternal memerlukan server PostgreSQL yang tersedia. Mode lokal ditujukan untuk pengembangan dan penggunaan pada satu laptop; jangan menggunakan folder PGlite bersama beberapa instance server.
-
-## Beralih dari versi lama
-
-Data PostgreSQL versi Docker **tidak otomatis dipindahkan** ke database lokal. Menghapus konfigurasi Docker dari repositori tidak menghapus container atau volume yang sudah ada di laptop. Pertahankan database lama dan `.env` hingga pemindahan selesai.
-
-Lihat [panduan pemindahan data](docs/MIGRATION.md). Tersedia `npm run db:import` untuk memindahkan akun, hash password, katalog, pesanan, dan penjualan dari PostgreSQL yang masih dapat diakses. Import hanya diizinkan ke database tujuan kosong, sehingga tidak menimpa data lokal yang sudah ada.
-
-## Konfigurasi toko
-
-Owner dapat mengubah nomor WhatsApp, Instagram, dan alamat toko melalui Pengaturan toko. Tombol pesan membuka WhatsApp dengan nama dan harga produk; pelanggan tetap menekan tombol kirim sendiri.
-
-Katalog awal disusun dari daftar toko. Harga website adalah usulan awal yang lebih rendah dari harga rujukan dan dapat diubah oleh admin. Gambar katalog dibuat ulang sebagai ilustrasi; periksa kecocokan dan ketersediaan sebelum menerima pesanan. Admin dapat mengunggah foto asli melalui dashboard.
-
-## Backup dan restore
-
-Hentikan server dengan Ctrl+C terlebih dahulu:
-
-```bash
-npm run db:backup
-```
-
-Snapshot tersimpan di `.local/backups/` dan memuat data serta hash akun. Simpan aman dan jangan unggah ke Git.
-
-Restore ke folder baru:
-
-```bash
-npm run db:restore -- .local/backups/NAMA_BACKUP.tar.gz .local/restored-database
-```
-
-Setelah berhasil, ubah `DB_DIRECTORY=.local/restored-database` pada `.env`, lalu jalankan website kembali. Restore menolak folder tujuan yang sudah ada; sesi login lama dibersihkan. Backup format ini untuk PGlite; PostgreSQL eksternal memakai fasilitas backup penyedia database.
-
-## Pengujian
+Untuk memeriksa perubahan kode:
 
 ```bash
 npm test
 npm run build
 npm run format:check
-# Jalankan aplikasi dahulu, kemudian pada terminal lain:
-npm run test:e2e
 ```
 
-Tes backend memakai database sementara terpisah dari data aplikasi. Tes browser membutuhkan katalog contoh dan akun seed. Chromium default `/usr/bin/chromium`; gunakan `CHROMIUM_PATH` untuk executable lain dan `E2E_BASE_URL` untuk alamat/port berbeda. Detail hasil pengujian ada di [VALIDATION.md](docs/VALIDATION.md).
+Pengujian browser tersedia melalui `npm run test:e2e` dan memerlukan aplikasi uji berjalan, browser yang sesuai, serta akun dan data pengujian.
 
-## Jika tidak bisa berjalan
+## Pemeliharaan dan Dokumentasi
 
-- `npm` tidak dikenali: pastikan Node.js terinstal, lalu buka terminal baru.
-- Script PowerShell diblokir: gunakan `npm.cmd` seperti panduan Windows di atas.
-- Port digunakan: tutup server sebelumnya. Untuk port alternatif pada PowerShell, jalankan `$env:WEB_PORT="3002"; $env:API_PORT="3003"; npm.cmd run dev`, lalu buka `http://localhost:3002/catalog`.
-- Database sedang dipakai: hentikan proses dev/start sebelum menjalankan perintah database.
-- Tabel belum ada: jalankan `npm run setup` saat aplikasi berhenti.
+Pembaruan kode produksi dilakukan melalui GitHub dan proses deployment pada VPS. Skrip `scripts/update-vps.sh` menyiapkan backup sebelum mengambil kode terbaru dan memperbarui container. Simpan salinan cadangan database dan foto di luar VPS.
 
-## Teknologi dan batas versi
+- [Panduan VPS Ubuntu dan pembaruan produksi](docs/VPS-UBUNTU.md)
+- [Dokumentasi database](docs/DATABASE.md)
+- [Panduan deployment](docs/DEPLOYMENT.md)
+- [Panduan migrasi data](docs/MIGRATION.md)
+- [Dokumentasi validasi](docs/VALIDATION.md)
 
-React, Vite, Lucide, Node.js/Express, PGlite/PostgreSQL, Zod, bcrypt, dan PDFKit. Struktur tabel dan aturan penjualan dijelaskan di [DATABASE.md](docs/DATABASE.md).
+## Arah Pengembangan
 
-Pesanan yang belum selesai dapat langsung diselesaikan dan menghasilkan satu penjualan dalam transaksi database. Pesanan lama yang dibatalkan tetap disimpan sebagai arsip dan tidak ditampilkan dalam daftar pesanan aktif. Harga item disimpan sebagai snapshot; perubahan katalog tidak mengubah transaksi selesai. Daftar pesanan dibatasi 500 terbaru, sementara laporan mencakup semua penjualan dalam periode.
+Pengembangan berikutnya dapat mencakup pemesanan langsung melalui website, integrasi pembayaran, notifikasi status, pengaturan kapasitas harian, persediaan bahan, dan pencatatan biaya untuk laporan laba. Prioritas ditentukan berdasarkan kebutuhan operasional toko.
 
-Pengelolaan akun lanjutan dan konfigurasi domain/HTTPS produksi belum tersedia. Website belum dideploy.
-
-## Atelier: fitur terbaru
-
-Identitas visual memakai biru navy, putih, dan aset floral editorial. Visual produk awal merupakan gambar contoh hasil generasi; ganti dengan foto produk toko sebelum digunakan untuk penawaran nyata.
-
-- **Pengaturan keamanan:** ganti password dan verifikasi email pemulihan. Lupa password memakai tautan sekali pakai yang berlaku 15 menit; semua sesi berakhir setelah reset.
-- **Data bisnis owner:** lihat tabel tanpa aplikasi database tambahan dan unduh JSON setelah konfirmasi password. Ekspor tidak menyertakan akun, password/hash, sesi, atau token; ini bukan backup lengkap.
-
-### Lupa password untuk pengujian lokal
-
-Mode non-production default memakai `MAIL_MODE=local`. Tidak diperlukan API key atau pengirim email.
-
-1. Login, buka **Pengaturan → Email pemulihan**, masukkan alamat email dan password saat ini.
-2. Buka folder `.local/mail` dari File Explorer. Buka file `.txt` terbaru dengan Notepad, lalu salin tautan verifikasinya ke browser dan konfirmasikan.
-3. Pada halaman login, pilih **Lupa password** dan masukkan alamat yang sudah diverifikasi.
-4. Buka file reset terbaru di `.local/mail`, salin tautannya ke browser, lalu buat password baru.
-
-File hanya disimpan pada laptop; tidak dikirim ke inbox email dan tidak disediakan melalui endpoint web. Tautan berlaku 15 menit, sekali pakai. Jaga folder tersebut secara pribadi dan hapus pesan yang tidak diperlukan. Jangan kirim screenshot tautan/token. Mode ini tidak membuktikan kepemilikan email nyata dan hanya untuk pengujian lokal; mode production menolaknya.
-
-**Deployment ditunda sesuai instruksi.** Konfigurasi hosting sebelumnya disimpan sebagai referensi masa depan di [catatan hosting](docs/DEPLOYMENT.md), tetapi tidak diperlukan dan tidak dijalankan untuk penggunaan lokal.
-
-[Arah produk dan batas fitur](docs/PRODUCT-DIRECTION.md).
-
-<details>
-<summary>Opsi lanjutan: Docker dan PostgreSQL server</summary>
-
-Konfigurasi Docker Compose tetap tersedia sebagai alternatif untuk pengembang yang membutuhkannya. Mode lokal di atas tidak memerlukannya. Compose menjalankan layanan `web` dan `db`; jangan menjalankannya bersamaan pada port yang sama dengan `npm run dev`.
-
-```bash
-docker compose up -d --build
-docker compose logs -f
-docker compose stop
-```
-
-Data PostgreSQL mode ini terpisah dari folder PGlite. Pertahankan data lama sebelum berpindah mode.
-
-</details>
-
-## Pembaruan fitur operasional
-
-- **Pengaturan toko (owner):** nama, alamat, deskripsi, logo, WhatsApp, Instagram, Shopee, dan Tokopedia bisa diubah dari dashboard; tersimpan di database.
-- **Laporan admin dan owner:** grafik tren mengikuti periode dan PDF berupa tabel dengan header berulang serta nomor halaman.
-- **Pelanggan:** empat kartu statistik dan akses baca untuk owner; ringkasan tidak lagi terbatas pada 500 pesanan.
-- **Katalog:** pilihan occasion dan urutan produk paling banyak difavoritkan. Favorit disimpan per browser dan jumlahnya terlihat di halaman produk admin.
-- **Katalog awal:** produk lama dinonaktifkan dari katalog satu kali, tetapi tetap tersimpan untuk riwayat pesanan. Produk baru disusun dari informasi toko; harga dan gambar dapat disesuaikan melalui dashboard. Rincian harga rujukan tersedia di [daftar harga](docs/DAFTAR-HARGA.md).
-- **Tentang kami:** profil florist, panduan perawatan bunga, dan kanal WhatsApp, Instagram, Shopee serta Tokopedia yang dapat diatur owner.
-- **Foto produk/logo:** upload JPEG/PNG/WebP dari perangkat, maksimal 5 MB; tersimpan sebagai WebP di `.local/uploads`. Ganti password tetap tersedia di Pengaturan keamanan.
-
-Setelah mengunduh pembaruan, hentikan server, jalankan `npm.cmd ci` sekali untuk memasang dependency baru, lalu buka `Mulai-BienVendre.cmd`. Data lama dipertahankan oleh migrasi. Backup juga folder `.local/uploads` selain database.
-
-Lihat [audit fitur dan batas penggunaan](docs/FEATURE-AUDIT.md). Fokus tetap localhost; tidak perlu akun hosting atau deploy.
-
-### Data simulasi lokal
-
-Setup lokal menambahkan satu kali 30 pesanan berlabel `[DEMO]`: 24 selesai dan enam belum selesai. Nama serta nomor kontak adalah simulasi, bukan pelanggan asli. Data ini mengisi grafik, laporan penjualan, dan produk paling dibeli berdasarkan pesanan selesai. Kategori pada produk terlaris mengikuti hubungan produk dengan Occasion.
-
-Untuk melewati penambahan demo, atur `SEED_DEMO=false` sebelum setup. Untuk menghapus data simulasi setelah mencoba, hentikan server dan jalankan `npm run demo:clear`. Perintah ini hanya menghapus pesanan dan penjualan dengan penanda demo; setup berikutnya tidak akan menambahkannya ulang.
-
-### Kategori dan jenis produk
-
-Menu Kategori berisi Occasion (Wedding, Wisuda, dan lainnya) serta Jenis Produk (Snack, Uang, Boneka, dan lainnya). Admin dapat menambah jenis baru, memilihnya saat mengisi produk, serta menyaring daftar produk per Occasion. Menu Rekomendasi sudah digabungkan ke alur ini; hubungan produk dengan Occasion yang lama tetap tersimpan. Grafik dashboard dan laporan memakai komponen React grafik garis yang sama.
+**Bien Vendre membantu pelanggan memilih produk, admin mengelola pesanan, dan owner memantau usaha.**
